@@ -187,8 +187,10 @@ function MiniChart({ chart }: { chart: View["chart"] }) {
         )}
       </svg>
       <div className="mt-2 flex justify-between font-data text-[10px] text-ink-3">
-        {chart.x.map((l) => (
-          <span key={l}>{l}</span>
+        {chart.x.map((l, i) => (
+          <span key={l} className={cn(chart.x.length > 6 && i % 2 === 1 && "hidden sm:inline")}>
+            {l}
+          </span>
         ))}
       </div>
     </figure>
@@ -241,7 +243,7 @@ export function ProductShowcase() {
       />
 
       <Reveal className="mt-12">
-        <div role="tablist" aria-label="Product views" onKeyDown={onKeyDown} className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <div role="tablist" aria-label="Product views" onKeyDown={onKeyDown} className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
           {VIEWS.map((v, i) => (
             <button
               key={v.tab}

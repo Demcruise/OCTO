@@ -135,7 +135,7 @@ export function SystemFlow() {
       />
 
       <Reveal className="mt-14">
-        <div role="tablist" aria-label="System stages" onKeyDown={onKeyDown} className="-mx-4 flex overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-5 sm:px-0">
+        <div role="tablist" aria-label="System stages" onKeyDown={onKeyDown} className="no-scrollbar -mx-4 flex overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-5 sm:px-0">
           {FLOW_STAGES.map((s, i) => (
             <button
               key={s.id}

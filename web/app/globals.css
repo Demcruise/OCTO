@@ -50,8 +50,8 @@
     --color-accent-soft: rgb(109 69 255 / 0.08);
     --color-accent-line: rgb(109 69 255 / 0.2);
 
-    --color-ok: #16845b;
-    --color-warn: #b7791f;
+    --color-ok: #137350; /* darker than #16845B so 11px pill text passes AA on its tint */
+    --color-warn: #975a16; /* #B7791F is 3.6:1 on white — below AA for small text */
     --color-danger: #c24141;
     --color-info: #3867d6;
 
@@ -82,5 +82,13 @@
 @media (prefers-reduced-motion: no-preference) {
     html:has(.landing) {
         scroll-behavior: smooth;
+    }
+}
+
+/* Horizontal strips (tabs, data rows) scroll on small screens without a visible bar. */
+@utility no-scrollbar {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
     }
 }

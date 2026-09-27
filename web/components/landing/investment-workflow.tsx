@@ -91,7 +91,7 @@ export function InvestmentWorkflow() {
           <SampleLabel>Illustrative prospect</SampleLabel>
         </div>
 
-        <div role="tablist" aria-label="Lifecycle stages" onKeyDown={onKeyDown} className="flex overflow-x-auto border-b border-line px-2 md:px-5">
+        <div role="tablist" aria-label="Lifecycle stages" onKeyDown={onKeyDown} className="no-scrollbar flex overflow-x-auto border-b border-line px-2 md:px-5">
           {LIFECYCLE.map((stage, i) => {
             const reached = i < PROSPECT.length;
             const cls = "relative flex min-w-[124px] flex-1 flex-col items-start gap-1 px-3 py-4 text-left";

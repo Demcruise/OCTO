@@ -36,7 +36,7 @@ export function OctoGraph() {
     <ol
       ref={ref}
       aria-label="Investment Ontology: fund to report"
-      className="-mx-4 flex snap-x items-center overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:px-0"
+      className="no-scrollbar -mx-4 flex snap-x items-center overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
     >
       {NODES.map((node, i) => (
         <Fragment key={node.type}>
