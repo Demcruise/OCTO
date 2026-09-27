@@ -162,7 +162,7 @@ export function LandingNavigation() {
       className={cn(
         "sticky top-0 z-50 border-b transition-[background-color,border-color,box-shadow] duration-200",
         solid
-          ? "border-line bg-canvas/95 shadow-[0_1px_2px_rgb(17_19_24/0.04)] supports-[backdrop-filter]:bg-canvas/90"
+          ? "border-line bg-canvas shadow-[0_1px_2px_rgb(17_19_24/0.04)]"
           : "border-transparent bg-canvas",
       )}
     >
