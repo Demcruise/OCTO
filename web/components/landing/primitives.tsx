@@ -211,8 +211,8 @@ export function SampleLabel({ children = "Sample data", className }: { children?
 }
 
 /** Roving-focus tab state shared by the interactive sections (A11Y-001). */
-export function useTabs(count: number) {
-  const [active, setActive] = useState(0);
+export function useTabs(count: number, initial = 0) {
+  const [active, setActive] = useState(initial);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const onKeyDown = (e: React.KeyboardEvent) => {
     const keys: Record<string, number> = { ArrowRight: active + 1, ArrowDown: active + 1, ArrowLeft: active - 1, ArrowUp: active - 1, Home: 0, End: count - 1 };

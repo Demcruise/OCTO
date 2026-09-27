@@ -5,6 +5,8 @@ import { OctoCore } from "@/components/landing/octo-core";
 import { SystemFlow } from "@/components/landing/system-flow";
 import { ProductShowcase } from "@/components/landing/product-showcase";
 import { Lineage } from "@/components/landing/lineage";
+import { GovernedAI } from "@/components/landing/governed-ai";
+import { InvestmentWorkflow } from "@/components/landing/investment-workflow";
 import Faq2 from "@/components/blocks/faq-2";
 import Cta2 from "@/components/blocks/cta-2";
 import Contact10 from "@/components/blocks/contact-10";
@@ -33,6 +35,8 @@ export default function Page() {
       <SystemFlow />
       <ProductShowcase />
       <Lineage />
+      <GovernedAI />
+      <InvestmentWorkflow />
       <div id="faq">
         <Faq2 />
       </div>
