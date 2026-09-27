@@ -7,44 +7,44 @@ import { ProductShowcase } from "@/components/landing/product-showcase";
 import { Lineage } from "@/components/landing/lineage";
 import { GovernedAI } from "@/components/landing/governed-ai";
 import { InvestmentWorkflow } from "@/components/landing/investment-workflow";
-import Faq2 from "@/components/blocks/faq-2";
-import Cta2 from "@/components/blocks/cta-2";
-import Contact10 from "@/components/blocks/contact-10";
-import Footer12 from "@/components/blocks/footer-12";
+import { Governance } from "@/components/landing/governance";
+import { Faq } from "@/components/landing/faq";
+import { Cta } from "@/components/landing/cta";
+import { Contact } from "@/components/landing/contact";
+import { Footer } from "@/components/landing/footer";
 
 /**
- * OCTO landing page
+ * OCTO landing page.
  *
- * Composed with the React Bits Landing Builder.
- *
- * The wrapper below sets `--rb-section-min-h: 0px`, which lets content
- * sections take their natural height instead of each filling the viewport.
- * Remove it and every section reverts to full-screen, which is the correct
- * behaviour when a block is used on its own.
+ * Narrative order: problem → system → product → trust → AI → workflow →
+ * governance → action. Each section answers the question the previous one
+ * raises; copy lives in lib/landing-content.ts.
  */
 export default function Page() {
   return (
-    <main
-      className="landing w-full font-landing"
-      style={{ "--rb-section-min-h": "0px" } as React.CSSProperties}
-    >
+    <div className="landing bg-canvas font-landing text-ink">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white"
+      >
+        Skip to content
+      </a>
       <LandingNavigation />
-      <Hero />
-      <Fragmentation />
-      <OctoCore />
-      <SystemFlow />
-      <ProductShowcase />
-      <Lineage />
-      <GovernedAI />
-      <InvestmentWorkflow />
-      <div id="faq">
-        <Faq2 />
-      </div>
-      <Cta2 />
-      <div id="contact">
-        <Contact10 />
-      </div>
-      <Footer12 />
-    </main>
+      <main id="main">
+        <Hero />
+        <Fragmentation />
+        <OctoCore />
+        <SystemFlow />
+        <ProductShowcase />
+        <Lineage />
+        <GovernedAI />
+        <InvestmentWorkflow />
+        <Governance />
+        <Faq />
+        <Cta />
+        <Contact />
+      </main>
+      <Footer />
+    </div>
   );
 }
