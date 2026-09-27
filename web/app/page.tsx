@@ -20,7 +20,7 @@ import Footer12 from "@/components/blocks/footer-12";
 export default function Page() {
   return (
     <main
-      className="w-full"
+      className="landing w-full font-landing"
       style={{ "--rb-section-min-h": "0px" } as React.CSSProperties}
     >
       <Navigation2 />
