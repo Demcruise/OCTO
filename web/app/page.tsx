@@ -1,5 +1,5 @@
-import Navigation2 from "@/components/blocks/navigation-2";
-import Hero15 from "@/components/blocks/hero-15";
+import { LandingNavigation } from "@/components/landing/landing-navigation";
+import { Hero } from "@/components/landing/hero";
 import HowItWorks5 from "@/components/blocks/how-it-works-5";
 import Features4 from "@/components/blocks/features-4";
 import Faq2 from "@/components/blocks/faq-2";
@@ -23,8 +23,8 @@ export default function Page() {
       className="landing w-full font-landing"
       style={{ "--rb-section-min-h": "0px" } as React.CSSProperties}
     >
-      <Navigation2 />
-      <Hero15 />
+      <LandingNavigation />
+      <Hero />
       <div id="how-it-works">
         <HowItWorks5 />
       </div>
