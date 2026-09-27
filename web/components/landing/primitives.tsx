@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { motion, useReducedMotion, type Variants } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -207,4 +208,28 @@ export function SampleLabel({ children = "Sample data", className }: { children?
   return (
     <span className={cn("font-data text-[11px] uppercase tracking-[0.08em] text-ink-3", className)}>{children}</span>
   );
+}
+
+/** Roving-focus tab state shared by the interactive sections (A11Y-001). */
+export function useTabs(count: number) {
+  const [active, setActive] = useState(0);
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const keys: Record<string, number> = { ArrowRight: active + 1, ArrowDown: active + 1, ArrowLeft: active - 1, ArrowUp: active - 1, Home: 0, End: count - 1 };
+    if (!(e.key in keys)) return;
+    e.preventDefault();
+    const i = (keys[e.key] + count) % count;
+    setActive(i);
+    refs.current[i]?.focus();
+  };
+  const tabProps = (i: number) => ({
+    ref: (el: HTMLButtonElement | null) => {
+      refs.current[i] = el;
+    },
+    role: "tab" as const,
+    "aria-selected": i === active,
+    tabIndex: i === active ? 0 : -1,
+    onClick: () => setActive(i),
+  });
+  return { active, setActive, onKeyDown, tabProps };
 }

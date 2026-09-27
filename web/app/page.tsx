@@ -3,6 +3,8 @@ import { Hero } from "@/components/landing/hero";
 import { Fragmentation } from "@/components/landing/fragmentation";
 import { OctoCore } from "@/components/landing/octo-core";
 import { SystemFlow } from "@/components/landing/system-flow";
+import { ProductShowcase } from "@/components/landing/product-showcase";
+import { Lineage } from "@/components/landing/lineage";
 import Faq2 from "@/components/blocks/faq-2";
 import Cta2 from "@/components/blocks/cta-2";
 import Contact10 from "@/components/blocks/contact-10";
@@ -29,6 +31,8 @@ export default function Page() {
       <Fragmentation />
       <OctoCore />
       <SystemFlow />
+      <ProductShowcase />
+      <Lineage />
       <div id="faq">
         <Faq2 />
       </div>

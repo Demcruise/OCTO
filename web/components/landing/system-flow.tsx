@@ -1,10 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { FLOW_STAGES } from "@/lib/landing-content";
-import { DUR, EASE, Pill, type PillTone, Reveal, SampleLabel, Section, SectionHeader, focusRing } from "./primitives";
+import { DUR, EASE, Pill, type PillTone, Reveal, SampleLabel, Section, SectionHeader, focusRing, useTabs } from "./primitives";
 
 const AS_OF = "30 Sep 2026 · 09:42 UTC";
 
@@ -116,20 +115,9 @@ const VISUALS: Record<string, React.ReactNode> = {
 
 /** Five-stage data-to-decision flow with accessible tabs (FLOW-001/002). */
 export function SystemFlow() {
-  const [active, setActive] = useState(0);
-  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const { active, onKeyDown, tabProps } = useTabs(FLOW_STAGES.length);
   const reduce = useReducedMotion();
   const stage = FLOW_STAGES[active];
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    const last = FLOW_STAGES.length - 1;
-    const next = { ArrowRight: active + 1, ArrowDown: active + 1, ArrowLeft: active - 1, ArrowUp: active - 1, Home: 0, End: last }[e.key];
-    if (next === undefined) return;
-    e.preventDefault();
-    const i = (next + FLOW_STAGES.length) % FLOW_STAGES.length;
-    setActive(i);
-    tabs.current[i]?.focus();
-  };
 
   return (
     <Section id="system" tone="subtle" labelledBy="system-title">
@@ -151,15 +139,9 @@ export function SystemFlow() {
           {FLOW_STAGES.map((s, i) => (
             <button
               key={s.id}
-              ref={(el) => {
-                tabs.current[i] = el;
-              }}
-              role="tab"
+              {...tabProps(i)}
               id={`flow-tab-${s.id}`}
-              aria-selected={i === active}
               aria-controls="flow-panel"
-              tabIndex={i === active ? 0 : -1}
-              onClick={() => setActive(i)}
               className={cn("group min-w-[132px] flex-1 pr-3 pt-0 text-left sm:min-w-0", focusRing)}
             >
               <span className={cn("block h-0.5 transition-colors duration-300", i <= active ? "bg-accent" : "bg-line-strong")} />
