@@ -10,7 +10,7 @@ const AS_OF = "30 Sep 2026 · 09:42 UTC";
 function Rows({ head, rows, align }: { head: string[]; rows: React.ReactNode[][]; align?: ("l" | "r")[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] text-left text-[13px]">
+      <table className="w-full min-w-[300px] text-left text-[13px]">
         <thead>
           <tr className="border-b border-line">
             {head.map((h, i) => (
@@ -168,9 +168,9 @@ export function SystemFlow() {
               animate={{ opacity: 1, x: 0 }}
               exit={reduce ? undefined : { opacity: 0, x: -12 }}
               transition={{ duration: DUR.standard, ease: EASE }}
-              className="grid lg:grid-cols-12"
+              className="grid grid-cols-1 lg:grid-cols-12"
             >
-              <div className="border-b border-line p-6 md:p-8 lg:col-span-5 lg:border-b-0 lg:border-r">
+              <div className="min-w-0 border-b border-line p-6 md:p-8 lg:col-span-5 lg:border-b-0 lg:border-r">
                 <h3 className="text-xl font-semibold tracking-tight">{stage.title}</h3>
                 <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{stage.description}</p>
                 <ul className="mt-6 flex flex-wrap gap-1.5">
@@ -181,8 +181,8 @@ export function SystemFlow() {
                   ))}
                 </ul>
               </div>
-              <div className="p-6 md:p-8 lg:col-span-7">
-                <div className="mb-4 flex items-center justify-between">
+              <div className="min-w-0 p-6 md:p-8 lg:col-span-7">
+                <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <p className="font-data text-[11px] text-ink-2">stage / {stage.id}</p>
                   <SampleLabel>As of {AS_OF}</SampleLabel>
                 </div>

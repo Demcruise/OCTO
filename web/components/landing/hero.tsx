@@ -20,7 +20,7 @@ export function Hero() {
       {/* Faint ledger grid — structure, not decoration. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_85%)] opacity-60"
+        className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_80%)] opacity-45"
         style={{
           backgroundImage:
             "linear-gradient(to right, var(--color-line) 1px, transparent 1px), linear-gradient(to bottom, var(--color-line) 1px, transparent 1px)",
@@ -28,7 +28,7 @@ export function Hero() {
         }}
       />
       <Container className="relative pb-14 pt-14 md:pb-20 md:pt-20 lg:pt-24">
-        <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-10">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-10">
           <div className="lg:col-span-6">
             <motion.div {...rise(0)}>
               <Eyebrow>Private markets infrastructure</Eyebrow>

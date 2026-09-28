@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Plus } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FAQ } from "@/lib/landing-content";
 import { DUR, EASE, Eyebrow, Reveal, Section, focusRing } from "./primitives";
@@ -50,12 +50,19 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
     <Section id="faq" tone="subtle" labelledBy="faq-title">
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
         <Reveal className="lg:col-span-4">
           <Eyebrow index="09">FAQ</Eyebrow>
           <h2 id="faq-title" className="mt-4 text-h2 font-semibold">
             Straight answers.
           </h2>
+          <p className="mt-5 max-w-xs text-base leading-relaxed text-ink-2">
+            Deployment, the book of record, data sources, and AI — the questions investment and operations teams ask first.
+          </p>
+          <a href="#contact" className={cn("mt-6 inline-flex items-center gap-1.5 rounded-sm text-sm font-medium text-accent hover:text-accent-hover", focusRing)}>
+            Ask the team directly
+            <ArrowRight aria-hidden className="size-3.5" />
+          </a>
         </Reveal>
         <Reveal className="lg:col-span-8" delay={0.06}>
           <ul className="border-t border-line">

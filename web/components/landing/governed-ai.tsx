@@ -27,7 +27,7 @@ function AIAnswerPreview() {
   const reduce = useReducedMotion();
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_24px_48px_-32px_rgb(17_19_24/0.25)]">
+    <div className="overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.22)]">
       <div className="flex items-center justify-between border-b border-line bg-subtle px-4 py-2.5">
         <p className="text-[13px] font-medium">Ask OCTO · Harbor Logistics</p>
         <SampleLabel>Demo environment</SampleLabel>
@@ -60,7 +60,7 @@ function AIAnswerPreview() {
 
         <div>
           <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Sources</p>
-          <ol className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          <ol className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             {SOURCES.map((s, i) => (
               <li key={s} className="flex items-center gap-2 text-[13px] text-ink-2">
                 <Check aria-hidden className="size-3.5 shrink-0 text-ok" />
@@ -72,7 +72,7 @@ function AIAnswerPreview() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-line bg-subtle px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-t border-line bg-subtle px-5 py-4 xl:flex-row xl:items-center xl:justify-between">
         <dl className="grid grid-cols-2 gap-x-5 gap-y-1 font-data text-[11px] sm:flex sm:flex-wrap">
           <div className="flex gap-1.5">
             <dt className="text-ink-3">Model</dt>
@@ -107,18 +107,18 @@ function AIAnswerPreview() {
           </div>
         </dl>
         {review === "pending" ? (
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <button
               type="button"
               onClick={() => setReview("changes")}
-              className={cn("h-8 rounded-md border border-line-strong bg-canvas px-3 text-[13px] text-ink hover:bg-muted", focusRing)}
+              className={cn("h-8 whitespace-nowrap rounded-md border border-line-strong bg-canvas px-3 text-[13px] text-ink hover:bg-muted", focusRing)}
             >
               Request changes
             </button>
             <button
               type="button"
               onClick={() => setReview("approved")}
-              className={cn("h-8 rounded-md bg-ink px-3 text-[13px] font-medium text-white hover:bg-ink-2", focusRing)}
+              className={cn("h-8 whitespace-nowrap rounded-md bg-ink px-3 text-[13px] font-medium text-white hover:bg-ink-2", focusRing)}
             >
               Approve for IC memo
             </button>
@@ -145,7 +145,7 @@ export function GovernedAI() {
         lead="OCTO's AI works on the same governed record as everyone else, knows where each answer came from, and never acts on its own authority."
       />
 
-      <div className="mt-14 grid gap-10 lg:grid-cols-12 lg:gap-12">
+      <div className="mt-14 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
         <Reveal className="lg:col-span-5">
           <p className="text-h3 font-semibold">
             AI proposes.

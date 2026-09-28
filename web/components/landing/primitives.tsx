@@ -41,7 +41,7 @@ export function Section({
       id={id}
       aria-labelledby={labelledBy}
       className={cn(
-        "border-t py-20 md:py-28",
+        "border-t py-20 md:py-24",
         tone === "canvas" && "border-line bg-canvas text-ink",
         tone === "subtle" && "border-line bg-subtle text-ink",
         tone === "ink" && "border-ink bg-ink text-white",
@@ -81,7 +81,7 @@ export function SectionHeader({
   className?: string;
 }) {
   return (
-    <Reveal className={cn("grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-12", className)}>
+    <Reveal className={cn("grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end lg:gap-12", className)}>
       <div className="lg:col-span-7">
         <Eyebrow index={index} inverse={inverse}>
           {eyebrow}

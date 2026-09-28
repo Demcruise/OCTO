@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useInView, useReducedMotion } from "motion/react";
+import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DUR, EASE, Reveal, SampleLabel, Section, SectionHeader, focusRing } from "./primitives";
@@ -37,41 +37,47 @@ const TRACES: Trace[] = [
 ];
 
 function LineageTrace({ trace }: { trace: Trace }) {
-  const ref = useRef<HTMLOListElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-120px" });
   const reduce = useReducedMotion();
-  const show = reduce || inView;
+  const hops: Hop[] = [{ level: "Reported figure", value: `${trace.label} · ${trace.value}`, meta: `${trace.scope} · Q3 LP report` }, ...trace.hops];
+  const step = 0.2;
 
   return (
-    <ol ref={ref} className="relative" aria-label={`Lineage of ${trace.label}, ${trace.scope}`}>
-      {trace.hops.map((hop, i) => (
+    <motion.ol
+      className="relative"
+      aria-label={`Lineage of ${trace.label}, ${trace.scope}`}
+      initial={reduce ? false : "hidden"}
+      whileInView="show"
+      viewport={{ once: true, margin: "-80px" }}
+    >
+      {hops.map((hop, i) => (
         <motion.li
           key={hop.level}
-          className="relative grid grid-cols-[28px_1fr] gap-4 pb-6 last:pb-0"
-          initial={reduce ? false : { opacity: 0, y: 8 }}
-          animate={show ? { opacity: 1, y: 0 } : undefined}
-          transition={{ duration: DUR.medium, ease: EASE, delay: 0.15 + i * 0.22 }}
+          className="relative grid grid-cols-[28px_1fr] gap-4 pb-5 last:pb-0"
+          variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: DUR.medium, ease: EASE, delay: 0.1 + i * step } } }}
         >
-          {i < trace.hops.length - 1 && (
+          {i < hops.length - 1 && (
             <motion.span
               aria-hidden
-              className="absolute left-[13.5px] top-7 h-[calc(100%-20px)] w-px origin-top bg-accent-line"
-              initial={reduce ? false : { scaleY: 0 }}
-              animate={show ? { scaleY: 1 } : undefined}
-              transition={{ duration: DUR.medium, ease: EASE, delay: 0.3 + i * 0.22 }}
+              className="absolute left-[13.5px] top-8 h-[calc(100%-24px)] w-px origin-top bg-accent-line"
+              variants={{ hidden: { scaleY: 0 }, show: { scaleY: 1, transition: { duration: DUR.medium, ease: EASE, delay: 0.25 + i * step } } }}
             />
           )}
-          <span className="relative z-10 mt-1 flex size-7 items-center justify-center rounded-full border border-accent-line bg-canvas font-data text-[10px] text-accent">
-            {i + 1}
+          <span
+            className={cn(
+              "relative z-10 mt-2 flex size-7 items-center justify-center rounded-full border font-data text-[10px]",
+              i === 0 ? "border-accent bg-accent text-white" : "border-accent-line bg-canvas text-accent",
+            )}
+          >
+            {i === 0 ? <span className="size-1.5 rounded-full bg-white" /> : i}
           </span>
-          <div className="rounded-lg border border-line bg-canvas px-4 py-3">
+          <div className={cn("rounded-lg border bg-canvas px-4 py-3", i === 0 ? "border-accent-line" : "border-line")}>
             <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">{hop.level}</p>
             <p className={cn("mt-1 text-[15px] font-medium text-ink", hop.level === "Calculation" && "font-data text-sm")}>{hop.value}</p>
             <p className="mt-0.5 text-[13px] text-ink-3">{hop.meta}</p>
           </div>
         </motion.li>
       ))}
-    </ol>
+    </motion.ol>
   );
 }
 
@@ -97,7 +103,7 @@ export function Lineage() {
         lead="Trace a metric from the report back to its calculation, ledger events, source system, and the page of the underlying document."
       />
 
-      <Reveal className="mt-14 grid gap-8 lg:grid-cols-12 lg:gap-12">
+      <Reveal className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-5">
           <fieldset>
             <legend className="font-data text-meta uppercase text-ink-3">Select a reported figure</legend>
@@ -131,12 +137,12 @@ export function Lineage() {
               ))}
             </div>
           </fieldset>
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <SampleLabel>Last reconciled 30 Sep 2026 · 09:42 UTC</SampleLabel>
             <button
               type="button"
               onClick={() => setRun((n) => n + 1)}
-              className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[13px] text-ink-2 hover:text-ink", focusRing)}
+              className={cn("-mx-2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] text-ink-2 hover:text-ink", focusRing)}
             >
               <RotateCcw aria-hidden className="size-3.5" />
               Replay trace

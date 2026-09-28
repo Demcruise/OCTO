@@ -35,7 +35,7 @@ function DecisionGraph() {
   const show = reduce || inView;
 
   return (
-    <svg ref={ref} viewBox="0 0 400 410" className="mx-auto h-auto w-full max-w-[420px]" role="img" aria-label="Fund to decision: the path OCTO keeps connected">
+    <svg ref={ref} viewBox="0 0 400 410" className="mx-auto h-auto w-full max-w-[300px] sm:max-w-[420px]" role="img" aria-label="Fund to decision: the path OCTO keeps connected">
       {EDGES.map(([a, b, onPath], i) => {
         const A = at(a);
         const B = at(b);
@@ -82,7 +82,7 @@ function DecisionGraph() {
 export function Cta() {
   return (
     <Section tone="ink" labelledBy="cta-title" className="overflow-hidden">
-      <div className="grid items-center gap-12 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
         <Reveal className="lg:col-span-7">
           <Eyebrow inverse>Request a walkthrough</Eyebrow>
           <h2 id="cta-title" className="mt-4 text-h2 font-semibold text-balance">

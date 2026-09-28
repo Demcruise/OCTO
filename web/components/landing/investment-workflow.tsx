@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, CircleDashed, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -67,6 +68,14 @@ export function InvestmentWorkflow() {
   const { active, onKeyDown, tabProps } = useTabs(PROSPECT.length, current);
   const reduce = useReducedMotion();
   const step = PROSPECT[active];
+  const stripRef = useRef<HTMLDivElement>(null);
+
+  // Keep the selected stage visible when the stepper scrolls horizontally on phones.
+  useEffect(() => {
+    const strip = stripRef.current;
+    const tab = strip?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (strip && tab && strip.scrollWidth > strip.clientWidth) strip.scrollTo({ left: tab.offsetLeft - 16 });
+  }, [active]);
 
   return (
     <Section id="workflow" tone="subtle" labelledBy="workflow-title">
@@ -75,10 +84,7 @@ export function InvestmentWorkflow() {
         index="07"
         eyebrow="Workflow"
         title={
-          <>
-            Run the investment lifecycle
-            <br className="hidden md:block" /> from one system.
-          </>
+"Run the investment lifecycle from one system."
         }
         lead="Sourcing, screening, diligence, committee review, and monitoring share one record, so the evidence behind a decision never has to be rebuilt."
       />
@@ -91,9 +97,13 @@ export function InvestmentWorkflow() {
           <SampleLabel>Illustrative prospect</SampleLabel>
         </div>
 
-        <div role="tablist" aria-label="Lifecycle stages" onKeyDown={onKeyDown} className="no-scrollbar flex overflow-x-auto border-b border-line px-2 md:px-5">
+        <div ref={stripRef} role="tablist" aria-label="Lifecycle stages" onKeyDown={onKeyDown} className="no-scrollbar relative flex overflow-x-auto border-b border-line px-2 md:px-5">
           {LIFECYCLE.map((stage, i) => {
             const reached = i < PROSPECT.length;
+            const connector = (k: number) =>
+              k < LIFECYCLE.length - 1 && (
+                <span aria-hidden className={cn("absolute left-[40px] right-1 top-[25px] h-px", k < current ? "bg-ok/40" : "bg-line")} />
+              );
             const cls = "relative flex min-w-[124px] flex-1 flex-col items-start gap-1 px-3 py-4 text-left";
             const marker = (
               <span
@@ -111,6 +121,7 @@ export function InvestmentWorkflow() {
               return (
                 <div key={stage} className={cls} aria-hidden>
                   {marker}
+                  {connector(i)}
                   <span className="text-[13px] text-ink-3">{stage}</span>
                   <span className="font-data text-[10px] text-ink-3">Upcoming</span>
                 </div>
@@ -118,6 +129,7 @@ export function InvestmentWorkflow() {
             return (
               <button key={stage} {...tabProps(i)} id={`wf-tab-${i}`} aria-controls="wf-panel" className={cn(cls, "hover:bg-subtle", focusRing)}>
                 {marker}
+                {connector(i)}
                 <span className={cn("text-[13px]", i === active ? "font-medium text-ink" : "text-ink-2")}>{stage}</span>
                 <span className="font-data text-[10px] text-ink-3">{PROSPECT[i].date}</span>
                 {i === active && <span aria-hidden className="absolute inset-x-3 bottom-0 h-0.5 bg-accent" />}
@@ -126,7 +138,7 @@ export function InvestmentWorkflow() {
           })}
         </div>
 
-        <div id="wf-panel" role="tabpanel" aria-labelledby={`wf-tab-${active}`} className="min-h-[260px] p-5 md:p-8">
+        <div id="wf-panel" role="tabpanel" aria-labelledby={`wf-tab-${active}`} className="p-5 md:p-8">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={step.stage}
@@ -134,7 +146,7 @@ export function InvestmentWorkflow() {
               animate={{ opacity: 1, y: 0 }}
               exit={reduce ? undefined : { opacity: 0 }}
               transition={{ duration: DUR.standard, ease: EASE }}
-              className="grid gap-8 md:grid-cols-12"
+              className="grid grid-cols-1 gap-8 md:grid-cols-12"
             >
               <div className="md:col-span-5">
                 <div className="flex items-center gap-3">

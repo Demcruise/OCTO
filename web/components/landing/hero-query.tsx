@@ -57,7 +57,7 @@ export function HeroQuery() {
   const custom = asked !== DEFAULT_QUERY;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_24px_48px_-32px_rgb(17_19_24/0.25)]">
+    <div className="overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.22)]">
       <div className="flex items-center justify-between border-b border-line bg-subtle px-4 py-2.5">
         <p className="text-[13px] font-medium text-ink">Ask OCTO</p>
         <SampleLabel>Demo environment</SampleLabel>
@@ -79,7 +79,7 @@ export function HeroQuery() {
                 e.currentTarget.form?.requestSubmit();
               }
             }}
-            className="min-w-0 flex-1 resize-none bg-transparent px-2 py-1.5 text-[15px] leading-snug text-ink placeholder:text-ink-3 focus:outline-none"
+            className="h-[4.75rem] min-w-0 flex-1 resize-none bg-transparent px-2 py-1.5 sm:h-auto text-[15px] leading-snug text-ink placeholder:text-ink-3 focus:outline-none"
             placeholder="Ask about the sample portfolio…"
           />
           <button
@@ -95,7 +95,7 @@ export function HeroQuery() {
       <div className="border-t border-line px-4 pb-4 pt-3" aria-live="polite">
         <AnimatePresence mode="wait">
           <motion.div key={run} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: DUR.fast }}>
-            <div className="flex items-baseline justify-between gap-3">
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
               <p className="text-sm font-medium text-ink">3 companies identified</p>
               <p className="font-data text-[11px] text-ink-3">Q3 vs Q2 · as of 30 Sep 2026</p>
             </div>

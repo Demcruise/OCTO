@@ -15,7 +15,7 @@ type CoreLayerProps = {
 /** Reusable numbered layer row (CORE-002). */
 export function OCTOCoreLayer({ number, eyebrow, title, description, visual }: CoreLayerProps) {
   return (
-    <Reveal as="li" className="grid gap-8 border-t border-line py-10 md:grid-cols-12 md:gap-10 md:py-12">
+    <Reveal as="li" className="grid grid-cols-1 gap-8 border-t border-line py-10 md:grid-cols-12 md:gap-10 md:py-12">
       <div className="md:col-span-5">
         <p className="font-data text-meta uppercase text-ink-3">
           <span className="text-accent">Layer {number}</span> · {eyebrow}
@@ -40,27 +40,56 @@ function Panel({ label, children, className }: { label: string; children: React.
   );
 }
 
-const TREE: { depth: number; label: string; kind: string }[] = [
-  { depth: 0, label: "Growth Fund II", kind: "Fund" },
-  { depth: 1, label: "Series B · 2023", kind: "Investment" },
-  { depth: 2, label: "Atlas Components", kind: "Company" },
-  { depth: 3, label: "Management team", kind: "People" },
-  { depth: 3, label: "EBITDA, revenue, net debt", kind: "Metrics" },
-  { depth: 3, label: "Capital calls, distributions", kind: "Transactions" },
-  { depth: 1, label: "Northbridge Pension", kind: "LP" },
-];
+type TreeNode = { label: string; kind: string; focus?: boolean; children?: TreeNode[] };
+
+const TREE: TreeNode = {
+  label: "Growth Fund II",
+  kind: "Fund",
+  children: [
+    {
+      label: "Series B · 2023",
+      kind: "Investment",
+      children: [
+        {
+          label: "Atlas Components",
+          kind: "Company",
+          focus: true,
+          children: [
+            { label: "Management team", kind: "People" },
+            { label: "EBITDA, revenue, net debt", kind: "Metrics" },
+            { label: "Capital calls, distributions", kind: "Transactions" },
+          ],
+        },
+      ],
+    },
+    { label: "Northbridge Pension", kind: "LP" },
+  ],
+};
+
+function TreeRow({ node, child }: { node: TreeNode; child?: boolean }) {
+  return (
+    <li className={cn("relative", child && "pl-5 last:after:absolute last:after:-left-px last:after:bottom-0 last:after:top-[16px] last:after:w-px last:after:bg-canvas")}>
+      {child && <span aria-hidden className="absolute left-0 top-[15px] h-px w-3.5 bg-line-strong" />}
+      <div className="flex items-center gap-3 py-1">
+        <span className={cn("min-w-0 truncate", node.focus ? "font-medium text-accent" : "text-ink")}>{node.label}</span>
+        <span className="ml-auto shrink-0 rounded-sm bg-muted px-1.5 text-[10px] uppercase tracking-[0.06em] text-ink-3">{node.kind}</span>
+      </div>
+      {node.children && (
+        <ul className="ml-[7px] border-l border-line-strong">
+          {node.children.map((c) => (
+            <TreeRow key={c.label} node={c} child />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
 
 function OntologyTree() {
   return (
     <Panel label="ontology / growth-fund-ii">
       <ul className="font-data text-[13px]">
-        {TREE.map((n, i) => (
-          <li key={i} className="flex items-center gap-3 py-1" style={{ paddingLeft: n.depth * 20 }}>
-            {n.depth > 0 && <span aria-hidden className="text-line-strong">└─</span>}
-            <span className={cn("text-ink", n.depth === 2 && "font-medium text-accent")}>{n.label}</span>
-            <span className="ml-auto shrink-0 rounded-sm bg-muted px-1.5 text-[10px] uppercase tracking-[0.06em] text-ink-3">{n.kind}</span>
-          </li>
-        ))}
+        <TreeRow node={TREE} />
       </ul>
     </Panel>
   );
@@ -70,7 +99,7 @@ function IBORLedgerPreview() {
   const checks = ["Reconciled", "Lineage available", "Immutable history"];
   return (
     <Panel label="ibor / capital-call · 30 Sep 2026">
-      <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
+      <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
         <div className="rounded-md border border-line bg-subtle p-3">
           <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Source · fund administrator</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">$12.4M</p>
@@ -138,7 +167,7 @@ export function OctoCore() {
         }
         lead="A canonical model of your firm, a governed ledger underneath every number, and the intelligence and workflow that turn that record into decisions."
       />
-      <ol className="mt-14 border-b border-line">
+      <ol className="mt-14">
         <OCTOCoreLayer
           number="01"
           eyebrow="Investment Ontology"

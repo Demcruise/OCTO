@@ -117,7 +117,7 @@ const SIDEBAR = [
 
 function ProductSidebar({ current }: { current: string }) {
   return (
-    <nav aria-label="Product navigation (preview)" className="hidden w-44 shrink-0 border-r border-line bg-subtle p-2 md:block lg:w-52">
+    <nav aria-label="Product navigation (preview)" className="hidden w-52 shrink-0 border-r border-line bg-subtle p-2 lg:block">
       <p className="px-2 pb-3 pt-1 text-[13px] font-semibold tracking-[0.16em]">OCTO</p>
       <ul className="space-y-0.5">
         {SIDEBAR.map(({ label, icon: Icon }) => (
@@ -200,11 +200,11 @@ function MiniChart({ chart }: { chart: View["chart"] }) {
 function DataTable({ table }: { table: View["table"] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-line">
-      <table className="w-full min-w-[520px] text-left text-[13px]">
+      <table className="w-full text-left text-[13px] sm:min-w-[520px]">
         <thead className="bg-subtle">
           <tr>
             {table.head.map((h, i) => (
-              <th key={h} scope="col" className={cn("px-4 py-2 text-xs font-medium text-ink-3", table.right.includes(i) && "text-right")}>
+              <th key={h} scope="col" className={cn("px-4 py-2 text-xs font-medium text-ink-3", table.right.includes(i) && "text-right", i === 1 && "hidden sm:table-cell")}>
                 {h}
               </th>
             ))}
@@ -214,7 +214,7 @@ function DataTable({ table }: { table: View["table"] }) {
           {table.rows.map((r, ri) => (
             <tr key={ri}>
               {r.map((c, ci) => (
-                <td key={ci} className={cn("px-4 py-2.5", ci === 0 ? "font-medium text-ink" : "text-ink-2", table.right.includes(ci) && "text-right font-data tabular-nums")}>
+                <td key={ci} className={cn("px-4 py-2.5", ci === 0 ? "font-medium text-ink" : "text-ink-2", table.right.includes(ci) && "text-right font-data tabular-nums", ci === 1 && "hidden sm:table-cell")}>
                   {typeof c === "string" ? c : <Pill tone={c.pill} dot>{c.text}</Pill>}
                 </td>
               ))}
@@ -261,7 +261,7 @@ export function ProductShowcase() {
           ))}
         </div>
 
-        <div id="product-panel" role="tabpanel" aria-labelledby={`product-tab-${active}`} className="mt-4 overflow-hidden rounded-xl border border-line-strong bg-canvas shadow-[0_32px_64px_-40px_rgb(17_19_24/0.35)]">
+        <div id="product-panel" role="tabpanel" aria-labelledby={`product-tab-${active}`} className="mt-4 overflow-hidden rounded-xl border border-line-strong bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.28)]">
           <div className="flex items-center gap-3 border-b border-line bg-subtle px-4 py-2.5">
             <span aria-hidden className="flex gap-1.5">
               {[0, 1, 2].map((d) => (

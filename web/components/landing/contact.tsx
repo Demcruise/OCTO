@@ -72,7 +72,7 @@ export function Contact() {
 
   return (
     <Section id="contact" labelledBy="contact-title">
-      <div className="grid gap-12 lg:grid-cols-12 lg:gap-12">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-12">
         <Reveal className="lg:col-span-5">
           <Eyebrow index="10">Contact</Eyebrow>
           <h2 id="contact-title" className="mt-4 text-h2 font-semibold">
@@ -126,7 +126,7 @@ export function Contact() {
                   />
                   {error("email")}
                 </div>
-                <div className="grid gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
                     <label htmlFor="contact-firm" className="text-sm font-medium text-ink">
                       Firm <span aria-hidden className="text-accent">*</span>

@@ -25,7 +25,7 @@ function Convergence() {
   const reduce = useReducedMotion();
   const show = reduce || inView;
   const rowY = (i: number) => 28 + i * 44;
-  const target = { x: 300, y: 138 };
+  const target = { x: 276, y: 138 };
 
   return (
     <svg ref={ref} viewBox="0 0 480 276" className="h-auto w-full" role="img" aria-labelledby="converge-title">
@@ -55,7 +55,7 @@ function Convergence() {
         animate={show ? { opacity: 1 } : undefined}
         transition={{ duration: DUR.medium, delay: 0.6 }}
       >
-        <rect x={target.x} y={target.y - 52} width="179" height="104" rx="6" className="fill-canvas stroke-accent" />
+        <rect x={target.x} y={target.y - 52} width="200" height="104" rx="6" className="fill-canvas stroke-accent" />
         <text x={target.x + 14} y={target.y - 28} className="fill-accent font-data text-[10px] tracking-[0.08em]">
           OCTO · IBOR
         </text>
@@ -87,7 +87,7 @@ export function Fragmentation() {
         lead="CRMs, fund administrators, financial feeds, documents, spreadsheets, internal models, and inboxes each hold a piece of the investment lifecycle. None of them holds the whole record."
       />
 
-      <Reveal className="mt-14 grid overflow-hidden rounded-xl border border-line bg-canvas lg:grid-cols-2">
+      <Reveal className="mt-14 grid grid-cols-1 overflow-hidden rounded-xl border border-line bg-canvas lg:grid-cols-2">
         <div className="border-b border-line p-5 md:p-8 lg:border-b-0 lg:border-r">
           <div className="flex items-baseline justify-between gap-3">
             <p className="text-sm font-medium text-ink">Today: one number, four answers</p>
@@ -121,8 +121,25 @@ export function Fragmentation() {
             <SampleLabel>Illustrative</SampleLabel>
           </div>
           <p className="mt-1 text-[13px] text-ink-3">Sources stay where they are. OCTO reconciles them into a single investment system.</p>
-          <div className="mt-6 flex flex-1 items-center">
+          <div className="mt-6 hidden flex-1 items-center sm:flex">
             <Convergence />
+          </div>
+          {/* Phones: the same consolidation as a stack, legible without zooming the SVG. */}
+          <div className="mt-5 sm:hidden">
+            <ul className="flex flex-wrap gap-1.5">
+              {SOURCES.map((s) => (
+                <li key={s}>
+                  <Pill>{s}</Pill>
+                </li>
+              ))}
+            </ul>
+            <p aria-hidden className="my-3 text-center font-data text-accent">↓</p>
+            <div className="rounded-md border border-accent px-4 py-3">
+              <p className="font-data text-[10px] tracking-[0.08em] text-accent">OCTO · IBOR</p>
+              <p className="mt-1 text-xs text-ink-3">Q3 EBITDA · Atlas Components</p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums">$14.6M</p>
+              <p className="mt-1 font-data text-[11px] text-ok">✓ reconciled · 2 flagged</p>
+            </div>
           </div>
         </div>
       </Reveal>

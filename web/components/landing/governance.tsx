@@ -17,7 +17,7 @@ export function Governance() {
       />
 
       <Reveal className="mt-14">
-        <dl className="grid overflow-hidden rounded-xl border border-line md:grid-cols-2">
+        <dl className="grid grid-cols-1 overflow-hidden rounded-xl border border-line md:grid-cols-2">
           {GOVERNANCE.map((g, i) => (
             <div
               key={g.name}
