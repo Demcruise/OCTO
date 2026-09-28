@@ -11,7 +11,7 @@ import { OctoWordmark } from "./landing-navigation";
  */
 export function Footer() {
   return (
-    <footer className="border-t border-line bg-canvas text-ink">
+    <footer className="border-t border-line bg-muted text-ink">
       <Container className="py-12 md:py-16">
         <div className="grid grid-cols-2 gap-x-8 gap-y-10 md:grid-cols-5">
           <div className="col-span-2 md:col-span-1">

@@ -1,20 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView, useReducedMotion } from "motion/react";
-import { useRef } from "react";
-import { cn } from "@/lib/utils";
-import { DUR, EASE, Reveal, Section, SectionHeader } from "./primitives";
+import {
+  Bell,
+  Calculator,
+  ChartNoAxesCombined,
+  CheckCircle,
+  FileBarChart,
+  FileText,
+  GitBranch,
+  Sparkles,
+  Users,
+  Workflow,
+  type LucideIcon,
+} from "lucide-react";
+import { Reveal, Section, SectionHeader } from "./primitives";
 
-const INPUTS = ["CRM", "Financial models", "Documents", "Market data", "Portfolio reporting", "Deal pipeline"];
-const OUTPUTS = ["Analysis", "Alerts", "Workflows", "Reporting", "AI", "Decisions"];
+type NodeDef = { label: string; icon: LucideIcon };
+const INPUTS: NodeDef[] = [
+  { label: "CRM", icon: Users },
+  { label: "Financial models", icon: Calculator },
+  { label: "Documents", icon: FileText },
+  { label: "Market data", icon: ChartNoAxesCombined },
+  { label: "Portfolio reporting", icon: FileBarChart },
+  { label: "Deal pipeline", icon: GitBranch },
+];
+const OUTPUTS: NodeDef[] = [
+  { label: "Analysis", icon: ChartNoAxesCombined },
+  { label: "Alerts", icon: Bell },
+  { label: "Workflows", icon: Workflow },
+  { label: "Reporting", icon: FileBarChart },
+  { label: "AI", icon: Sparkles },
+  { label: "Decisions", icon: CheckCircle },
+];
 
 type Hot = { side: "in" | "out" | "core"; i: number } | null;
 
+const IDLE_LINE = "var(--color-line)";
+const ICON_IDLE = "var(--octo-text-color-medium)";
+const NODE_STROKE = "var(--color-line)";
+const NODE_STROKE_ACTIVE = "var(--color-accent-line)";
+
 /**
- * Inputs → OCTO → outputs on a light surface (PAL-011, light theme per the
- * 8-section master backlog). Hovering a node brightens its paths and dims
- * unrelated elements; the core brightens every connection.
+ * Inputs → OCTO → outputs on a light surface. Each node carries a Lucide icon;
+ * hovering brightens the connected paths and related nodes while unrelated
+ * elements dim (V4-05).
  */
 function Network() {
   const ref = useRef<SVGSVGElement>(null);
@@ -23,107 +54,78 @@ function Network() {
   const show = reduce || inView;
   const [hot, setHot] = useState<Hot>(null);
   const W = 1200;
-  const H = 420;
-  const y = (i: number) => 45 + i * 66;
-  const core = { x: 600, y: 210, w: 200, h: 120 };
+  const H = 500;
+  const BOX_W = 264;
+  const BOX_H = 56;
+  const y = (i: number) => 38 + i * 82;
+  const core = { x: 600, y: 248, w: 216, h: 128 };
 
   const lineState = (side: "in" | "out", i: number) => {
-    if (!hot) return { stroke: "var(--color-line-strong)", dim: false };
-    if (hot.side === "core") return { stroke: "var(--color-accent)", dim: false };
-    if (hot.side === side && hot.i === i) return { stroke: "var(--color-accent)", dim: false };
-    if (hot.side === "in" && side === "out") return { stroke: "var(--color-accent)", dim: false }; // related outputs brighten
-    if (hot.side === "out" && side === "in") return { stroke: "var(--color-accent)", dim: false };
-    return { stroke: "var(--color-line-strong)", dim: true };
+    if (!hot) return { hot: false, dim: false };
+    if (hot.side === "core") return { hot: true, dim: false };
+    if (hot.side === side && hot.i === i) return { hot: true, dim: false };
+    if (hot.side !== side) return { hot: true, dim: false }; // related side brightens
+    return { hot: false, dim: true };
   };
-  const boxState = (side: "in" | "out", i: number) => {
-    if (!hot) return "rest";
-    if (hot.side === "core" || (hot.side === side && hot.i === i)) return "hot";
-    if (hot.side !== side) return "hot"; // related side stays bright
-    return "dim";
+  const boxDim = (side: "in" | "out", i: number) => hot && hot.side === side && hot.i !== i;
+
+  const node = (def: NodeDef, side: "in" | "out", i: number) => {
+    const l = lineState(side, i);
+    const dim = boxDim(side, i);
+    const x = side === "in" ? 0.5 : W - BOX_W - 0.5;
+    const active = hot?.side === side && hot.i === i;
+    const Icon = def.icon;
+    return (
+      <g
+        key={def.label}
+        role="button"
+        tabIndex={0}
+        aria-label={`${side === "in" ? "Input" : "Output"}: ${def.label}`}
+        onMouseEnter={() => setHot({ side, i })}
+        onMouseLeave={() => setHot(null)}
+        onFocus={() => setHot({ side, i })}
+        onBlur={() => setHot(null)}
+        className="cursor-default outline-none"
+        style={{ opacity: dim ? 0.45 : 1, transition: "opacity 200ms" }}
+      >
+        <rect
+          x={x}
+          y={y(i) - BOX_H / 2}
+          width={BOX_W}
+          height={BOX_H}
+          fill="var(--octo-body-color)"
+          stroke={active || l.hot ? NODE_STROKE_ACTIVE : NODE_STROKE}
+        />
+        <Icon x={x + 18} y={y(i) - 9} size={18} strokeWidth={1.5} color={active ? "var(--octo-accent)" : ICON_IDLE} aria-hidden />
+        <text x={x + 50} y={y(i) + 5} className="font-data text-[13px]" fill="var(--octo-text-color)">
+          {def.label}
+        </text>
+        <motion.path
+          d={
+            side === "in"
+              ? `M${x + BOX_W} ${y(i)} C 380 ${y(i)}, 400 ${core.y}, ${core.x - core.w / 2} ${core.y}`
+              : `M${core.x + core.w / 2} ${core.y} C 820 ${core.y}, ${W - BOX_W - 40} ${y(i)}, ${W - BOX_W - 1} ${y(i)}`
+          }
+          fill="none"
+          stroke={l.hot ? "var(--octo-accent)" : IDLE_LINE}
+          strokeWidth={l.hot ? 1.5 : 1}
+          initial={reduce ? false : { pathLength: 0 }}
+          animate={show ? { pathLength: 1 } : undefined}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: (side === "in" ? 0.05 : 0.55) + i * 0.06 }}
+          style={{ opacity: l.dim ? 0.4 : 1, transition: "opacity 200ms" }}
+        />
+      </g>
+    );
   };
 
   return (
-    <svg
-      ref={ref}
-      viewBox={`0 0 ${W} ${H}`}
-      className="h-auto w-full"
-      role="img"
-      aria-label="Six input systems connect into OCTO, which feeds six decision outputs"
-    >
-      {INPUTS.map((s, i) => {
-        const l = lineState("in", i);
-        const box = boxState("in", i);
-        return (
-          <g
-            key={s}
-            onMouseEnter={() => setHot({ side: "in", i })}
-            onMouseLeave={() => setHot(null)}
-            className="cursor-default"
-            style={{ opacity: box === "dim" ? 0.35 : 1, transition: "opacity 200ms" }}
-          >
-            <rect
-              x="0.5"
-              y={y(i) - 18}
-              width="220"
-              height="36"
-              fill="var(--color-canvas)"
-              stroke={box === "hot" ? "var(--color-accent)" : "var(--color-line-strong)"}
-            />
-            <text x="16" y={y(i) + 4} className="font-data text-[13px]" fill="var(--color-ink)">
-              {s}
-            </text>
-            <motion.path
-              d={`M221 ${y(i)} C 380 ${y(i)}, 400 ${core.y}, ${core.x - core.w / 2} ${core.y}`}
-              fill="none"
-              stroke={l.stroke}
-              strokeWidth={l.dim ? 1 : 1.5}
-              initial={reduce ? false : { pathLength: 0 }}
-              animate={show ? { pathLength: 1 } : undefined}
-              transition={{ duration: DUR.narrative, ease: EASE, delay: 0.05 + i * 0.06 }}
-              style={{ opacity: l.dim ? 0.35 : 1, transition: "opacity 200ms" }}
-            />
-          </g>
-        );
-      })}
-      {OUTPUTS.map((s, i) => {
-        const l = lineState("out", i);
-        const box = boxState("out", i);
-        return (
-          <g
-            key={s}
-            onMouseEnter={() => setHot({ side: "out", i })}
-            onMouseLeave={() => setHot(null)}
-            className="cursor-default"
-            style={{ opacity: box === "dim" ? 0.35 : 1, transition: "opacity 200ms" }}
-          >
-            <rect
-              x={W - 220.5}
-              y={y(i) - 18}
-              width="220"
-              height="36"
-              fill="var(--color-canvas)"
-              stroke={box === "hot" ? "var(--color-accent)" : "var(--color-line-strong)"}
-            />
-            <text x={W - 204} y={y(i) + 4} className="font-data text-[13px]" fill="var(--color-ink)">
-              {s}
-            </text>
-            <motion.path
-              d={`M${core.x + core.w / 2} ${core.y} C 800 ${core.y}, 820 ${y(i)}, ${W - 221} ${y(i)}`}
-              fill="none"
-              stroke={l.stroke}
-              strokeWidth={l.dim ? 1 : 1.5}
-              initial={reduce ? false : { pathLength: 0 }}
-              animate={show ? { pathLength: 1 } : undefined}
-              transition={{ duration: DUR.narrative, ease: EASE, delay: 0.55 + i * 0.06 }}
-              style={{ opacity: l.dim ? 0.35 : 1, transition: "opacity 200ms" }}
-            />
-          </g>
-        );
-      })}
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Six input systems connect into OCTO, which feeds six decision outputs">
+      {INPUTS.map((d, i) => node(d, "in", i))}
+      {OUTPUTS.map((d, i) => node(d, "out", i))}
       <motion.g
         initial={reduce ? false : { opacity: 0 }}
         animate={show ? { opacity: 1 } : undefined}
-        transition={{ duration: DUR.complex, delay: 0.45 }}
+        transition={{ duration: 0.4, delay: 0.45 }}
         onMouseEnter={() => setHot({ side: "core", i: 0 })}
         onMouseLeave={() => setHot(null)}
         className="cursor-default"
@@ -133,31 +135,31 @@ function Network() {
           y={core.y - core.h / 2}
           width={core.w}
           height={core.h}
-          fill="var(--color-canvas)"
-          stroke="var(--color-accent)"
+          fill="var(--octo-body-color)"
+          stroke="var(--octo-accent)"
           strokeWidth={hot?.side === "core" ? 1.5 : 1}
         />
-        <text x={core.x} y={core.y - 8} textAnchor="middle" className="text-[26px] font-semibold tracking-[0.2em]" fill="var(--color-ink)">
+        <text x={core.x} y={core.y - 8} textAnchor="middle" className="text-[26px] font-normal tracking-[0.2em]" fill="var(--octo-text-color)">
           OCTO
         </text>
-        <text x={core.x} y={core.y + 22} textAnchor="middle" className="font-data text-[11px] tracking-[0.1em]" fill="var(--color-accent)">
+        <text x={core.x} y={core.y + 22} textAnchor="middle" className="font-data text-[11px] tracking-[0.1em]" fill="var(--octo-accent)">
           GOVERNED CONTEXT
         </text>
       </motion.g>
-      <text x="0" y={H - 4} className="font-data text-[11px] tracking-[0.1em]" fill="var(--color-ink-3)">
+      <text x="0" y={H - 4} className="font-data text-[11px] tracking-[0.1em]" fill="var(--octo-text-color-light)">
         INPUTS
       </text>
-      <text x={W} y={H - 4} textAnchor="end" className="font-data text-[11px] tracking-[0.1em]" fill="var(--color-ink-3)">
+      <text x={W} y={H - 4} textAnchor="end" className="font-data text-[11px] tracking-[0.1em]" fill="var(--octo-text-color-light)">
         OUTPUTS
       </text>
     </svg>
   );
 }
 
-/** 04 — FRAGMENTED TRUTH: the problem statement and the connective diagram. */
+/** 04 — FRAGMENTED TRUTH: the problem statement and the connective map. */
 export function FragmentedTruth() {
   return (
-    <Section id="problem" tone="subtle" labelledBy="problem-title">
+    <Section id="problem" tone="muted" labelledBy="problem-title">
       <SectionHeader
         id="problem-title"
         index="04"
@@ -170,10 +172,11 @@ export function FragmentedTruth() {
       </Reveal>
       {/* Phones: the same story as a vertical flow. */}
       <Reveal className="mt-12 md:hidden">
-        <ul className="grid grid-cols-2 gap-px border border-line bg-line">
-          {INPUTS.map((s) => (
-            <li key={s} className="bg-canvas px-3 py-2.5 font-data text-[12px] text-ink">
-              {s}
+        <ul className="grid grid-cols-1 gap-px border border-line bg-line">
+          {INPUTS.map((d) => (
+            <li key={d.label} className="flex items-center gap-3 bg-canvas px-4 py-3 font-data text-[12px] text-ink">
+              <d.icon aria-hidden className="size-4 text-ink-2" strokeWidth={1.5} />
+              {d.label}
             </li>
           ))}
         </ul>
@@ -181,16 +184,17 @@ export function FragmentedTruth() {
           ↓
         </p>
         <div className="border border-accent bg-canvas px-4 py-5 text-center">
-          <p className="text-2xl font-semibold tracking-[0.2em] text-ink">OCTO</p>
+          <p className="text-2xl font-normal tracking-[0.2em] text-ink">OCTO</p>
           <p className="mt-1 font-data text-[11px] tracking-[0.1em] text-accent">GOVERNED CONTEXT</p>
         </div>
         <p aria-hidden className="py-3 text-center font-data text-ink-3">
           ↓
         </p>
-        <ul className="grid grid-cols-2 gap-px border border-line bg-line">
-          {OUTPUTS.map((s) => (
-            <li key={s} className="bg-canvas px-3 py-2.5 font-data text-[12px] text-ink">
-              {s}
+        <ul className="grid grid-cols-1 gap-px border border-line bg-line">
+          {OUTPUTS.map((d) => (
+            <li key={d.label} className="flex items-center gap-3 bg-canvas px-4 py-3 font-data text-[12px] text-ink">
+              <d.icon aria-hidden className="size-4 text-ink-2" strokeWidth={1.5} />
+              {d.label}
             </li>
           ))}
         </ul>

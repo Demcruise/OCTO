@@ -28,7 +28,7 @@ export function FutureEditorial() {
         <div className="flex flex-col justify-center py-16 lg:py-32 lg:pl-4">
           <Reveal delay={0.05}>
             <Eyebrow index="05">The future</Eyebrow>
-            <h2 id="future-title" className="mt-8 text-display font-medium text-balance">
+            <h2 id="future-title" className="mt-8 text-display font-normal text-balance">
               There is still more to connect.
             </h2>
             <p className="mt-8 max-w-md text-lg leading-relaxed text-ink-2">

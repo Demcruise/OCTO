@@ -11,24 +11,25 @@ import { Container, focusRing } from "./primitives";
  */
 export function Cta() {
   const panels = [
-    { title: "Request access", href: CTA_HREF, primary: true },
-    { title: "Explore OCTO", href: "#system", primary: false },
+    { title: "Request access", href: CTA_HREF, primary: true, surface: "bg-subtle" },
+    { title: "Explore OCTO", href: "#system", primary: false, surface: "bg-muted" },
   ];
   return (
-    <section id="cta" aria-label="Get started" className="border-t border-line bg-subtle">
+    <section id="cta" aria-label="Get started" className="border-t border-line bg-canvas">
       <Container className="py-16 md:py-24">
-        <div className="grid grid-cols-1 gap-px border border-line bg-line md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-px border border-[rgb(30_33_36/0.16)] bg-line md:grid-cols-2">
           {panels.map((p) => (
             <a
               key={p.title}
               href={p.href}
               className={cn(
-                "group flex items-center justify-between gap-6 bg-canvas px-8 py-12 transition-colors md:px-12 md:py-20",
-                "hover:bg-subtle",
+                "group flex items-center justify-between gap-6 px-8 py-12 transition-colors md:px-12 md:py-20",
+                p.surface,
+                "hover:bg-[rgb(30_33_36/0.06)]",
                 focusRing,
               )}
             >
-              <span className="text-3xl font-medium tracking-tight text-ink transition-colors group-hover:text-accent md:text-4xl">
+              <span className="text-3xl font-normal tracking-tight text-ink transition-colors group-hover:text-accent md:text-4xl">
                 {p.title}
               </span>
               <span

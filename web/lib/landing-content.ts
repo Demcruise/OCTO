@@ -24,13 +24,15 @@ export const NAV_LINKS: NavLink[] = [
 
 /* ── 02 FEATURED — five snack bars with timed progress (8s each). ── */
 
-export type Story = { id: string; eyebrow: string; title: string; image: string; alt: string; href: string };
+/* Headlines are structured pairs so every slide renders exactly two lines. */
+export type Story = { id: string; eyebrow: string; headline: [string, string]; support: string; image: string; alt: string; href: string };
 
 export const STORIES: Story[] = [
   {
     id: "ontology",
     eyebrow: "Investment Ontology",
-    title: "See every fund, company, deal, person, and relationship in one context.",
+    headline: ["See every investment object", "in one context."],
+    support: "Funds, companies, deals, and relationships.",
     image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa",
     alt: "Aerial view of city lights and connected infrastructure at night",
     href: "#system",
@@ -38,7 +40,8 @@ export const STORIES: Story[] = [
   {
     id: "ibor",
     eyebrow: "Investment Book of Record",
-    title: "Every number has a governed history.",
+    headline: ["Keep every number", "in one governed record."],
+    support: "Trace the record back to source.",
     image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570",
     alt: "Rows of archived volumes on library shelves",
     href: "#system",
@@ -46,7 +49,8 @@ export const STORIES: Story[] = [
   {
     id: "intelligence",
     eyebrow: "Governed Intelligence",
-    title: "AI can propose. Your team remains in control.",
+    headline: ["Turn context", "into usable insight."],
+    support: "AI works inside the investment record.",
     image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36",
     alt: "Dark boardroom table with documents and low light",
     href: "#system",
@@ -54,7 +58,8 @@ export const STORIES: Story[] = [
   {
     id: "portfolio",
     eyebrow: "Portfolio Operations",
-    title: "See what needs attention before it becomes a problem.",
+    headline: ["See what needs attention", "before it becomes a problem."],
+    support: "Monitor change and act on exceptions.",
     image: "https://images.unsplash.com/photo-1553413077-190dd305871c",
     alt: "Racking aisles inside a large logistics warehouse",
     href: "#system",
@@ -62,7 +67,8 @@ export const STORIES: Story[] = [
   {
     id: "ic",
     eyebrow: "IC Workflow",
-    title: "Bring evidence, models, and decisions into one workflow.",
+    headline: ["Bring evidence and decisions", "into one workflow."],
+    support: "Keep analysis, approvals, and actions together.",
     image: "https://images.unsplash.com/photo-1449157291145-7efd050a4d0e",
     alt: "Glass facade of an institutional building seen from below",
     href: "#system",

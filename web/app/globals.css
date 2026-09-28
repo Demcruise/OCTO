@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/octo-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -41,31 +42,36 @@
     --color-night-line: rgb(255 255 255 / 0.12);
     --color-fog: #8a8f98; /* secondary text on dark surfaces only */
 
-    --color-canvas: #ffffff;
-    --color-subtle: #f6f6f3;
-    --color-muted: #eeeeea;
-    --color-line: #e8e9ec;
-    --color-line-strong: #d6d9de;
-    --color-ink: #111318;
-    --color-ink-2: #3f434a;
-    --color-ink-3: #666b73;
+    /* Light surfaces resolve through the centralized OCTO token file (V5). */
+    --color-canvas: var(--octo-body-color);
+    --color-subtle: var(--octo-body-color-medium);
+    --color-muted: var(--octo-body-color-light);
+    --color-line: rgb(30 33 36 / 0.16);
+    --color-line-strong: rgb(30 33 36 / 0.3);
+    --color-ink: var(--octo-text-color);
+    --color-ink-2: var(--octo-text-color-medium);
+    --color-ink-3: var(--octo-text-color-light);
 
-    --color-accent: #6d45ff;
+    --color-accent: var(--octo-accent);
     --color-accent-hover: #5b36e6;
-    --color-accent-soft: rgb(109 69 255 / 0.08);
+    --color-accent-soft: var(--octo-accent-soft);
     --color-accent-line: rgb(109 69 255 / 0.3);
     --color-accent-light: #b9a6ff; /* accent text on dark surfaces */
     --color-ok-light: #6fcf97; /* status text on dark surfaces */
     --color-warn-light: #f2c14e;
 
-    --color-ok: #137350; /* darker than #16845B so 11px pill text passes AA on its tint */
-    --color-warn: #975a16; /* #B7791F is 3.6:1 on white — below AA for small text */
-    --color-danger: #c24141;
-    --color-info: #3867d6;
+    --color-ok: var(--octo-data-green);
+    --color-warn: var(--octo-data-amber);
+    --color-danger: var(--octo-error);
+    --color-info: var(--octo-notice);
+    --color-data: var(--octo-data-default);
 
     --text-hero: clamp(3.25rem, 1.5rem + 7vw, 8rem);
     --text-hero--line-height: 0.98;
     --text-hero--letter-spacing: -0.045em;
+    --text-statement: clamp(3.5rem, 6.2vw, 5.75rem);
+    --text-statement--line-height: 1.01;
+    --text-statement--letter-spacing: -0.04em;
     --text-display: clamp(2.625rem, 1.5rem + 4.4vw, 6rem);
     --text-display--line-height: 0.98;
     --text-display--letter-spacing: -0.045em;
@@ -75,7 +81,7 @@
     --text-h3: clamp(1.75rem, 1.45rem + 0.9vw, 2.5rem);
     --text-h3--line-height: 1.08;
     --text-h3--letter-spacing: -0.03em;
-    --text-meta: 0.6875rem;
+    --text-meta: 0.625rem;
     --text-meta--line-height: 1rem;
     --text-meta--letter-spacing: 0.1em;
 }

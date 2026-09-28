@@ -17,7 +17,7 @@ export function Container({ className, children }: { className?: string; childre
   return <div className={cn("mx-auto w-full max-w-[1520px] px-4 sm:px-5 md:px-10 xl:px-16", className)}>{children}</div>;
 }
 
-export type Tone = "canvas" | "subtle" | "night" | "void";
+export type Tone = "canvas" | "subtle" | "muted" | "night" | "void";
 export const isDark = (t: Tone) => t === "night" || t === "void";
 
 export function Section({
@@ -41,6 +41,7 @@ export function Section({
         "border-t py-20 md:py-28",
         tone === "canvas" && "border-line bg-canvas text-ink",
         tone === "subtle" && "border-line bg-subtle text-ink",
+        tone === "muted" && "border-line bg-muted text-ink",
         tone === "night" && "border-night-line bg-night text-white",
         tone === "void" && "border-night-line bg-void text-white",
         className,
@@ -86,7 +87,7 @@ export function SectionHeader({
         <Eyebrow index={index} inverse={inverse}>
           {eyebrow}
         </Eyebrow>
-        <h2 id={id} className="mt-6 text-h2 font-medium text-balance">
+        <h2 id={id} className="mt-6 text-h2 font-normal text-balance">
           {title}
         </h2>
       </div>

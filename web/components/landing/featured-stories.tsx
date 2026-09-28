@@ -11,9 +11,10 @@ import { Container, DUR, EASE, Eyebrow, focusRing } from "./primitives";
 const DURATION_MS = 8000;
 
 /**
- * Featured stories (PAL-006..009): five snack bars, each with an 8-second
- * progress fill. Advance only at 100%; manual selection resets the timer;
- * hover pauses; hidden tabs pause; reduced motion disables autoplay.
+ * 02 — FEATURED: five snack bars, each with an 8-second linear progress rail
+ * (track rgba(30,33,36,.12), fill OCTO violet). The slide advances only at
+ * 100%; manual selection resets the timer; hover pauses; hidden tabs pause;
+ * reduced motion disables autoplay.
  */
 export function FeaturedStories() {
   const reduce = useReducedMotion();
@@ -77,7 +78,7 @@ export function FeaturedStories() {
       <Container>
         <Eyebrow index="02">Featured</Eyebrow>
 
-        {/* Five snack bars; each owns its progress indicator. */}
+        {/* Five snack bars; each owns its progress rail. */}
         <div role="group" aria-label="Featured topics" className="no-scrollbar -mx-5 mt-10 flex gap-px overflow-x-auto border-y border-line bg-line px-px md:mx-0 md:px-0">
           {STORIES.map((s, i) => (
             <button
@@ -86,14 +87,14 @@ export function FeaturedStories() {
               aria-pressed={index === i}
               onClick={() => go(i)}
               className={cn(
-                "relative min-w-56 flex-1 shrink-0 bg-canvas px-4 pb-4 pt-3.5 text-left transition-colors",
-                index === i ? "text-ink" : "text-ink-3 hover:bg-subtle hover:text-ink",
+                "relative min-w-56 flex-1 shrink-0 px-4 pb-4 pt-3.5 text-left transition-colors",
+                index === i ? "bg-canvas text-ink" : "bg-subtle text-ink-3 hover:text-ink",
                 focusRing,
               )}
             >
               <span className="block font-data text-[10px] uppercase tracking-[0.12em]">{`0${i + 1}`}</span>
               <span className="mt-1 block truncate text-[13px] font-medium">{s.eyebrow}</span>
-              <span aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 bg-line-strong/40">
+              <span aria-hidden className="absolute inset-x-0 bottom-0 h-0.5 bg-[rgb(30_33_36/0.12)]">
                 <span
                   ref={(el) => {
                     barsRef.current[i] = el;
@@ -106,10 +107,11 @@ export function FeaturedStories() {
           ))}
         </div>
 
+        {/* One media frame for all five slides: identical ratio and height. */}
         <div
           role="group"
           aria-label={`Story ${index + 1} of ${STORIES.length}: ${story.eyebrow}`}
-          className="relative mt-6 aspect-[4/5] overflow-hidden border border-line sm:aspect-[16/10] lg:aspect-[21/10] lg:max-h-[76vh]"
+          className="relative mt-6 min-h-[520px] overflow-hidden border border-line sm:aspect-[16/9] sm:min-h-0"
           onTouchStart={(e) => {
             touchX.current = e.touches[0].clientX;
           }}
@@ -134,30 +136,36 @@ export function FeaturedStories() {
                   priority={story.id === "ontology"}
                 />
               </motion.div>
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-void/60 via-transparent to-transparent" />
             </motion.div>
           </AnimatePresence>
 
-          {/* Light overlay card — page chrome stays light. */}
-          <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 lg:p-10">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={story.id}
-                initial={reduce ? false : { opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: DUR.standard, ease: EASE, delay: reduce ? 0 : 0.1 }}
-                className="max-w-xl border border-line bg-canvas/95 p-6 md:p-9 lg:w-[46%]"
-              >
-                <p className="font-data text-meta uppercase text-accent">{story.eyebrow}</p>
-                <h2 className="mt-4 text-2xl font-medium leading-snug tracking-tight text-ink md:text-3xl">{story.title}</h2>
-                <a href={story.href} className={cn("mt-6 inline-flex min-h-10 items-center gap-2 font-data text-[12px] uppercase tracking-[0.1em] text-ink hover:text-accent", focusRing)}>
-                  Learn more
-                  <ArrowRight aria-hidden className="size-3.5" />
-                </a>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+          {/* Light overlay card — same dimensions on every slide (V4-01.5). */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={story.id}
+              initial={reduce ? false : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: DUR.standard, ease: EASE, delay: reduce ? 0 : 0.1 }}
+              className={cn(
+                "border border-ink/10 bg-white/90 backdrop-blur-md",
+                "absolute inset-x-0 bottom-0 p-5",
+                "lg:left-[5%] lg:right-auto lg:min-h-[360px] lg:w-[min(560px,42%)] lg:p-12",
+              )}
+            >
+              <p className="font-data text-meta uppercase text-accent">{story.eyebrow}</p>
+              <h2 className="mt-5 text-2xl leading-snug tracking-tight text-ink md:text-[2rem]">
+                {story.headline[0]}
+                <br />
+                {story.headline[1]}
+              </h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{story.support}</p>
+              <a href={story.href} className={cn("mt-6 inline-flex min-h-10 items-center gap-2 font-data text-[12px] uppercase tracking-[0.1em] text-ink hover:text-accent", focusRing)}>
+                Learn more
+                <ArrowRight aria-hidden className="size-3.5" />
+              </a>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         <div className="mt-4 flex items-center justify-end gap-3">

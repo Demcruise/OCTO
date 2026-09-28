@@ -1,0 +1,50 @@
+/*
+ * OCTO light-theme design tokens (V5.9).
+ *
+ * Provenance: base values reference the light-theme custom properties rendered
+ * by https://www.palantir.com/ as extracted into the project backlog
+ * (palantir-design-tokens.md, extraction date 2026-09-28). They are
+ * rendered-reference values, not Palantir's internal design-system source.
+ * OCTO keeps its own semantic aliases and brand accent; dark-theme values are
+ * documented for reference only and are not shipped as a site theme.
+ */
+:root {
+    /* Palantir-referenced light system */
+    --octo-body-color: #ffffff;
+    --octo-body-color-medium: #f3f3f3;
+    --octo-body-color-light: #f9f9f9;
+
+    --octo-text-color: #1e2124;
+    --octo-text-color-medium: #636363;
+    --octo-text-color-light: #767676;
+
+    --octo-border-color: currentColor;
+    --octo-hover-color: rgba(30, 33, 36, 0.33);
+    --octo-input-border-color: #636363;
+
+    /* OCTO brand */
+    --octo-accent: #6d45ff;
+    --octo-accent-soft: rgba(109, 69, 255, 0.1);
+
+    /* Semantics */
+    --octo-error: #ff4136;
+    --octo-notice: #368cff;
+
+    /* Data visualization — light qualitative palette */
+    --octo-data-default: #a7b6c2;
+    --octo-data-blue: #147eb3;
+    --octo-data-green: #29a634;
+    --octo-data-amber: #d1980b;
+    --octo-data-red: #d13913;
+    --octo-data-violet: #634dbf;
+    --octo-data-orange: #d17e09;
+    --octo-data-crimson: #9f1239;
+    --octo-data-teal: #00a396;
+    --octo-data-deep-violet: #5642a6;
+    --octo-data-olive: #728c23;
+
+    /* Layout metrics shared by featured and workflow modules (V4-07) */
+    --octo-featured-overlay-width: 560px;
+    --octo-workflow-preview-height: 560px;
+    --octo-section-side-padding: clamp(24px, 4vw, 80px);
+}

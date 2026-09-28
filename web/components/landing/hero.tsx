@@ -50,7 +50,7 @@ export function Hero() {
         <motion.p {...rise(0.15)} className="font-data text-meta uppercase text-white/70">
           Private markets infrastructure
         </motion.p>
-        <h1 className="mt-6 max-w-6xl text-hero font-medium">
+        <h1 className="mt-6 max-w-6xl text-hero font-normal">
           <motion.span {...rise(0.3)} className="block">
             One system
           </motion.span>

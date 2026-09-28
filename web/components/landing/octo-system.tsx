@@ -6,8 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EventLog } from "@/components/octo/event-log";
 import { SYSTEM_INDEX } from "@/lib/landing-content";
-import { Container, Eyebrow, Pill, Reveal, SampleLabel, Section, focusRing } from "./primitives";
-import { OctoWordmark } from "./landing-navigation";
+import { Pill, Reveal, SampleLabel, Section, focusRing } from "./primitives";
 
 /* ── Control Panel module: the only product dashboard on the page. ── */
 
@@ -202,25 +201,24 @@ function ObjectGraphModule() {
 export function OctoSystem() {
   return (
     <Section id="system" labelledBy="system-title">
-      <Reveal className="mx-auto max-w-3xl text-center">
-        <OctoWordmark inverse={false} />
-        <h2 id="system-title" className="mt-10 text-display font-medium text-balance">
+      {/* Centered statement — no label, no logo, no paragraph (V4-02). */}
+      <Reveal className="mx-auto max-w-[1220px] text-center">
+        <h2 id="system-title" className="text-statement font-normal text-balance">
           OCTO connects investment data, context, intelligence, and workflow in one governed system.
         </h2>
       </Reveal>
 
       <Reveal className="mt-20 md:mt-24" delay={0.05}>
-        <Eyebrow index="03">The OCTO System</Eyebrow>
+        <p className="font-data text-meta uppercase tracking-[0.05em] text-ink-3">The OCTO system</p>
         <ul className="mt-8 divide-y divide-line border-y border-line">
           {SYSTEM_INDEX.map((s) => (
             <li key={s.index}>
-              <a href={s.href} className={cn("group grid grid-cols-[2.5rem_1fr] items-baseline gap-4 py-7 md:grid-cols-[6rem_1fr_auto]", focusRing)}>
-                <span className="font-data text-[13px] text-accent">{s.index}</span>
+              <a href={s.href} className={cn("group flex items-start justify-between gap-6 py-8 md:min-h-[132px] md:py-9", focusRing)}>
                 <span className="min-w-0">
-                  <span className="block text-2xl font-medium tracking-tight text-ink transition-colors group-hover:text-accent md:text-3xl">{s.name}</span>
-                  <span className="mt-2 block max-w-lg text-[15px] leading-relaxed text-ink-2">{s.description}</span>
+                  <span className="block text-[clamp(1.625rem,2.5vw,2.5rem)] font-normal leading-tight tracking-tight text-ink transition-colors group-hover:text-accent">{s.name}</span>
+                  <span className="mt-2 block max-w-lg text-lg leading-[1.4] text-ink-2">{s.description}</span>
                 </span>
-                <span className="hidden items-center gap-1 font-data text-[12px] text-ink-3 transition-colors group-hover:text-accent md:inline-flex">
+                <span className="mt-2 inline-flex shrink-0 items-center gap-1 font-data text-[12px] text-ink-3 transition-all group-hover:translate-x-1 group-hover:text-accent">
                   /0.{Number(s.index)} <ArrowUpRight aria-hidden className="size-3.5" />
                 </span>
               </a>
@@ -230,10 +228,7 @@ export function OctoSystem() {
       </Reveal>
 
       <Reveal className="mt-16 md:mt-20" delay={0.05}>
-        <p id="system-control" className="font-data text-meta uppercase text-ink-3">
-          OCTO Control Panel
-        </p>
-        <div className="mt-4">
+        <div id="system-control">
           <ControlPanelModule />
         </div>
       </Reveal>
