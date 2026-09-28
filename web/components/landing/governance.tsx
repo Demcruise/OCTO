@@ -21,9 +21,9 @@ export function Governance() {
     <Section id="governance" tone="night" labelledBy="governance-title">
       <SectionHeader
         id="governance-title"
-        index="16"
+        index="15"
         eyebrow="Governance"
-        title="Built for controlled investment environments."
+        title="Built for controlled environments."
         lead="Permissions, approvals, and the audit trail are part of the system every request passes through — for people and for AI."
         inverse
       />

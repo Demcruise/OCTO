@@ -133,9 +133,9 @@ export function Lineage() {
     <Section id="lineage" labelledBy="lineage-title">
       <SectionHeader
         id="lineage-title"
-        index="15"
+        index="08"
         eyebrow="Lineage"
-        title="Every number defends itself."
+        title="Know where the number came from."
         lead="Trace a reported figure to its calculation, the ledger events behind it, the investment that moved it, the source, and the page it came from."
       />
 

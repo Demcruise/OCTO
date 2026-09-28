@@ -18,7 +18,7 @@ export function Deployment() {
     <Section id="deployment" tone="void" labelledBy="deployment-title">
       <SectionHeader
         id="deployment-title"
-        index="17"
+        index="16"
         eyebrow="Deployment"
         title="Deploy where your investment data belongs."
         lead="The record, the ontology, and the AI context stay inside your perimeter. OCTO connects to the systems you already run."

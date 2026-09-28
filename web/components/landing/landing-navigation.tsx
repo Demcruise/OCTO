@@ -42,7 +42,7 @@ function DesktopMenu({ group, open, onOpen, onClose }: { group: NavGroup; open: 
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => (open ? onClose() : onOpen())}
-        className={cn("flex h-16 items-center gap-1 px-3 text-sm transition-colors", open ? "text-white" : "text-fog hover:text-white", darkRing)}
+        className={cn("flex h-20 items-center gap-1 px-3 text-sm transition-colors", open ? "text-white" : "text-fog hover:text-white", darkRing)}
       >
         {group.label}
         <ChevronDown aria-hidden className={cn("size-3.5 transition-transform duration-150", open && "rotate-180")} />
@@ -146,7 +146,7 @@ export function LandingNavigation() {
   const [scrolled, setScrolled] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [menuTop, setMenuTop] = useState(64);
+  const [menuTop, setMenuTop] = useState(80);
   const headerRef = useRef<HTMLElement>(null);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -158,7 +158,7 @@ export function LandingNavigation() {
   }, []);
 
   const toggleMobile = () => {
-    setMenuTop(headerRef.current?.getBoundingClientRect().bottom ?? 64);
+    setMenuTop(headerRef.current?.getBoundingClientRect().bottom ?? 80);
     setMobileOpen((v) => !v);
   };
 
@@ -171,7 +171,7 @@ export function LandingNavigation() {
       }}
       className={cn("sticky top-0 z-50 border-b bg-void text-white transition-colors duration-200", scrolled || openGroup || mobileOpen ? "border-night-line" : "border-transparent")}
     >
-      <Container className="flex h-16 items-center justify-between gap-6">
+      <Container className="flex h-20 items-center justify-between gap-6">
         <a href="#top" aria-label="OCTO home" className={darkRing}>
           <OctoWordmark />
         </a>

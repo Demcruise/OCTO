@@ -94,9 +94,9 @@ export function InvestmentWorkflow() {
     <Section id="workflow" tone="subtle" labelledBy="workflow-title">
       <SectionHeader
         id="workflow-title"
-        index="12"
+        index="11"
         eyebrow="Workflow"
-        title="Turn insight into action."
+        title="From data to decision."
         lead="Every stage of the investment lifecycle has an owner, its evidence, an open task, and a next action — in the same system that holds the numbers."
       />
 

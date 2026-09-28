@@ -76,7 +76,7 @@ export function SourceNetwork() {
         id="problem-title"
         index="02"
         eyebrow="Fragmented truth"
-        title="Private markets run across too many versions of the truth."
+        title="Private markets still run on fragmented information."
         lead="CRM, models, documents, market data, and reporting each hold part of the record. OCTO connects them once, so every output starts from the same facts."
         inverse
       />

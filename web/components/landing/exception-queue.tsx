@@ -26,9 +26,9 @@ export function ExceptionQueue() {
     <Section id="exceptions" tone="subtle" labelledBy="exceptions-title">
       <SectionHeader
         id="exceptions-title"
-        index="14"
+        index="13"
         eyebrow="Exceptions"
-        title="Know what needs attention, and why."
+        title="See what needs attention."
         lead="Breaks, gaps, anomalies, and stale sources surface with the evidence and an owner — before they reach a report."
       />
       <Reveal className="mt-16 overflow-hidden rounded-sm border border-line-strong bg-canvas">

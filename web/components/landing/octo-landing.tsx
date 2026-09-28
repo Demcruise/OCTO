@@ -1,34 +1,40 @@
 import { LandingNavigation } from "./landing-navigation";
 import { Hero } from "./hero";
-import { AskOcto } from "./ask-octo";
+import { FeaturedStories } from "./featured-stories";
+import { PlatformStatement } from "./platform-statement";
 import { SourceNetwork } from "./source-network";
-import { PlatformArchitecture } from "./platform-architecture";
+import { SystemIndex } from "./system-index";
 import { OntologySection } from "./ontology-section";
 import { ObjectGraph } from "./object-graph";
 import { InvestmentObjectView } from "./investment-object-view";
 import { IborShowcase } from "./ibor-showcase";
-import { DecisionArchitecture } from "./decision-architecture";
-import { AnalyticsShowcase } from "./analytics-showcase";
+import { Lineage } from "./lineage";
 import { AiContext } from "./ai-context";
 import { GovernedAI } from "./governed-ai";
 import { InvestmentWorkflow } from "./investment-workflow";
 import { ControlPanel } from "./control-panel";
 import { ExceptionQueue } from "./exception-queue";
-import { Lineage } from "./lineage";
+import { AnalyticsShowcase } from "./analytics-showcase";
 import { Governance } from "./governance";
 import { Deployment } from "./deployment";
-import { CapabilityIndex } from "./capability-index";
+import { LargeTransition } from "./large-transition";
+import { Proof } from "./proof";
 import { Editorial } from "./editorial";
+import { UseCaseIndex } from "./use-case-index";
 import { Cta } from "./cta";
 import { Contact } from "./contact";
 import { Footer } from "./footer";
 
 /**
- * OCTO landing page (PAL-046, PAL-050).
+ * OCTO landing page — editorial sequence per the megaplan (PAL-002):
  *
- * Rhythm: editorial statement → system visualization → product interface →
- * architecture → proof → workflow → governance → conversion. Dark sections carry
- * system diagrams; light sections carry product surfaces.
+ * nav → cinematic hero → topic strip / featured story → the OCTO system
+ * statement → system index → product stories (ontology → record → lineage →
+ * intelligence → workflow → control → analytics → governance) → large
+ * transition → proof → case studies → use-case index → CTA → footer.
+ *
+ * Dark sections carry system diagrams and statements; light sections carry
+ * product surfaces.
  */
 export function OctoLanding() {
   return (
@@ -42,25 +48,27 @@ export function OctoLanding() {
       <LandingNavigation />
       <main id="main">
         <Hero />
-        <AskOcto />
+        <FeaturedStories />
+        <PlatformStatement />
+        <SystemIndex />
         <SourceNetwork />
-        <PlatformArchitecture />
         <OntologySection />
         <ObjectGraph />
         <InvestmentObjectView />
         <IborShowcase />
-        <DecisionArchitecture />
-        <AnalyticsShowcase />
+        <Lineage />
         <AiContext />
         <GovernedAI />
         <InvestmentWorkflow />
         <ControlPanel />
         <ExceptionQueue />
-        <Lineage />
+        <AnalyticsShowcase />
         <Governance />
         <Deployment />
-        <CapabilityIndex />
+        <LargeTransition />
+        <Proof />
         <Editorial />
+        <UseCaseIndex />
         <Cta />
         <Contact />
       </main>

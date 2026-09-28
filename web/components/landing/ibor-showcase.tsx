@@ -109,7 +109,7 @@ export function IborShowcase() {
         id="ibor-title"
         index="07"
         eyebrow="Investment Book of Record"
-        title="One governed record for every investment."
+        title="Every number should have a history."
         lead="Transactions, valuations, and corrections land in an append-only ledger. Select an event to see where it came from and what it changed."
       />
 

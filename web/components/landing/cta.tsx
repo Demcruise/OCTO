@@ -56,15 +56,15 @@ export function Cta() {
         <Reveal className="lg:col-span-7">
           <Eyebrow inverse index="20">Request access</Eyebrow>
           <h2 id="cta-title" className="mt-6 text-h2 font-medium text-balance">
-            Build a governed operating system for private markets.
+            Build your firm&apos;s single source of truth.
           </h2>
           <p className="mt-6 max-w-lg text-lg leading-relaxed text-fog">Bring investment data, context, intelligence, and workflows into one system.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href={CTA_HREF} variant="inverse" arrow>
               Request access
             </ButtonLink>
-            <ButtonLink href={CTA_HREF} variant="ghost-inverse">
-              Talk to the team
+            <ButtonLink href="#contact" variant="ghost-inverse">
+              Contact OCTO
             </ButtonLink>
           </div>
         </Reveal>

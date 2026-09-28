@@ -75,9 +75,9 @@ export function ControlPanel() {
     <Section id="control-panel" labelledBy="cp-title">
       <SectionHeader
         id="cp-title"
-        index="13"
+        index="12"
         eyebrow="Control Panel"
-        title="Run the day from one workspace."
+        title="A system designed around action."
         lead="Alerts, drafts, tasks, exceptions, approvals, and new intelligence arrive in one queue — each linked to the object it concerns."
       />
 

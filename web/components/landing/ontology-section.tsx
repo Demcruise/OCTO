@@ -18,7 +18,7 @@ export function OntologySection() {
         id="ontology-title"
         index="04"
         eyebrow="Investment Ontology"
-        title="Understand every investment in context."
+        title="Built around the objects your investment team already manages."
         lead="The Investment Ontology models your firm as connected objects. A fund, a company, and the document behind its valuation are one step apart."
       />
       <div className="mt-16 grid grid-cols-1 gap-10 lg:grid-cols-12">

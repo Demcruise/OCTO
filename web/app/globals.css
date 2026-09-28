@@ -63,6 +63,9 @@
     --color-danger: #c24141;
     --color-info: #3867d6;
 
+    --text-hero: clamp(3.25rem, 1.5rem + 7vw, 8rem);
+    --text-hero--line-height: 0.98;
+    --text-hero--letter-spacing: -0.045em;
     --text-display: clamp(2.625rem, 1.5rem + 4.4vw, 6rem);
     --text-display--line-height: 0.98;
     --text-display--letter-spacing: -0.045em;
@@ -91,9 +94,9 @@
     --font-data: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
-/* Anchor targets clear the sticky 64px header. */
+/* Anchor targets clear the sticky 80px header. */
 .landing [id] {
-    scroll-margin-top: 4.5rem;
+    scroll-margin-top: 6rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {

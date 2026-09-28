@@ -6,50 +6,50 @@ import { Reveal, Section, SectionHeader } from "./primitives";
 
 type Tile = { src: string; alt: string; label: string; title: string; note: string; className: string };
 
-/* Unsplash photographs (Unsplash License), always paired with product information (PAL-028, PAL-044). */
+/* Case-study tiles (PAL-026): grayscale photography paired with product facts. */
 const TILES: Tile[] = [
-  {
-    src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab",
-    alt: "Glass office towers seen from street level",
-    label: "Financial district",
-    title: "Data → Ontology → Action",
-    note: "IBOR current · lineage verified · 15 open items",
-    className: "md:col-span-7 md:row-span-2",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122",
-    alt: "Sparks from a metal grinder in a manufacturing plant",
-    label: "Private markets operations",
-    title: "OCTO coordinates the information required to monitor an investment.",
-    note: "US Manufacturing III · 12 companies · 3 open items",
-    className: "md:col-span-5",
-  },
   {
     src: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492",
     alt: "Aerial view of freight trucks parked at a logistics depot",
     label: "Portfolio monitoring",
-    title: "A logistics company's EBITDA drop, explained from four sources.",
-    note: "Harbor Logistics · −8.2% QoQ · drafted by AI · review pending",
+    title: "Reduce weekly portfolio review from fragmented spreadsheets to one operating view.",
+    note: "Harbor Logistics · EBITDA −8.2% QoQ · explained from four sources",
+    className: "md:col-span-7 md:row-span-2",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1497366216548-37526070297c",
+    alt: "A quiet institutional meeting room with a long table",
+    label: "Investment committee",
+    title: "Bring evidence, models, and approvals into one workflow.",
+    note: "IC review · evidence attached · named approver",
     className: "md:col-span-5",
   },
   {
-    src: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31",
-    alt: "Server racks with network cabling in a data center",
-    label: "Controlled deployment",
-    title: "The record and its context stay inside your environment.",
-    note: "Self-hosted · tenant-scoped · governed integrations",
+    src: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab",
+    alt: "Glass office towers in a financial district seen from street level",
+    label: "LP reporting",
+    title: "Trace reported metrics back to the governed source.",
+    note: "Q3 report · every figure resolves to the ledger",
+    className: "md:col-span-5",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122",
+    alt: "Sparks from a metal grinder in a manufacturing plant",
+    label: "Diligence",
+    title: "Connect findings, evidence, and decision context.",
+    note: "Acme Robotics · 2 open items · checklist tracked",
     className: "md:col-span-12",
   },
 ];
 
-/** Editorial use cases: grayscale, tightly cropped, annotated (PAL-028). */
+/** Case studies: editorial imagery, tightly cropped, annotated (PAL-026). */
 export function Editorial() {
   return (
-    <Section id="use-cases" tone="void" labelledBy="usecases-title">
+    <Section id="case-studies" tone="void" labelledBy="cases-title">
       <SectionHeader
-        id="usecases-title"
-        index="19"
-        eyebrow="Use cases"
+        id="cases-title"
+        index="18"
+        eyebrow="Case studies"
         title="Built for the work behind every investment."
         lead="From the committee room to the factory floor, OCTO keeps the facts behind each decision in one place."
         inverse
@@ -76,7 +76,7 @@ export function Editorial() {
           </figure>
         ))}
       </Reveal>
-      <p className="mt-4 font-data text-[10px] uppercase tracking-[0.1em] text-fog">Photography: Unsplash</p>
+      <p className="mt-4 font-data text-[10px] uppercase tracking-[0.1em] text-fog">Photography: Unsplash · Representative scenarios on sample data</p>
     </Section>
   );
 }

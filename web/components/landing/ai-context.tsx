@@ -48,9 +48,9 @@ export function AiContext() {
     <Section id="ai-context" tone="subtle" labelledBy="aicontext-title">
       <SectionHeader
         id="aicontext-title"
-        index="10"
-        eyebrow="AI with context"
-        title="AI that operates on investment context."
+        index="09"
+        eyebrow="Intelligence"
+        title="AI that works inside the investment system."
         lead="Before OCTO answers, it assembles the objects, ledger events, documents, and permissions the question depends on — and shows you which ones it used."
       />
 

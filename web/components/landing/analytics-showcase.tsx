@@ -110,9 +110,9 @@ export function AnalyticsShowcase() {
     <Section id="analytics" labelledBy="analytics-title">
       <SectionHeader
         id="analytics-title"
-        index="09"
+        index="14"
         eyebrow="Analytics"
-        title="From data to decision without losing context."
+        title="Analysis without leaving context."
         lead="Filter a fund, drill into its holdings, and trace any figure to its source — without exporting to a spreadsheet."
       />
 

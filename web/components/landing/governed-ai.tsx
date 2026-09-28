@@ -39,11 +39,12 @@ export function GovernedAI() {
     <Section id="ai" labelledBy="ai-title">
       <SectionHeader
         id="ai-title"
-        index="11"
+        index="10"
         eyebrow="Governed AI"
         title="Intelligence with controls built in."
         lead="AI in OCTO drafts. It never approves. Every proposal passes an evidence check and a permission check, then waits for a named reviewer."
       />
+      <p className="mt-6 font-data text-[12px] uppercase tracking-[0.14em] text-accent">AI proposes. Humans decide.</p>
 
       <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-12">
         <Reveal className="min-w-0 lg:col-span-7">
