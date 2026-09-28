@@ -183,7 +183,7 @@ export function DataToDecision() {
     <Section id="decision" labelledBy="decision-title">
       <SectionHeader
         id="decision-title"
-        index="06"
+        index="05"
         eyebrow="From data to decision"
         title="From data to decision."
         lead="Connect investment data, context, intelligence, and workflow — and move from information to a governed decision."

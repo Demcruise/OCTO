@@ -16,7 +16,6 @@ export const NAV_LINKS: NavLink[] = [
   { title: "Featured", description: "What the system does", href: "#stories" },
   { title: "The OCTO System", description: "Ontology · record · intelligence · workflow · governance", href: "#system" },
   { title: "Fragmented truth", description: "Why OCTO exists", href: "#problem" },
-  { title: "The future", description: "There is still more to connect", href: "#future" },
   { title: "From data to decision", description: "Screen · decide · monitor · report", href: "#decision" },
   { title: "Request access", description: "See OCTO on your portfolio questions", href: CTA_HREF },
   { title: "Sign in", href: SIGN_IN_HREF },
@@ -145,7 +144,6 @@ export const FOOTER: { label: string; links: NavLink[] }[] = [
     label: "Resources",
     links: [
       { title: "The OCTO System", href: "#system" },
-      { title: "The future", href: "#future" },
       { title: "Request access", href: CTA_HREF },
     ],
   },

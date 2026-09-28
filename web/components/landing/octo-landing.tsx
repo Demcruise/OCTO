@@ -3,17 +3,15 @@ import { Hero } from "./hero";
 import { FeaturedStories } from "./featured-stories";
 import { OctoSystem } from "./octo-system";
 import { FragmentedTruth } from "./fragmented-truth";
-import { FutureEditorial } from "./future-editorial";
 import { DataToDecision } from "./data-to-decision";
 import { Cta } from "./cta";
 import { Footer } from "./footer";
 
 /**
- * OCTO landing page — exactly eight sections per the light-theme master
- * backlog:
+ * OCTO landing page — seven sections:
  *
  * 01 Hero · 02 Featured · 03 OCTO System · 04 Fragmented Truth ·
- * 05 The Future · 06 From Data to Decision · 07 CTA · 08 Footer.
+ * 05 From Data to Decision · 06 CTA · 07 Footer.
  *
  * Light theme throughout; the only dark pixels live inside photography.
  */
@@ -32,7 +30,6 @@ export function OctoLanding() {
         <FeaturedStories />
         <OctoSystem />
         <FragmentedTruth />
-        <FutureEditorial />
         <DataToDecision />
         <Cta />
       </main>
