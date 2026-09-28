@@ -76,10 +76,10 @@ export function Contact() {
         <Reveal className="lg:col-span-5">
           <Eyebrow index="10">Contact</Eyebrow>
           <h2 id="contact-title" className="mt-4 text-h2 font-semibold">
-            Request a walkthrough.
+            Request access.
           </h2>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-2">
-            Tell us where your investment data lives today. We&apos;ll show you how it maps onto one governed record, deployed inside your own
+            Tell us where your investment data lives today. We&apos;ll walk you through OCTO on sample data and scope a pilot inside your own
             environment.
           </p>
           <ul className="mt-8 space-y-3 text-[15px] text-ink-2">
@@ -195,7 +195,7 @@ export function Contact() {
                     type="submit"
                     className={cn("inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-medium text-white hover:bg-accent-hover", focusRing)}
                   >
-                    Request walkthrough
+                    Request access
                     <ArrowRight aria-hidden className="size-4" />
                   </button>
                 </div>

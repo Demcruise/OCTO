@@ -86,7 +86,7 @@ function DesktopMenu({ group }: { group: NavGroup }) {
   );
 }
 
-function MobileMenu({ onClose }: { onClose: () => void }) {
+function MobileMenu({ onClose, top }: { onClose: () => void; top: number }) {
   const reduce = useReducedMotion();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +110,8 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: DUR.standard }}
-      className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto border-t border-line bg-canvas lg:hidden"
+      style={{ top }}
+      className="fixed inset-x-0 bottom-0 z-40 overflow-y-auto border-t border-line bg-canvas lg:hidden"
     >
       <Container className="flex min-h-full flex-col py-6">
         <nav aria-label="Mobile" className="flex-1 space-y-7">
@@ -120,7 +121,7 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
               <ul className="mt-2 divide-y divide-line border-y border-line">
                 {group.links.map((link) => (
                   <li key={link.title}>
-                    <a href={link.href} onClick={onClose} className={cn("block py-3 text-[15px] text-ink", focusRing)}>
+                    <a href={link.href} onClick={onClose} className={cn("flex min-h-11 items-center py-2 text-[15px] text-ink", focusRing)}>
                       {link.title}
                     </a>
                   </li>
@@ -146,7 +147,14 @@ function MobileMenu({ onClose }: { onClose: () => void }) {
 export function LandingNavigation() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuTop, setMenuTop] = useState(64);
+  const headerRef = useRef<HTMLElement>(null);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
+  const toggleMobile = () => {
+    // The announcement bar can sit above the sticky header, so anchor the drawer to its real bottom edge.
+    setMenuTop(headerRef.current?.getBoundingClientRect().bottom ?? 64);
+    setMobileOpen((v) => !v);
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -159,6 +167,7 @@ export function LandingNavigation() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         "sticky top-0 z-50 border-b transition-[background-color,border-color,box-shadow] duration-200",
         solid
@@ -190,7 +199,7 @@ export function LandingNavigation() {
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <a href={CTA_HREF} className={cn("flex h-9 items-center rounded-md bg-accent px-3 text-sm font-medium text-white", focusRing, mobileOpen && "invisible")}>
+          <a href={CTA_HREF} className={cn("flex h-11 items-center rounded-md bg-accent px-3.5 text-sm font-medium text-white", focusRing, mobileOpen && "invisible")}>
             Request access
           </a>
           <button
@@ -198,14 +207,14 @@ export function LandingNavigation() {
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            onClick={() => setMobileOpen((v) => !v)}
-            className={cn("flex size-9 items-center justify-center rounded-md border border-line text-ink", focusRing)}
+            onClick={toggleMobile}
+            className={cn("flex size-11 items-center justify-center rounded-md border border-line text-ink", focusRing)}
           >
             {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
         </div>
       </Container>
-      <AnimatePresence>{mobileOpen && <MobileMenu onClose={closeMobile} />}</AnimatePresence>
+      <AnimatePresence>{mobileOpen && <MobileMenu onClose={closeMobile} top={menuTop} />}</AnimatePresence>
     </header>
   );
 }

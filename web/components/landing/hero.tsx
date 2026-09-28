@@ -12,7 +12,7 @@ export function Hero() {
   const rise = (delay: number) => ({
     initial: reduce ? false : { opacity: 0, y: 16 },
     animate: { opacity: 1, y: 0 },
-    transition: { duration: DUR.large, ease: EASE, delay },
+    transition: { duration: DUR.narrative, ease: EASE, delay },
   });
 
   return (
@@ -39,15 +39,15 @@ export function Hero() {
               Every investment decision.
             </motion.h1>
             <motion.p {...rise(0.14)} className="mt-6 max-w-xl text-lg leading-relaxed text-ink-2">
-              OCTO brings funds, investments, portfolio companies, documents, analytics, and operating workflows into one
-              governed investment system for private-equity firms.
+              OCTO connects investment data, ontology, IBOR, intelligence, and governed workflows into one operating system
+              for private-markets teams.
             </motion.p>
             <motion.div {...rise(0.22)} className="mt-8 flex flex-col gap-3 sm:flex-row">
               <ButtonLink href={CTA_HREF} arrow>
                 Request access
               </ButtonLink>
               <ButtonLink href="#core" variant="secondary">
-                Explore the platform
+                Explore OCTO
               </ButtonLink>
             </motion.div>
             <motion.p {...rise(0.3)} className="mt-8 font-data text-[13px] text-ink-3">
@@ -57,23 +57,23 @@ export function Hero() {
 
           <motion.div
             className="lg:col-span-6 lg:pl-6"
-            initial={reduce ? false : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DUR.reveal, ease: EASE, delay: 0.1 }}
+            initial={reduce ? false : { opacity: 0, scale: 0.985 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: DUR.narrative, ease: EASE, delay: 0.1 }}
           >
             <HeroQuery />
           </motion.div>
         </div>
 
         <motion.div
-          className="mt-14 border-t border-line pt-6 md:mt-20"
+          className="mt-14 hidden border-t border-line pt-6 sm:block md:mt-20"
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: DUR.reveal, ease: EASE, delay: 0.4 }}
+          transition={{ duration: DUR.narrative, ease: EASE, delay: 0.4 }}
         >
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
             <p className="text-sm font-medium text-ink">Investment Ontology</p>
-            <p className="text-[13px] text-ink-3">Every record is connected — from fund to the report your LPs read.</p>
+            <p className="text-[13px] text-ink-3">Every record connects, from the fund to the report your LPs read.</p>
           </div>
           <OctoGraph />
         </motion.div>

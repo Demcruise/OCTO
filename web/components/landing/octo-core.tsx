@@ -1,44 +1,15 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Reveal, SampleLabel, Section, SectionHeader } from "./primitives";
+import { CORE_LAYERS, type CoreLayer } from "@/lib/landing-content";
+import { ProductFrame } from "@/components/octo/product-frame";
+import { EventLog } from "@/components/octo/event-log";
+import { EvidenceList } from "@/components/octo/evidence-list";
+import { DUR, EASE, Reveal, Section, SectionHeader, focusRing, useTabs } from "./primitives";
 
-type CoreLayerProps = {
-  number: string;
-  eyebrow: string;
-  title: string;
-  description: string;
-  visual: React.ReactNode;
-};
-
-/** Reusable numbered layer row (CORE-002). */
-export function OCTOCoreLayer({ number, eyebrow, title, description, visual }: CoreLayerProps) {
-  return (
-    <Reveal as="li" className="grid grid-cols-1 gap-8 border-t border-line py-10 md:grid-cols-12 md:gap-10 md:py-12">
-      <div className="md:col-span-5">
-        <p className="font-data text-meta uppercase text-ink-3">
-          <span className="text-accent">Layer {number}</span> · {eyebrow}
-        </p>
-        <h3 className="mt-3 text-h3 font-semibold">{title}</h3>
-        <p className="mt-3 max-w-md text-base leading-relaxed text-ink-2">{description}</p>
-      </div>
-      <div className="md:col-span-7">{visual}</div>
-    </Reveal>
-  );
-}
-
-function Panel({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
-  return (
-    <div className={cn("rounded-lg border border-line bg-canvas", className)}>
-      <div className="flex items-center justify-between border-b border-line px-4 py-2">
-        <p className="font-data text-[11px] text-ink-2">{label}</p>
-        <SampleLabel />
-      </div>
-      <div className="p-4">{children}</div>
-    </div>
-  );
-}
+/* ---------- Layer visuals (CORE-102..105) ---------- */
 
 type TreeNode = { label: string; kind: string; focus?: boolean; children?: TreeNode[] };
 
@@ -55,9 +26,8 @@ const TREE: TreeNode = {
           kind: "Company",
           focus: true,
           children: [
-            { label: "Management team", kind: "People" },
-            { label: "EBITDA, revenue, net debt", kind: "Metrics" },
-            { label: "Capital calls, distributions", kind: "Transactions" },
+            { label: "Q3 2026 management accounts", kind: "Financials" },
+            { label: "Board pack · 24 Sep 2026", kind: "Documents" },
           ],
         },
       ],
@@ -85,111 +55,158 @@ function TreeRow({ node, child }: { node: TreeNode; child?: boolean }) {
   );
 }
 
-function OntologyTree() {
-  return (
-    <Panel label="ontology / growth-fund-ii">
+const EXCEPTION_STEPS = [
+  { label: "Detected", at: "09:12", who: "Reconciliation" },
+  { label: "Assigned", at: "09:20", who: "Fund accounting" },
+  { label: "Reviewed", at: "10:05", who: "Finance lead" },
+  { label: "Resolved", at: "—", who: "Awaiting approval" },
+];
+
+const VISUALS: Record<CoreLayer["id"], React.ReactNode> = {
+  ontology: (
+    <ProductFrame path="ontology / growth-fund-ii" bodyClassName="p-4">
       <ul className="font-data text-[13px]">
         <TreeRow node={TREE} />
       </ul>
-    </Panel>
-  );
-}
-
-function IBORLedgerPreview() {
-  const checks = ["Reconciled", "Lineage available", "Immutable history"];
-  return (
-    <Panel label="ibor / capital-call · 30 Sep 2026">
-      <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
-        <div className="rounded-md border border-line bg-subtle p-3">
-          <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Source · fund administrator</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">$12.4M</p>
-        </div>
-        <span aria-hidden className="justify-self-center rotate-90 font-data text-ink-3 sm:rotate-0">→</span>
-        <div className="rounded-md border border-accent-line bg-accent-soft p-3">
-          <p className="font-data text-[10px] uppercase tracking-[0.08em] text-accent">IBOR · book of record</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">$12.4M</p>
-        </div>
+    </ProductFrame>
+  ),
+  ibor: (
+    <ProductFrame path="ibor / events · 30 Sep 2026" bodyClassName="p-4">
+      <EventLog
+        label="Book of record events"
+        events={[
+          { time: "09:41", event: "Revenue updated", detail: "Atlas Components · management accounts", actor: "system" },
+          { time: "09:44", event: "FX adjustment posted", detail: "Harbor Logistics · EUR/USD 1.0712", actor: "person" },
+          { time: "10:02", event: "Valuation approved", detail: "Growth Fund II · Q3 fair value", actor: "person", emphasis: true },
+          { time: "10:07", event: "IRR recalculated", detail: "Growth Fund II · 18.2% gross", actor: "system" },
+        ]}
+      />
+    </ProductFrame>
+  ),
+  intelligence: (
+    <ProductFrame path="intelligence / ask" bodyClassName="space-y-3 p-4">
+      <div className="flex items-center gap-2 rounded-md border border-line-strong px-3 py-2 text-sm text-ink">
+        <Search aria-hidden className="size-3.5 shrink-0 text-ink-3" />
+        Why is Growth Fund II IRR down this quarter?
       </div>
-      <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-        {checks.map((c) => (
-          <li key={c} className="flex items-center gap-1.5 text-[13px] text-ink-2">
-            <Check aria-hidden className="size-3.5 text-ok" />
-            {c}
-          </li>
-        ))}
-      </ul>
-    </Panel>
-  );
-}
-
-const STEPS = [
-  { label: "Data", note: "Governed records" },
-  { label: "Analysis", note: "Versioned metrics" },
-  { label: "AI proposal", note: "Cited, scoped" },
-  { label: "Human review", note: "Named reviewer" },
-  { label: "Approval", note: "Logged decision" },
-  { label: "Action", note: "Report, task, export" },
-];
-
-function IntelligenceFlow() {
-  return (
-    <Panel label="workflow / quarterly-review">
-      <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {STEPS.map((s, i) => {
-          const gate = s.label === "Human review" || s.label === "Approval";
+      <p className="text-sm text-ink">
+        Gross IRR fell from <span className="font-data tabular-nums">19.0%</span> to <span className="font-data tabular-nums">18.2%</span>, mainly from the
+        Harbor Logistics markdown.
+      </p>
+      <EvidenceList
+        items={[
+          { ref: "1", title: "Q3 valuation · Harbor Logistics", kind: "IBOR event" },
+          { ref: "2", title: "Board pack · 24 Sep 2026, p.14", kind: "Document" },
+          { ref: "3", title: "Cash flows 2021–2026", kind: "Ledger" },
+        ]}
+      />
+    </ProductFrame>
+  ),
+  workflow: (
+    <ProductFrame path="workflow / exception-2291" bodyClassName="p-4">
+      <p className="text-sm font-medium text-ink">FX rate mismatch · Harbor Logistics</p>
+      <p className="text-[13px] text-ink-3">Administrator and record differ by $0.18M.</p>
+      <ol className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Exception status">
+        {EXCEPTION_STEPS.map((s, i) => {
+          const done = i < 3;
           return (
-            <li key={s.label} className={cn("rounded-md border p-3", gate ? "border-accent-line bg-accent-soft" : "border-line")}>
-              <p className="font-data text-[10px] text-ink-3">{String(i + 1).padStart(2, "0")}</p>
-              <p className={cn("mt-1 text-sm font-medium", gate ? "text-accent" : "text-ink")}>{s.label}</p>
-              <p className="text-xs text-ink-3">{s.note}</p>
+            <li
+              key={s.label}
+              className={cn("rounded-md border p-2.5", i === 2 ? "border-accent-line bg-accent-soft" : done ? "border-line" : "border-dashed border-line-strong")}
+            >
+              <p className={cn("flex items-center gap-1 text-[13px] font-medium", done ? "text-ink" : "text-ink-3")}>
+                {done && <Check aria-hidden className="size-3 text-ok" />}
+                {s.label}
+              </p>
+              <p className="mt-0.5 font-data text-[10px] text-ink-3">
+                {s.at} · {s.who}
+              </p>
             </li>
           );
         })}
       </ol>
-    </Panel>
-  );
-}
+    </ProductFrame>
+  ),
+};
 
-/** Replaces the generic feature grid with OCTO's three layers (CORE-001). */
+/** OCTO Core: four layers with a switcher (PENDLE-002, CORE-100/101). */
 export function OctoCore() {
+  const { active, onKeyDown, tabProps } = useTabs(CORE_LAYERS.length);
+  const reduce = useReducedMotion();
+  const layer = CORE_LAYERS[active];
+
   return (
     <Section id="core" labelledBy="core-title">
       <SectionHeader
         id="core-title"
         index="02"
         eyebrow="The OCTO core"
-        title={
-          <>
-            One system.
-            <br />
-            Three layers.
-          </>
-        }
-        lead="A canonical model of your firm, a governed ledger underneath every number, and the intelligence and workflow that turn that record into decisions."
+        title="One system. Four layers."
+        lead="Context, truth, reasoning, and action. Each layer reads from the one below it, so an answer, a report, or an approval always rests on the same record."
       />
-      <ol className="mt-14">
-        <OCTOCoreLayer
-          number="01"
-          eyebrow="Investment Ontology"
-          title="A shared model of the firm"
-          description="A canonical model for funds, investments, companies, people, instruments, LPs, and the relationships between them. Every source maps onto it once."
-          visual={<OntologyTree />}
-        />
-        <OCTOCoreLayer
-          number="02"
-          eyebrow="Investment Book of Record"
-          title="The ledger behind every number"
-          description="The IBOR is the governed record of positions, transactions, cash flows, and valuations. Positions are derived from events, and corrections never overwrite history."
-          visual={<IBORLedgerPreview />}
-        />
-        <OCTOCoreLayer
-          number="03"
-          eyebrow="Intelligence + workflow"
-          title="From record to reviewed action"
-          description="Analytics and AI operate on governed data, then route proposals through review and approval before anything becomes a report, alert, or export."
-          visual={<IntelligenceFlow />}
-        />
-      </ol>
+
+      <Reveal className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
+        <div
+          role="tablist"
+          aria-label="OCTO layers"
+          onKeyDown={onKeyDown}
+          className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:col-span-3 lg:mx-0 lg:flex-col lg:gap-0 lg:overflow-visible lg:px-0"
+        >
+          {CORE_LAYERS.map((l, i) => (
+            <button
+              key={l.id}
+              {...tabProps(i)}
+              id={`core-tab-${l.id}`}
+              aria-controls="core-panel"
+              className={cn(
+                "group relative min-h-11 shrink-0 rounded-md border px-3 py-2.5 text-left transition-colors lg:rounded-none lg:border-0 lg:border-l-2 lg:px-5 lg:py-5",
+                i === active ? "border-accent bg-accent-soft lg:bg-transparent" : "border-line hover:bg-subtle",
+                focusRing,
+              )}
+            >
+              <span className={cn("block font-data text-meta uppercase", i === active ? "text-accent" : "text-ink-3")}>
+                {l.number} · {l.eyebrow}
+              </span>
+              <span className={cn("mt-1 block whitespace-nowrap text-[15px] font-medium lg:text-base", i === active ? "text-ink" : "text-ink-2 group-hover:text-ink")}>
+                {l.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div id="core-panel" role="tabpanel" aria-labelledby={`core-tab-${layer.id}`} className="min-w-0 lg:col-span-9">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={layer.id}
+              initial={reduce ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduce ? undefined : { opacity: 0 }}
+              transition={{ duration: DUR.standard, ease: EASE }}
+              className="grid grid-cols-1 gap-8 md:grid-cols-12"
+            >
+              <div className="md:col-span-5">
+                <h3 className="text-2xl font-semibold tracking-tight">{layer.title}</h3>
+                <p className="mt-3 text-[15px] leading-relaxed text-ink-2">{layer.description}</p>
+                <ul className="mt-5 space-y-2">
+                  {layer.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-2 text-sm text-ink">
+                      <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-accent" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="min-w-0 md:col-span-7">
+                {VISUALS[layer.id]}
+                <p className="mt-4 border-l-2 border-accent pl-3 text-sm text-ink-2">
+                  <span className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">What this enables · </span>
+                  {layer.enables}
+                </p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </Reveal>
     </Section>
   );
 }

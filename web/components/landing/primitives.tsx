@@ -1,14 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useReducedMotion, type Variants } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Motion tokens (MOTION-001). Seconds, for Motion. */
-export const DUR = { fast: 0.16, standard: 0.24, medium: 0.4, large: 0.65, reveal: 0.8 } as const;
+/** Motion tokens (MOTION-101/102): one ease family, four durations. Seconds, for Motion. */
+export const DUR = { fast: 0.14, standard: 0.22, complex: 0.36, narrative: 0.65 } as const;
 export const EASE = [0.22, 1, 0.36, 1] as const;
-export const STAGGER = 0.06;
 
 export const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas";
@@ -119,24 +118,11 @@ export function Reveal({
       initial={reduce ? false : { opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-64px" }}
-      transition={{ duration: DUR.large, ease: EASE, delay }}
+      transition={{ duration: DUR.narrative, ease: EASE, delay }}
     >
       {children}
     </Comp>
   );
-}
-
-export const staggerParent: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: STAGGER } },
-};
-
-export function useStaggerChild(): Variants {
-  const reduce = useReducedMotion();
-  return {
-    hidden: reduce ? { opacity: 1 } : { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { duration: DUR.medium, ease: EASE } },
-  };
 }
 
 export function ButtonLink({

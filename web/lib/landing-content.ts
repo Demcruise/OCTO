@@ -1,99 +1,157 @@
 /**
- * Landing page copy (ARCH-003). Edit wording here without touching layout.
+ * Landing page copy (ARCH-003 / ARCH-101). Edit wording here without touching layout.
  *
  * Every href must resolve to a section on this page or a real route. Do not add
- * links to pages that do not exist yet (FOOTER-001).
+ * links to pages that do not exist yet (FOOT-100). Every figure shown on the page
+ * is illustrative and labelled as such (BP-003, CONTENT-002).
  */
 
 export type NavLink = { title: string; description?: string; href: string };
 export type NavGroup = { label: string; links: NavLink[] };
 
+export const CTA_HREF = "#contact";
+export const SIGN_IN_HREF = "/login";
+
+export const ANNOUNCEMENT = { label: "Private beta", text: "Onboarding a small number of private-markets firms.", cta: "Request access" };
+
 export const NAV: NavGroup[] = [
   {
     label: "Platform",
     links: [
-      { title: "Investment System", description: "How data becomes a defensible decision", href: "#system" },
-      { title: "Investment Ontology", description: "One canonical model of your firm", href: "#core" },
-      { title: "Investment Book of Record", description: "The governed ledger behind every number", href: "#core" },
-      { title: "Analytics", description: "IRR, TVPI, DPI, and look-through exposure", href: "#product" },
-      { title: "Workflow", description: "Sourcing to IC to monitoring", href: "#workflow" },
-      { title: "AI", description: "Source-grounded, approval-gated assistance", href: "#ai" },
-      { title: "Governance", description: "Permissions, audit, and lineage", href: "#governance" },
+      { title: "OCTO Core", description: "Ontology, book of record, intelligence, workflow", href: "#core" },
+      { title: "Product", description: "Control panel, portfolio, fund, and investment views", href: "#product" },
+      { title: "Governed AI", description: "Answers with evidence and human approval", href: "#ai" },
+      { title: "Capabilities", description: "Everything OCTO covers, in one index", href: "#capabilities" },
     ],
   },
   {
-    label: "Solutions",
+    label: "System",
     links: [
-      { title: "Deal teams", description: "Screening, diligence, and IC review", href: "#workflow" },
-      { title: "Portfolio operations", description: "Monitoring and company performance", href: "#product" },
-      { title: "Finance and reporting", description: "Reconciled records and LP reporting", href: "#lineage" },
+      { title: "Fragmented data", description: "Why firms lose one version of the truth", href: "#problem" },
+      { title: "Data to decision", description: "Connect, normalize, analyze, review, act", href: "#system" },
+      { title: "Lineage", description: "Trace a number to its source document", href: "#lineage" },
+      { title: "Investment workflow", description: "Sourcing to IC review to monitoring", href: "#workflow" },
     ],
   },
   {
-    label: "Infrastructure",
+    label: "Governance",
     links: [
-      { title: "Self-hosted deployment", description: "Core data stays in your environment", href: "#governance" },
-      { title: "Lineage and audit", description: "Trace any figure to its source", href: "#lineage" },
-      { title: "Fragmented stack", description: "Why private markets need one record", href: "#problem" },
+      { title: "Controls", description: "Permissions, append-only records, approvals", href: "#governance" },
+      { title: "Audit trail", description: "Every material action is recorded", href: "#audit" },
+      { title: "Deployment", description: "Runs inside your environment", href: "#faq" },
     ],
   },
   {
     label: "Resources",
     links: [
-      { title: "FAQ", description: "Deployment, IBOR, data, and AI", href: "#faq" },
-      { title: "Request a walkthrough", description: "Talk to the OCTO team", href: "#contact" },
+      { title: "Questions", description: "Deployment, IBOR, data sources, and AI", href: "#faq" },
+      { title: "Talk to the team", description: "Book a walkthrough on sample data", href: "#contact" },
     ],
   },
 ];
 
-export const CTA_HREF = "#contact";
-export const SIGN_IN_HREF = "/login";
+/* ---------- OCTO Core (CORE-100) ---------- */
 
-export const PRINCIPLES = [
-  "One system.",
-  "One governed model.",
-  "One book of record.",
-  "Every number traceable.",
-  "AI proposes. Humans approve.",
-] as const;
+export type CoreLayer = {
+  id: "ontology" | "ibor" | "intelligence" | "workflow";
+  number: string;
+  eyebrow: string;
+  label: string;
+  title: string;
+  description: string;
+  bullets: string[];
+  enables: string;
+};
+
+export const CORE_LAYERS: CoreLayer[] = [
+  {
+    id: "ontology",
+    number: "01",
+    eyebrow: "Context",
+    label: "Investment Ontology",
+    title: "Understand every investment in context.",
+    description: "The Investment Ontology connects funds, investments, companies, people, documents, and events in one governed model. Every source maps onto it once.",
+    bullets: ["Funds, investments, companies, LPs", "People, documents, and events", "Versioned and reviewed like code"],
+    enables: "Open a company and see its fund, deal team, financials, and documents together.",
+  },
+  {
+    id: "ibor",
+    number: "02",
+    eyebrow: "Truth",
+    label: "Investment Book of Record",
+    title: "One governed record.",
+    description: "Keep the investment record current, traceable, and ready for analysis. Positions and cash are derived from an append-only ledger of events.",
+    bullets: ["Transactions, valuations, cash flows", "Corrections supersede, never overwrite", "Reconciled against administrators"],
+    enables: "Every report reads from the same record, so numbers agree across teams.",
+  },
+  {
+    id: "intelligence",
+    number: "03",
+    eyebrow: "Reasoning",
+    label: "Intelligence",
+    title: "Answers from governed context.",
+    description: "Analytics, search, and AI-assisted analysis run on the ontology and the book of record, and every answer keeps its sources attached.",
+    bullets: ["IRR, TVPI, DPI, look-through exposure", "Questions in plain language", "Evidence cited with every answer"],
+    enables: "Investigate a change in performance without rebuilding the model.",
+  },
+  {
+    id: "workflow",
+    number: "04",
+    eyebrow: "Action",
+    label: "Workflow",
+    title: "From exception to resolution.",
+    description: "Tasks, exceptions, and approvals move through named owners, so analysis turns into a reviewed, recorded action.",
+    bullets: ["Exceptions routed to an owner", "Approvals before anything leaves", "Decision record kept with the evidence"],
+    enables: "Nothing material leaves the system without a named approver.",
+  },
+];
+
+/* ---------- Data → decision (FLOW-100/101) ---------- */
 
 export type FlowStage = { id: string; label: string; title: string; description: string; items: string[] };
 
 export const FLOW_STAGES: FlowStage[] = [
   {
-    id: "ingest",
-    label: "Ingest",
-    title: "Connect the sources you already run",
-    description: "Adapters pull from CRMs, fund administrators, financial and market-data feeds, and document stores without replacing them.",
-    items: ["CRM", "Documents", "Financial feeds", "Market data", "Internal systems"],
+    id: "connect",
+    label: "Connect",
+    title: "Sources enter through governed adapters.",
+    description: "CRMs, fund administrators, financial and market-data feeds, and document stores stay where they are. OCTO reads from them.",
+    items: ["CRM", "Fund administrator", "Financial feeds", "Market data", "Documents"],
   },
   {
     id: "normalize",
     label: "Normalize",
-    title: "Resolve every record to one entity",
-    description: "Names, identifiers, and schemas are mapped onto the Investment Ontology and validated before anything is recorded.",
-    items: ["Entity resolution", "Schema mapping", "Validation", "Source lineage"],
+    title: "Data is mapped to canonical objects.",
+    description: "Names, identifiers, and schemas resolve to one entity each, and records are validated before they are accepted.",
+    items: ["Entity resolution", "Schema mapping", "Validation"],
   },
   {
-    id: "record",
-    label: "Record",
-    title: "Write it once, to the book of record",
-    description: "Events land in an append-only ledger. Positions and cash are derived from transactions, never edited directly.",
-    items: ["Transactions", "Commitments", "Cash flows", "Valuations", "Positions"],
+    id: "contextualize",
+    label: "Contextualize",
+    title: "The ontology adds relationships and meaning.",
+    description: "A record stops being a row. It becomes a company, in a fund, with a deal team, financials, and documents attached.",
+    items: ["Relationships", "Ownership", "Source lineage"],
   },
   {
     id: "analyze",
     label: "Analyze",
-    title: "Measure on governed data",
-    description: "Performance, exposure, and custom metrics are computed from the ledger with versioned definitions.",
-    items: ["IRR", "TVPI", "MOIC", "DPI", "Look-through exposure", "Custom metrics", "AI-assisted analysis"],
+    title: "Metrics and questions run on governed context.",
+    description: "Performance, exposure, and custom metrics are calculated from the ledger with versioned definitions.",
+    items: ["IRR", "TVPI", "MOIC", "DPI", "Look-through exposure"],
+  },
+  {
+    id: "review",
+    label: "Review",
+    title: "People inspect evidence before anything moves.",
+    description: "Exceptions and AI-drafted proposals arrive with their evidence, so reviewers decide on facts, not summaries.",
+    items: ["Exceptions", "Evidence", "Proposals"],
   },
   {
     id: "act",
     label: "Act",
-    title: "Turn analysis into reviewed action",
-    description: "Alerts, tasks, reports, and exports move through approval before anything leaves the system.",
-    items: ["Alerts", "Tasks", "Reports", "Approvals", "Exports"],
+    title: "Approved outputs enter a governed workflow.",
+    description: "Reports, tasks, and exports leave the system only after approval, and the decision is recorded with its evidence.",
+    items: ["Reports", "Tasks", "Approvals", "Exports"],
   },
 ];
 
@@ -104,16 +162,18 @@ export const LIFECYCLE = [
   "IC review",
   "Invested",
   "Portfolio monitoring",
-  "Reporting",
+  "Exit / reporting",
 ] as const;
 
+/* ---------- Governance (GOV-100) ---------- */
+
 export const GOVERNANCE = [
-  { name: "Self-hosted", tag: "Data residency", body: "Core data runs inside your environment. No external SaaS dependency for the ledger or the ontology." },
-  { name: "Ontology", tag: "Versioned", body: "The canonical model is maintained like code: reviewed, validated, and semantically versioned." },
-  { name: "Lineage", tag: "Traceability", body: "Every reported number resolves to its calculation, ledger events, source system, and document." },
-  { name: "Permissions", tag: "RBAC + ABAC", body: "Access is scoped by role and by fund, deal, entity, document, and purpose." },
-  { name: "Audit", tag: "Material actions", body: "Governed actions are written to an immutable audit trail that reviewers can replay." },
-  { name: "AI governance", tag: "Models · prompts · approvals", body: "Models and prompts are versioned; outputs carry provenance; high-impact actions need human sign-off." },
+  { name: "Permission-scoped", body: "People and AI see only what their role, fund, and deal assignments allow." },
+  { name: "Source-grounded", body: "Source context stays attached to every number, answer, and draft." },
+  { name: "Append-only", body: "Every change remains traceable. Corrections supersede a record; they never overwrite it." },
+  { name: "Human approval", body: "High-impact actions wait for a named approver before they leave the system." },
+  { name: "Audit trail", body: "Material actions are written to an audit log that reviewers can replay." },
+  { name: "Controlled deployment", body: "Core data runs inside your environment, with no external SaaS dependency for the record." },
 ] as const;
 
 export const FAQ = [
@@ -123,28 +183,47 @@ export const FAQ = [
   },
   {
     q: "What is the Investment Book of Record?",
-    a: "An append-only ledger of transactions, commitments, cash flows, and valuations. Positions and cash are derived from it. Corrections supersede an event with a stated rationale instead of overwriting it, so history is never lost.",
+    a: "An append-only ledger of transactions, commitments, cash flows, and valuations. Positions and cash are derived from it. A correction supersedes an event with a stated reason instead of overwriting it.",
   },
   {
-    q: "How does OCTO work with existing fund administrators and data providers?",
-    a: "It sits alongside them. Ingestion adapters normalize their feeds onto the ontology, and reconciliation flags where sources disagree, so your administrator remains a source while OCTO becomes the record your team works from.",
+    q: "Does OCTO replace our fund administrator or data providers?",
+    a: "No. It reads from them. Adapters map their feeds onto the ontology and reconciliation flags where sources disagree, so your administrator stays a source while OCTO becomes the record your team works from.",
   },
   {
-    q: "How is AI governed?",
-    a: "AI answers are grounded in permitted records and cite their sources. Each output records model, version, and request lineage; confidential data is blocked from external APIs; and actions with material impact require human approval.",
+    q: "What can the AI do on its own?",
+    a: "Draft. Answers are built from records the user is permitted to see and cite their sources. Anything with material impact — a report, a memo, a correction — waits for human approval.",
   },
   {
-    q: "Can firms configure workflows and metrics?",
+    q: "Can we configure workflows and metrics?",
     a: "Yes. Screening criteria, approval routes, alert rules, and metric definitions are configurable and versioned, so a change to how a number is calculated is itself reviewable.",
   },
 ] as const;
+
+/* ---------- Capability index (CAP-100/101) ---------- */
+
+export const CAPABILITIES = [
+  { title: "Investment data", benefit: "Connect every source to one model.", signal: "Adapters · ontology", href: "#system" },
+  { title: "Portfolio analytics", benefit: "Compare funds without rebuilding the model.", signal: "IRR · TVPI · DPI", href: "#product" },
+  { title: "Investment monitoring", benefit: "See what changed, and why.", signal: "Company KPIs", href: "#product" },
+  { title: "Deal sourcing", benefit: "Track prospects against your thesis.", signal: "Pipeline · CRM", href: "#workflow" },
+  { title: "Due diligence", benefit: "Keep evidence requests with the deal.", signal: "Checklists · documents", href: "#workflow" },
+  { title: "IC workflow", benefit: "Route memos to named approvers.", signal: "Approvals · decision record", href: "#workflow" },
+  { title: "LP reporting", benefit: "Report from the reconciled record.", signal: "IBOR · reports", href: "#lineage" },
+  { title: "Exceptions", benefit: "Assign, review, and resolve breaks.", signal: "Reconciliation", href: "#core" },
+  { title: "Alerts", benefit: "Know when a threshold is crossed.", signal: "Rules · control panel", href: "#product" },
+  { title: "AI-assisted analysis", benefit: "Draft explanations from governed context.", signal: "Citations · review", href: "#ai" },
+  { title: "Governance", benefit: "Scope access by role, fund, and deal.", signal: "RBAC · ABAC", href: "#governance" },
+  { title: "Audit and lineage", benefit: "Trace a number to its source document.", signal: "Ledger · audit log", href: "#lineage" },
+] as const;
+
+/* ---------- Contact ---------- */
 
 export const CONSOLIDATE_OPTIONS = [
   "Portfolio data",
   "Deal workflow",
   "Reporting",
   "Data infrastructure",
-  "AI / analytics",
+  "AI-assisted analysis",
 ] as const;
 
 export const ROLE_OPTIONS = [
@@ -156,36 +235,29 @@ export const ROLE_OPTIONS = [
   "Other",
 ] as const;
 
+/* ---------- Footer (FOOT-100) ---------- */
+
 export const FOOTER: NavGroup[] = [
   {
     label: "Platform",
     links: [
-      { title: "Investment Ontology", href: "#core" },
-      { title: "Book of Record", href: "#core" },
+      { title: "OCTO Core", href: "#core" },
+      { title: "System", href: "#system" },
       { title: "Analytics", href: "#product" },
-      { title: "Governed AI", href: "#ai" },
-    ],
-  },
-  {
-    label: "Solutions",
-    links: [
-      { title: "Deal teams", href: "#workflow" },
-      { title: "Portfolio operations", href: "#product" },
-      { title: "Finance and reporting", href: "#lineage" },
-    ],
-  },
-  {
-    label: "Infrastructure",
-    links: [
-      { title: "Self-hosted deployment", href: "#governance" },
-      { title: "Lineage and audit", href: "#lineage" },
+      { title: "Governance", href: "#governance" },
     ],
   },
   {
     label: "Resources",
     links: [
-      { title: "FAQ", href: "#faq" },
-      { title: "Request a walkthrough", href: "#contact" },
+      { title: "Capabilities", href: "#capabilities" },
+      { title: "Questions", href: "#faq" },
+    ],
+  },
+  {
+    label: "Company",
+    links: [
+      { title: "Contact", href: "#contact" },
       { title: "Sign in", href: "/login" },
     ],
   },

@@ -1,3 +1,4 @@
+import { Announcement } from "@/components/landing/announcement";
 import { LandingNavigation } from "@/components/landing/landing-navigation";
 import { Hero } from "@/components/landing/hero";
 import { Fragmentation } from "@/components/landing/fragmentation";
@@ -8,17 +9,17 @@ import { Lineage } from "@/components/landing/lineage";
 import { GovernedAI } from "@/components/landing/governed-ai";
 import { InvestmentWorkflow } from "@/components/landing/investment-workflow";
 import { Governance } from "@/components/landing/governance";
-import { Faq } from "@/components/landing/faq";
+import { CapabilityIndex } from "@/components/landing/capability-index";
 import { Cta } from "@/components/landing/cta";
 import { Contact } from "@/components/landing/contact";
 import { Footer } from "@/components/landing/footer";
 
 /**
- * OCTO landing page.
+ * OCTO landing page (MASTER-001).
  *
- * Narrative order: problem → system → product → trust → AI → workflow →
- * governance → action. Each section answers the question the previous one
- * raises; copy lives in lib/landing-content.ts.
+ * Concept → system → product → evidence → governance → conversion. Each
+ * section answers the question the previous one raises; copy lives in
+ * lib/landing-content.ts and shared product surfaces in components/octo/.
  */
 export default function Page() {
   return (
@@ -29,6 +30,7 @@ export default function Page() {
       >
         Skip to content
       </a>
+      <Announcement />
       <LandingNavigation />
       <main id="main">
         <Hero />
@@ -40,7 +42,7 @@ export default function Page() {
         <GovernedAI />
         <InvestmentWorkflow />
         <Governance />
-        <Faq />
+        <CapabilityIndex />
         <Cta />
         <Contact />
       </main>

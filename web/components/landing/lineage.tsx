@@ -1,91 +1,128 @@
 "use client";
 
-import { useState } from "react";
-import { motion, useReducedMotion } from "motion/react";
-import { RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EventLog } from "@/components/octo/event-log";
 import { DUR, EASE, Reveal, SampleLabel, Section, SectionHeader, focusRing } from "./primitives";
 
-type Hop = { level: string; value: string; meta: string };
-type Trace = { id: string; label: string; scope: string; value: string; hops: Hop[] };
+type Node = { level: string; value: string; meta: string; preview: React.ReactNode };
 
-const TRACES: Trace[] = [
+const NODES: Node[] = [
   {
-    id: "irr",
-    label: "Gross IRR",
-    scope: "US Manufacturing III",
-    value: "21.4%",
-    hops: [
-      { level: "Calculation", value: "XIRR(cash flows, NAV)", meta: "Metric definition v3.2 · approved by Finance" },
-      { level: "IBOR events", value: "12 transactions", meta: "Capital calls, distributions, and NAV · 2019–2026" },
-      { level: "Source", value: "Fund administrator", meta: "Quarterly capital account statement" },
-      { level: "Document", value: "Q2 valuation report", meta: "Page 14 · received 14 Jul 2026" },
-    ],
+    level: "Metric",
+    value: "21.84% Gross IRR",
+    meta: "Keller Tooling · Q3 LP report",
+    preview: (
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
+        {[
+          ["Reported in", "Q3 LP report · page 6"],
+          ["Scope", "Keller Tooling · US Manufacturing III"],
+          ["As of", "30 Sep 2026"],
+          ["Definition", "Gross IRR v3.2"],
+        ].map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-4 border-b border-line py-1.5">
+            <dt className="text-ink-3">{k}</dt>
+            <dd className="text-right text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    ),
   },
   {
-    id: "tvpi",
-    label: "TVPI",
-    scope: "Total portfolio",
-    value: "2.31x",
-    hops: [
-      { level: "Calculation", value: "(Distributions + NAV) / Paid-in", meta: "Metric definition v2.0 · approved by Finance" },
-      { level: "IBOR events", value: "38 transactions", meta: "$412M paid-in · $196M distributed" },
-      { level: "Source", value: "Valuation committee", meta: "Q3 fair-value sign-off" },
-      { level: "Document", value: "Q3 NAV statement", meta: "Page 3 · signed off 30 Sep 2026" },
-    ],
+    level: "Calculation",
+    value: "XIRR(cash flows, NAV)",
+    meta: "Definition v3.2 · approved by Finance",
+    preview: (
+      <pre className="overflow-x-auto rounded-md bg-ink p-3 font-data text-[12px] leading-relaxed text-white/85">
+        {`XIRR(
+  −32.7  14 Jun 2021   capital call
+   −4.1  16 Mar 2022   follow-on
+   +6.8  26 Sep 2026   distribution
+  +96.4  30 Sep 2026   NAV
+) = 21.84%`}
+      </pre>
+    ),
+  },
+  {
+    level: "IBOR events",
+    value: "12 ledger events",
+    meta: "Capital calls, distributions, NAV",
+    preview: (
+      <EventLog
+        label="Ledger events behind the metric"
+        events={[
+          { time: "14 Jun", event: "Capital call · $32.7M", detail: "2021 · initial investment", actor: "system" },
+          { time: "16 Mar", event: "Follow-on · $4.1M", detail: "2022 · add-on acquisition", actor: "system" },
+          { time: "26 Sep", event: "Distribution · $6.8M", detail: "2026 · dividend recap", actor: "system" },
+          { time: "30 Sep", event: "NAV · $96.4M", detail: "2026 · valuation approved", actor: "person", emphasis: true },
+        ]}
+      />
+    ),
+  },
+  {
+    level: "Investment record",
+    value: "Keller Tooling · Buyout",
+    meta: "US Manufacturing III · since Jun 2021",
+    preview: (
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
+        {[
+          ["Fund", "US Manufacturing III"],
+          ["Instrument", "Common equity · 62%"],
+          ["Cost", "$36.8M"],
+          ["Fair value", "$96.4M"],
+        ].map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-4 border-b border-line py-1.5">
+            <dt className="text-ink-3">{k}</dt>
+            <dd className="text-right font-data tabular-nums text-ink">{v}</dd>
+          </div>
+        ))}
+      </dl>
+    ),
+  },
+  {
+    level: "Source document",
+    value: "Q2 valuation report",
+    meta: "Fund administrator · page 14",
+    preview: (
+      <div className="mx-auto max-w-md rounded-sm border border-line-strong bg-canvas p-4 shadow-[0_1px_0_var(--color-line)]">
+        <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Q2 valuation report · page 14 of 22</p>
+        <div aria-hidden className="mt-3 space-y-1.5">
+          <div className="h-1.5 w-3/4 rounded-full bg-muted" />
+          <div className="h-1.5 w-full rounded-full bg-muted" />
+          <div className="h-1.5 w-5/6 rounded-full bg-muted" />
+        </div>
+        <p className="my-3 rounded-sm bg-accent-soft px-2 py-1.5 font-data text-[12px] text-ink ring-1 ring-accent-line">
+          Keller Tooling — fair value $96.4M (Level 3, market approach)
+        </p>
+        <div aria-hidden className="space-y-1.5">
+          <div className="h-1.5 w-full rounded-full bg-muted" />
+          <div className="h-1.5 w-2/3 rounded-full bg-muted" />
+        </div>
+        <p className="mt-3 text-[11px] text-ink-3">Received 14 Jul 2026 · checksum verified</p>
+      </div>
+    ),
   },
 ];
 
-function LineageTrace({ trace }: { trace: Trace }) {
-  const reduce = useReducedMotion();
-  const hops: Hop[] = [{ level: "Reported figure", value: `${trace.label} · ${trace.value}`, meta: `${trace.scope} · Q3 LP report` }, ...trace.hops];
-  const step = 0.2;
-
-  return (
-    <motion.ol
-      className="relative"
-      aria-label={`Lineage of ${trace.label}, ${trace.scope}`}
-      initial={reduce ? false : "hidden"}
-      whileInView="show"
-      viewport={{ once: true, margin: "-80px" }}
-    >
-      {hops.map((hop, i) => (
-        <motion.li
-          key={hop.level}
-          className="relative grid grid-cols-[28px_1fr] gap-4 pb-5 last:pb-0"
-          variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: DUR.medium, ease: EASE, delay: 0.1 + i * step } } }}
-        >
-          {i < hops.length - 1 && (
-            <motion.span
-              aria-hidden
-              className="absolute left-[13.5px] top-8 h-[calc(100%-24px)] w-px origin-top bg-accent-line"
-              variants={{ hidden: { scaleY: 0 }, show: { scaleY: 1, transition: { duration: DUR.medium, ease: EASE, delay: 0.25 + i * step } } }}
-            />
-          )}
-          <span
-            className={cn(
-              "relative z-10 mt-2 flex size-7 items-center justify-center rounded-full border font-data text-[10px]",
-              i === 0 ? "border-accent bg-accent text-white" : "border-accent-line bg-canvas text-accent",
-            )}
-          >
-            {i === 0 ? <span className="size-1.5 rounded-full bg-white" /> : i}
-          </span>
-          <div className={cn("rounded-lg border bg-canvas px-4 py-3", i === 0 ? "border-accent-line" : "border-line")}>
-            <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">{hop.level}</p>
-            <p className={cn("mt-1 text-[15px] font-medium text-ink", hop.level === "Calculation" && "font-data text-sm")}>{hop.value}</p>
-            <p className="mt-0.5 text-[13px] text-ink-3">{hop.meta}</p>
-          </div>
-        </motion.li>
-      ))}
-    </motion.ol>
-  );
-}
-
-/** Signature trust section: any figure resolves to its evidence (TRUST-001/002). */
+/**
+ * Signature trust section (LINE-100..103). Opening the metric reveals its chain;
+ * hovering a step dims the others; selecting a step opens its preview. Horizontal
+ * on desktop, a vertical stepped timeline on phones.
+ */
 export function Lineage() {
-  const [selected, setSelected] = useState(0);
-  const [run, setRun] = useState(0);
-  const trace = TRACES[selected];
+  const reduce = useReducedMotion();
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(NODES.length - 1);
+  const [hover, setHover] = useState<number | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const seen = useInView(cardRef, { once: true, margin: "-35% 0px -35% 0px" });
+
+  // Reveal the chain once when the metric reaches mid-viewport; the button still toggles it.
+  useEffect(() => {
+    if (seen) setOpen(true);
+  }, [seen]);
 
   return (
     <Section id="lineage" tone="subtle" labelledBy="lineage-title">
@@ -93,66 +130,103 @@ export function Lineage() {
         id="lineage-title"
         index="05"
         eyebrow="Lineage"
-        title={
-          <>
-            Every number
-            <br />
-            defends itself.
-          </>
-        }
-        lead="Trace a metric from the report back to its calculation, ledger events, source system, and the page of the underlying document."
+        title="Every number defends itself."
+        lead="Trace a portfolio metric from its calculation to the ledger events, the investment record, and the page of the source document."
       />
 
-      <Reveal className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-5">
-          <fieldset>
-            <legend className="font-data text-meta uppercase text-ink-3">Select a reported figure</legend>
-            <div className="mt-3 space-y-2">
-              {TRACES.map((t, i) => (
-                <label
-                  key={t.id}
-                  className={cn(
-                    "flex cursor-pointer items-center justify-between gap-4 rounded-lg border bg-canvas px-4 py-4 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent",
-                    i === selected ? "border-accent" : "border-line hover:border-line-strong",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="lineage-metric"
-                    className="sr-only"
-                    checked={i === selected}
-                    onChange={() => {
-                      setSelected(i);
-                      setRun((n) => n + 1);
-                    }}
-                  />
-                  <span>
-                    <span className="block text-sm text-ink-3">{t.scope}</span>
-                    <span className="block text-sm font-medium text-ink">{t.label}</span>
-                  </span>
-                  <span className={cn("text-3xl font-semibold tabular-nums tracking-tight", i === selected ? "text-accent" : "text-ink")}>
-                    {t.value}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <SampleLabel>Last reconciled 30 Sep 2026 · 09:42 UTC</SampleLabel>
-            <button
-              type="button"
-              onClick={() => setRun((n) => n + 1)}
-              className={cn("-mx-2 inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[13px] text-ink-2 hover:text-ink", focusRing)}
-            >
-              <RotateCcw aria-hidden className="size-3.5" />
-              Replay trace
-            </button>
+      <Reveal className="mt-14">
+        <div ref={cardRef} className="flex flex-col gap-4 rounded-xl border border-line bg-canvas p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+          <div>
+            <p className="text-sm text-ink-3">Keller Tooling · US Manufacturing III</p>
+            <p className="mt-1 flex items-baseline gap-3">
+              <span className="text-4xl font-semibold tabular-nums tracking-tight">21.84%</span>
+              <span className="text-sm font-medium text-ink">Gross IRR</span>
+            </p>
+            <SampleLabel className="mt-2 block">Last reconciled 30 Sep 2026 · 09:42 UTC</SampleLabel>
           </div>
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="lineage-chain"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors",
+              open ? "border border-line-strong text-ink hover:bg-subtle" : "bg-accent text-white hover:bg-accent-hover",
+              focusRing,
+            )}
+          >
+            {open ? "Hide lineage" : "View lineage"}
+            <ChevronDown aria-hidden className={cn("size-4 transition-transform", open && "rotate-180")} />
+          </button>
         </div>
 
-        <div className="lg:col-span-7" aria-live="polite">
-          <LineageTrace key={`${trace.id}-${run}`} trace={trace} />
-        </div>
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              id="lineage-chain"
+              initial={reduce ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={reduce ? undefined : { opacity: 0, height: 0 }}
+              transition={{ duration: DUR.complex, ease: EASE }}
+              className="overflow-hidden"
+            >
+              <ol aria-label="Lineage of 21.84% Gross IRR" className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-5 lg:gap-0" onMouseLeave={() => setHover(null)}>
+                {NODES.map((n, i) => (
+                  <motion.li
+                    key={n.level}
+                    className="relative flex lg:flex-col"
+                    initial={reduce ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: DUR.standard, ease: EASE, delay: 0.08 + i * 0.12 }}
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={i === selected}
+                      onClick={() => setSelected(i)}
+                      onMouseEnter={() => setHover(i)}
+                      onFocus={() => setHover(i)}
+                      onBlur={() => setHover(null)}
+                      className={cn(
+                        "min-h-11 w-full rounded-lg border bg-canvas px-4 py-3 text-left transition-[opacity,border-color,background-color] duration-150 lg:h-full",
+                        i === selected ? "border-accent bg-accent-soft" : "border-line hover:border-line-strong",
+                        hover !== null && hover !== i && "opacity-55",
+                        focusRing,
+                      )}
+                    >
+                      <span className={cn("block font-data text-[10px] uppercase tracking-[0.08em]", i === selected ? "text-accent" : "text-ink-3")}>
+                        {String(i + 1).padStart(2, "0")} · {n.level}
+                      </span>
+                      <span className={cn("mt-1 block text-[15px] font-medium text-ink", n.level === "Calculation" && "font-data text-[13px]")}>{n.value}</span>
+                      <span className="mt-0.5 block text-[12px] text-ink-3">{n.meta}</span>
+                    </button>
+                    {i < NODES.length - 1 && (
+                      <span aria-hidden className="hidden w-4 shrink-0 items-center justify-center text-ink-3 lg:absolute lg:-right-2 lg:top-1/2 lg:z-10 lg:flex lg:-translate-y-1/2">
+                        <ArrowRight className="size-3.5 rounded-full bg-subtle" />
+                      </span>
+                    )}
+                  </motion.li>
+                ))}
+              </ol>
+
+              <div aria-live="polite" className="mt-4 rounded-xl border border-line bg-canvas p-5 md:p-6">
+                <p className="mb-4 font-data text-meta uppercase text-ink-3">
+                  <span className="text-accent">{NODES[selected].level}</span> · preview
+                </p>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={selected}
+                    initial={reduce ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={reduce ? undefined : { opacity: 0 }}
+                    transition={{ duration: DUR.fast }}
+                  >
+                    {NODES[selected].preview}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Reveal>
     </Section>
   );

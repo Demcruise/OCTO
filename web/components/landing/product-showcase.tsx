@@ -6,49 +6,122 @@ import { cn } from "@/lib/utils";
 import { DUR, EASE, Pill, type PillTone, Reveal, SampleLabel, Section, SectionHeader, focusRing, useTabs } from "./primitives";
 
 type Cell = string | { pill: PillTone; text: string };
-type View = {
-  tab: string;
-  nav: string;
-  title: string;
-  kpis: [string, string][];
-  chart: { label: string; kind: "line" | "bars"; points: number[]; x: string[]; accent?: number };
-  table: { head: string[]; right: number[]; rows: Cell[][] };
-};
+type Col = { label: string; right?: boolean; hideBelow?: "sm" | "md" | "lg" };
+type Table = { caption: string; cols: Col[]; rows: Cell[][] };
+type Chart = { label: string; kind: "line" | "bars"; points: number[]; x: string[]; accent?: number };
+type ListBlock = { title: string; items: { primary: string; secondary: string; tone?: PillTone; tag?: string }[] };
+type View = { tab: string; nav: string; title: string; kpis: [string, string][]; chart?: Chart; lists?: ListBlock[]; table?: Table };
 
 const QUARTERS = ["Q4 24", "Q1 25", "Q2 25", "Q3 25", "Q4 25", "Q1 26", "Q2 26", "Q3 26"];
 
+const HIDE = { sm: "hidden sm:table-cell", md: "hidden md:table-cell", lg: "hidden lg:table-cell" } as const;
+
+/* All figures are illustrative and formatted one way: $x.xM, IRR to one decimal, multiples to two (PROD-105). */
 const VIEWS: View[] = [
+  {
+    tab: "Control Panel",
+    nav: "Control Panel",
+    title: "Control panel",
+    kpis: [
+      ["Alerts", "3"],
+      ["Drafts", "2"],
+      ["Tasks", "5"],
+      ["Exceptions", "3"],
+      ["Signals", "4"],
+      ["Approvals", "2"],
+    ],
+    table: {
+      caption: "Items needing action",
+      cols: [{ label: "Item" }, { label: "Type", hideBelow: "sm" }, { label: "Entity", hideBelow: "md" }, { label: "State", right: true }],
+      rows: [
+        ["Covenant headroom < 15%", "Alert", "Atlas Components", { pill: "warn", text: "Open" }],
+        ["Q3 variance explanation", "Draft", "Harbor Logistics", { pill: "accent", text: "Review" }],
+        ["FX rate mismatch", "Exception", "Harbor Logistics", { pill: "warn", text: "Assigned" }],
+        ["Request Q3 management accounts", "Task", "FN NYC", { pill: "info", text: "Due 3 Oct" }],
+        ["Peer refinancing announced", "Signal", "Keller Tooling", { pill: "neutral", text: "New" }],
+        ["Q3 LP report · Growth Fund II", "Approval", "Growth Fund II", { pill: "accent", text: "2 of 3" }],
+      ],
+    },
+  },
   {
     tab: "Portfolio",
     nav: "Portfolio",
     title: "Portfolio overview",
-    kpis: [["Invested", "$1.82B"], ["Gross IRR", "18.4%"], ["TVPI", "2.31x"], ["DPI", "0.84x"]],
+    kpis: [
+      ["Invested", "$1.82B"],
+      ["Gross IRR", "18.4%"],
+      ["TVPI", "2.31x"],
+      ["Needs attention", "7"],
+    ],
     chart: { label: "Net asset value · $B", kind: "line", points: [1.21, 1.28, 1.35, 1.41, 1.52, 1.58, 1.66, 1.74], x: QUARTERS },
+    lists: [
+      {
+        title: "Companies requiring attention",
+        items: [
+          { primary: "Atlas Components", secondary: "Covenant headroom 12%", tone: "warn", tag: "Exception" },
+          { primary: "Harbor Logistics", secondary: "EBITDA −8.2% QoQ", tone: "warn", tag: "Review" },
+          { primary: "FN NYC", secondary: "Q3 accounts overdue", tone: "info", tag: "Task" },
+        ],
+      },
+      {
+        title: "Recent material changes",
+        items: [
+          { primary: "Valuation approved", secondary: "Growth Fund II · 30 Sep" },
+          { primary: "FX adjustment posted", secondary: "Harbor Logistics · 29 Sep" },
+          { primary: "Distribution $6.8M", secondary: "US Manufacturing III · 26 Sep" },
+        ],
+      },
+    ],
+  },
+  {
+    tab: "Fund",
+    nav: "Funds",
+    title: "Growth Fund II",
+    kpis: [
+      ["Commitments", "$750.0M"],
+      ["Called", "68%"],
+      ["Net IRR", "16.1%"],
+      ["DPI", "0.42x"],
+    ],
+    chart: { label: "Capital called per quarter · $M", kind: "bars", points: [42, 58, 31, 66, 48, 54, 39, 61], x: QUARTERS },
     table: {
-      head: ["Fund", "Vintage", "IRR", "TVPI"],
-      right: [2, 3],
+      caption: "Holdings",
+      cols: [{ label: "Company" }, { label: "Entry", hideBelow: "sm" }, { label: "Cost", right: true, hideBelow: "md" }, { label: "Fair value", right: true }, { label: "MOIC", right: true }],
       rows: [
-        ["US Manufacturing III", "2019", "21.4%", "2.7x"],
-        ["Growth Fund II", "2021", "18.2%", "2.3x"],
-        ["Growth Fund I", "2016", "16.9%", "2.1x"],
-        ["Credit Opportunities I", "2022", "11.3%", "1.3x"],
+        ["Atlas Components", "Mar 2023", "$86.0M", "$142.5M", "1.66x"],
+        ["Harbor Logistics", "Nov 2021", "$47.8M", "$61.2M", "1.28x"],
+        ["Northgate Software", "Aug 2022", "$27.3M", "$38.7M", "1.42x"],
       ],
     },
   },
   {
     tab: "Investment",
     nav: "Investments",
-    title: "Atlas Components · Growth Fund II",
-    kpis: [["Cost", "$86.0M"], ["Fair value", "$142.5M"], ["MOIC", "1.66x"], ["Gross IRR", "19.2%"]],
-    chart: { label: "Fair value · $M", kind: "line", points: [86, 92, 101, 108, 117, 126, 134, 142.5], x: QUARTERS },
+    title: "Investments",
+    kpis: [
+      ["Investments", "38"],
+      ["Active", "34"],
+      ["Realized", "4"],
+      ["On watch", "3"],
+    ],
     table: {
-      head: ["Date", "Event", "Source", "Amount"],
-      right: [3],
+      caption: "Investment register",
+      cols: [
+        { label: "Investment", hideBelow: "lg" },
+        { label: "Fund", hideBelow: "md" },
+        { label: "Company" },
+        { label: "Entry", hideBelow: "lg" },
+        { label: "Current value", right: true },
+        { label: "IRR", right: true, hideBelow: "sm" },
+        { label: "TVPI", right: true, hideBelow: "sm" },
+        { label: "Status", right: true },
+      ],
       rows: [
-        ["30 Sep 2026", "Valuation", "Q3 valuation report", "$142.5M"],
-        ["18 Sep 2026", "Follow-on", "Capital call notice", "$4.2M"],
-        ["30 Jun 2026", "Valuation", "Q2 valuation report", "$134.0M"],
-        ["12 Mar 2026", "Dividend", "Fund administrator", "($1.1M)"],
+        ["Buyout", "US Manufacturing III", "Keller Tooling", "Jun 2021", "$96.4M", "21.8%", "2.80x", { pill: "ok", text: "Performing" }],
+        ["Series B", "Growth Fund II", "Atlas Components", "Mar 2023", "$142.5M", "19.2%", "1.66x", { pill: "warn", text: "On watch" }],
+        ["Growth equity", "Growth Fund I", "FN NYC", "Apr 2018", "$54.0M", "17.3%", "2.21x", { pill: "ok", text: "Performing" }],
+        ["Growth equity", "Growth Fund II", "Northgate Software", "Aug 2022", "$38.7M", "14.6%", "1.42x", { pill: "ok", text: "Performing" }],
+        ["Buyout", "Growth Fund II", "Harbor Logistics", "Nov 2021", "$61.2M", "9.8%", "1.28x", { pill: "warn", text: "Exception" }],
       ],
     },
   },
@@ -56,50 +129,21 @@ const VIEWS: View[] = [
     tab: "Company",
     nav: "Companies",
     title: "Atlas Components",
-    kpis: [["Revenue LTM", "$212M"], ["EBITDA LTM", "$38.4M"], ["EBITDA margin", "18.1%"], ["Net debt / EBITDA", "2.1x"]],
+    kpis: [
+      ["Revenue LTM", "$212.0M"],
+      ["EBITDA LTM", "$38.4M"],
+      ["EBITDA margin", "18.1%"],
+      ["Net debt / EBITDA", "2.10x"],
+    ],
     chart: { label: "Quarterly EBITDA · $M", kind: "bars", points: [8.1, 8.6, 9.0, 9.2, 9.4, 9.8, 9.6, 9.6], x: QUARTERS },
     table: {
-      head: ["Metric", "Period", "Source", "Value"],
-      right: [3],
+      caption: "Reported metrics",
+      cols: [{ label: "Metric" }, { label: "Period", hideBelow: "sm" }, { label: "Source", hideBelow: "md" }, { label: "Value", right: true }],
       rows: [
         ["Revenue", "Q3 2026", "Management accounts", "$54.2M"],
         ["EBITDA", "Q3 2026", "Management accounts", "$9.6M"],
         ["Net debt", "30 Sep 2026", "Lender report", "$80.6M"],
         ["Headcount", "Q3 2026", "HR export", "1,140"],
-      ],
-    },
-  },
-  {
-    tab: "Control Panel",
-    nav: "Control Panel",
-    title: "Control panel",
-    kpis: [["Open alerts", "7"], ["In review", "3"], ["Approvals due", "2"], ["Active rules", "24"]],
-    chart: { label: "Alerts raised per week", kind: "bars", points: [4, 6, 3, 5, 8, 4, 6, 7], x: ["W32", "W33", "W34", "W35", "W36", "W37", "W38", "W39"] },
-    table: {
-      head: ["Rule", "Entity", "Raised", "State"],
-      right: [3],
-      rows: [
-        ["Covenant headroom < 15%", "Atlas Components", "30 Sep", { pill: "warn", text: "Open" }],
-        ["Valuation variance > 5% vs admin", "Growth Fund II", "29 Sep", { pill: "accent", text: "In review" }],
-        ["Missing Q3 management accounts", "FN NYC", "28 Sep", { pill: "info", text: "Assigned" }],
-        ["LP report ready for approval", "Growth Fund II", "27 Sep", { pill: "ok", text: "Approved" }],
-      ],
-    },
-  },
-  {
-    tab: "Analytics",
-    nav: "Analytics",
-    title: "Look-through exposure",
-    kpis: [["Industrials", "34%"], ["Technology", "22%"], ["Healthcare", "18%"], ["Consumer", "12%"]],
-    chart: { label: "Exposure by sector · %", kind: "bars", points: [34, 22, 18, 12, 9, 5], x: ["Ind.", "Tech", "Health", "Cons.", "Fin.", "Other"], accent: 0 },
-    table: {
-      head: ["Metric", "Definition", "Owner", "Version"],
-      right: [3],
-      rows: [
-        ["Net IRR", "XIRR(net cash flows, NAV)", "Finance", "v3.2"],
-        ["TVPI", "(Distributions + NAV) / Paid-in", "Finance", "v2.0"],
-        ["DPI", "Distributions / Paid-in", "Finance", "v2.0"],
-        ["Look-through", "Σ holding × underlying weight", "Risk", "v1.4"],
       ],
     },
   },
@@ -124,7 +168,10 @@ function ProductSidebar({ current }: { current: string }) {
           <li
             key={label}
             aria-current={label === current ? "page" : undefined}
-            className={cn("flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px]", label === current ? "bg-canvas font-medium text-ink shadow-[0_0_0_1px_var(--color-line)]" : "text-ink-3")}
+            className={cn(
+              "flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px]",
+              label === current ? "bg-canvas font-medium text-ink shadow-[0_0_0_1px_var(--color-line)]" : "text-ink-3",
+            )}
           >
             <Icon aria-hidden className={cn("size-3.5", label === current && "text-accent")} />
             {label}
@@ -137,10 +184,10 @@ function ProductSidebar({ current }: { current: string }) {
 
 function KpiStrip({ kpis }: { kpis: View["kpis"] }) {
   return (
-    <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line lg:grid-cols-4">
+    <dl className={cn("grid gap-px overflow-hidden rounded-lg border border-line bg-line", kpis.length === 6 ? "grid-cols-3 lg:grid-cols-6" : "grid-cols-2 lg:grid-cols-4")}>
       {kpis.map(([k, v]) => (
-        <div key={k} className="bg-canvas px-4 py-3">
-          <dt className="text-xs text-ink-3">{k}</dt>
+        <div key={k} className="min-w-0 bg-canvas px-4 py-3">
+          <dt className="truncate text-xs text-ink-3">{k}</dt>
           <dd className="mt-1 text-xl font-semibold tabular-nums tracking-tight md:text-2xl">{v}</dd>
         </div>
       ))}
@@ -148,7 +195,7 @@ function KpiStrip({ kpis }: { kpis: View["kpis"] }) {
   );
 }
 
-function MiniChart({ chart }: { chart: View["chart"] }) {
+function MiniChart({ chart }: { chart: Chart }) {
   const W = 600;
   const H = 150;
   const pad = 8;
@@ -163,7 +210,7 @@ function MiniChart({ chart }: { chart: View["chart"] }) {
   return (
     <figure className="rounded-lg border border-line p-4">
       <figcaption className="text-xs text-ink-3">{chart.label}</figcaption>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 h-28 w-full md:h-36" preserveAspectRatio="none" aria-hidden>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-3 h-24 w-full md:h-32" preserveAspectRatio="none" aria-hidden>
         {[0.25, 0.5, 0.75].map((f) => (
           <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} className="stroke-line" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
         ))}
@@ -197,15 +244,17 @@ function MiniChart({ chart }: { chart: View["chart"] }) {
   );
 }
 
-function DataTable({ table }: { table: View["table"] }) {
+function DataTable({ table }: { table: Table }) {
+  const cellCls = (c: Col) => cn(c.right && "text-right", c.hideBelow && HIDE[c.hideBelow]);
   return (
     <div className="overflow-x-auto rounded-lg border border-line">
-      <table className="w-full text-left text-[13px] sm:min-w-[520px]">
+      <table className="w-full text-left text-[13px]">
+        <caption className="sr-only">{table.caption}</caption>
         <thead className="bg-subtle">
           <tr>
-            {table.head.map((h, i) => (
-              <th key={h} scope="col" className={cn("px-4 py-2 text-xs font-medium text-ink-3", table.right.includes(i) && "text-right", i === 1 && "hidden sm:table-cell")}>
-                {h}
+            {table.cols.map((c) => (
+              <th key={c.label} scope="col" className={cn("whitespace-nowrap px-4 py-2 text-xs font-medium text-ink-3", cellCls(c))}>
+                {c.label}
               </th>
             ))}
           </tr>
@@ -213,11 +262,22 @@ function DataTable({ table }: { table: View["table"] }) {
         <tbody className="divide-y divide-line">
           {table.rows.map((r, ri) => (
             <tr key={ri}>
-              {r.map((c, ci) => (
-                <td key={ci} className={cn("px-4 py-2.5", ci === 0 ? "font-medium text-ink" : "text-ink-2", table.right.includes(ci) && "text-right font-data tabular-nums", ci === 1 && "hidden sm:table-cell")}>
-                  {typeof c === "string" ? c : <Pill tone={c.pill} dot>{c.text}</Pill>}
-                </td>
-              ))}
+              {r.map((cell, ci) => {
+                const col = table.cols[ci];
+                return (
+                  <td
+                    key={ci}
+                    className={cn(
+                      "px-4 py-2.5",
+                      ci === table.cols.findIndex((c) => !c.hideBelow) ? "min-w-40 font-medium text-ink" : "whitespace-nowrap text-ink-2",
+                      col.right && typeof cell === "string" && "font-data tabular-nums",
+                      cellCls(col),
+                    )}
+                  >
+                    {typeof cell === "string" ? cell : <Pill tone={cell.pill} dot>{cell.text}</Pill>}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
@@ -226,7 +286,34 @@ function DataTable({ table }: { table: View["table"] }) {
   );
 }
 
-/** Product proof: a coherent, deterministic OCTO interface (PRODUCT-001/002/003). */
+function Lists({ lists }: { lists: ListBlock[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {lists.map((l) => (
+        <section key={l.title} aria-label={l.title} className="rounded-lg border border-line">
+          <p className="border-b border-line bg-subtle px-4 py-2 text-xs font-medium text-ink-3">{l.title}</p>
+          <ul className="divide-y divide-line">
+            {l.items.map((it) => (
+              <li key={it.primary} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-medium text-ink">{it.primary}</p>
+                  <p className="truncate text-xs text-ink-3">{it.secondary}</p>
+                </div>
+                {it.tag && (
+                  <Pill tone={it.tone} dot>
+                    {it.tag}
+                  </Pill>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** Product proof: one coherent OCTO interface across five surfaces (PROD-100..105). */
 export function ProductShowcase() {
   const { active, onKeyDown, tabProps } = useTabs(VIEWS.length);
   const reduce = useReducedMotion();
@@ -238,8 +325,8 @@ export function ProductShowcase() {
         id="product-title"
         index="04"
         eyebrow="The product"
-        title="One interface for the whole portfolio."
-        lead="Portfolio, investments, companies, alerts, and analytics read from the same book of record, so every screen agrees with every other screen."
+        title="Know what changed. Know why. Know what needs a decision."
+        lead="The control panel, portfolio, fund, investment, and company views all read from the same book of record, so every screen agrees with every other screen."
       />
 
       <Reveal className="mt-12">
@@ -251,7 +338,7 @@ export function ProductShowcase() {
               id={`product-tab-${i}`}
               aria-controls="product-panel"
               className={cn(
-                "h-9 shrink-0 rounded-md border px-3.5 text-sm transition-colors",
+                "min-h-11 shrink-0 rounded-md border px-3.5 text-sm transition-colors sm:min-h-9",
                 i === active ? "border-ink bg-ink text-white" : "border-line bg-canvas text-ink-2 hover:border-line-strong hover:text-ink",
                 focusRing,
               )}
@@ -261,20 +348,23 @@ export function ProductShowcase() {
           ))}
         </div>
 
-        <div id="product-panel" role="tabpanel" aria-labelledby={`product-tab-${active}`} className="mt-4 overflow-hidden rounded-xl border border-line-strong bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.28)]">
+        <div
+          id="product-panel"
+          role="tabpanel"
+          aria-labelledby={`product-tab-${active}`}
+          className="mt-4 overflow-hidden rounded-xl border border-line-strong bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.28)]"
+        >
           <div className="flex items-center gap-3 border-b border-line bg-subtle px-4 py-2.5">
             <span aria-hidden className="flex gap-1.5">
               {[0, 1, 2].map((d) => (
-                <span key={d} className="size-2.5 rounded-full bg-line-strong" />
+                <span key={d} className="size-2 rounded-full bg-line-strong" />
               ))}
             </span>
-            <p className="min-w-0 flex-1 truncate font-data text-[11px] text-ink-3">
-              octo / {view.nav.toLowerCase().replace(" ", "-")}
-            </p>
+            <p className="min-w-0 flex-1 truncate font-data text-[11px] text-ink-2">octo / {view.nav.toLowerCase().replace(" ", "-")}</p>
             <SampleLabel className="hidden sm:inline">Illustrative portfolio · as of 30 Sep 2026</SampleLabel>
           </div>
 
-          <div className="flex min-h-[520px]">
+          <div className="flex min-h-[540px]">
             <ProductSidebar current={view.nav} />
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -290,8 +380,9 @@ export function ProductShowcase() {
                   <SampleLabel className="sm:hidden">Sample data</SampleLabel>
                 </div>
                 <KpiStrip kpis={view.kpis} />
-                <MiniChart chart={view.chart} />
-                <DataTable table={view.table} />
+                {view.chart && <MiniChart chart={view.chart} />}
+                {view.lists && <Lists lists={view.lists} />}
+                {view.table && <DataTable table={view.table} />}
               </motion.div>
             </AnimatePresence>
           </div>

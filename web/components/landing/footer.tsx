@@ -12,16 +12,16 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <OctoWordmark />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-2">The operating system for private markets.</p>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-2">Private-markets investment infrastructure.</p>
           </div>
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-8">
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-8">
             {FOOTER.map((group) => (
               <div key={group.label}>
                 <p className="font-data text-meta uppercase text-ink-3">{group.label}</p>
                 <ul className="mt-4 space-y-2.5">
                   {group.links.map((link) => (
                     <li key={link.title}>
-                      <a href={link.href} className={`rounded-sm text-sm text-ink-2 hover:text-ink ${focusRing}`}>
+                      <a href={link.href} className={`inline-flex min-h-8 items-center rounded-sm text-sm text-ink-2 hover:text-ink ${focusRing}`}>
                         {link.title}
                       </a>
                     </li>

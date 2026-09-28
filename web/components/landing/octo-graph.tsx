@@ -15,18 +15,24 @@ const NODES = [
 const EDGES = ["invests via", "in", "records", "moves", "feeds"];
 
 /**
- * Ontology path from fund to report (HERO-003). The active node walks the path
- * while visible; reduced motion shows the full path statically.
+ * Ontology path from fund to report (HERO-003). Nodes connect once, in order,
+ * when the strip enters view — no loop (HERO-104, MOTION-104). Reduced motion
+ * renders the connected end state.
  */
 export function OctoGraph() {
   const ref = useRef<HTMLOListElement>(null);
-  const inView = useInView(ref, { margin: "-40px" });
+  const inView = useInView(ref, { once: true, margin: "-40px" });
   const reduce = useReducedMotion();
-  const [active, setActive] = useState(NODES.length - 1);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
     if (reduce || !inView) return;
-    const id = window.setInterval(() => setActive((i) => (i + 1) % NODES.length), 1600);
+    const id = window.setInterval(() => {
+      setActive((i) => {
+        if (i >= NODES.length - 1) window.clearInterval(id);
+        return Math.min(i + 1, NODES.length - 1);
+      });
+    }, 260);
     return () => window.clearInterval(id);
   }, [inView, reduce]);
 
