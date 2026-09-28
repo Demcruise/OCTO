@@ -53,7 +53,7 @@ const VISUALS: Record<string, React.ReactNode> = {
         ["Fund administrator", "3,912", status("ok", "Synced")],
         ["Financial data feed", "642", status("ok", "Synced")],
         ["Document store", "418", status("info", "Classifying")],
-        ["Market data", "12,006", status("ok", "Synced")],
+        ["Market data", "12,006", status("warn", "Stale · 3d")],
       ]}
     />
   ),

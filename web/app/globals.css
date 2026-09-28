@@ -75,7 +75,7 @@
 }
 
 /* Anchor targets clear the sticky 64px header. */
-.landing section[id] {
+.landing [id] {
     scroll-margin-top: 4.5rem;
 }
 

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { BarChart3, Briefcase, Building2, FileText, Gauge, Layers, PieChart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EvidenceList, type Evidence } from "@/components/octo/evidence-list";
 import { DUR, EASE, Pill, type PillTone, Reveal, SampleLabel, Section, SectionHeader, focusRing, useTabs } from "./primitives";
 
 type Cell = string | { pill: PillTone; text: string };
@@ -10,7 +12,17 @@ type Col = { label: string; right?: boolean; hideBelow?: "sm" | "md" | "lg" };
 type Table = { caption: string; cols: Col[]; rows: Cell[][] };
 type Chart = { label: string; kind: "line" | "bars"; points: number[]; x: string[]; accent?: number };
 type ListBlock = { title: string; items: { primary: string; secondary: string; tone?: PillTone; tag?: string }[] };
-type View = { tab: string; nav: string; title: string; kpis: [string, string][]; chart?: Chart; lists?: ListBlock[]; table?: Table };
+type View = {
+  tab: string;
+  nav: string;
+  title: string;
+  kpis: [string, string][];
+  facts?: [string, string, PillTone?][];
+  why?: { label: string; evidence: Evidence[] };
+  chart?: Chart;
+  lists?: ListBlock[];
+  table?: Table;
+};
 
 const QUARTERS = ["Q4 24", "Q1 25", "Q2 25", "Q3 25", "Q4 25", "Q1 26", "Q2 26", "Q3 26"];
 
@@ -76,21 +88,33 @@ const VIEWS: View[] = [
   {
     tab: "Fund",
     nav: "Funds",
-    title: "Growth Fund II",
+    title: "US Manufacturing III",
     kpis: [
-      ["Commitments", "$750.0M"],
-      ["Called", "68%"],
-      ["Net IRR", "16.1%"],
-      ["DPI", "0.42x"],
+      ["Gross IRR", "21.8%"],
+      ["TVPI", "2.70x"],
+      ["MOIC", "2.55x"],
+      ["Portfolio companies", "12"],
     ],
-    chart: { label: "Capital called per quarter · $M", kind: "bars", points: [42, 58, 31, 66, 48, 54, 39, 61], x: QUARTERS },
+    facts: [
+      ["Open items", "03"],
+      ["Latest valuation", "24 Sep 2026"],
+      ["Market comps", "Stale · updated 3 days ago", "warn"],
+    ],
+    why: {
+      label: "Why 21.8% gross IRR?",
+      evidence: [
+        { ref: "1", title: "Fund cash flows 2019–2026 · 48 ledger events", kind: "IBOR", excerpt: "Calls $612.0M · distributions $418.6M · NAV $1,234.8M as of 30 Sep 2026." },
+        { ref: "2", title: "Gross IRR definition v3.2", kind: "Metric", excerpt: "XIRR over fund-level cash flows and closing NAV, before fees and carry." },
+        { ref: "3", title: "Q3 valuation report · 24 Sep 2026", kind: "Document", excerpt: "12 portfolio company fair values, approved by the valuation committee on 30 Sep." },
+      ],
+    },
     table: {
       caption: "Holdings",
       cols: [{ label: "Company" }, { label: "Entry", hideBelow: "sm" }, { label: "Cost", right: true, hideBelow: "md" }, { label: "Fair value", right: true }, { label: "MOIC", right: true }],
       rows: [
-        ["Atlas Components", "Mar 2023", "$86.0M", "$142.5M", "1.66x"],
-        ["Harbor Logistics", "Nov 2021", "$47.8M", "$61.2M", "1.28x"],
-        ["Northgate Software", "Aug 2022", "$27.3M", "$38.7M", "1.42x"],
+        ["Meridian Fluid Systems", "Oct 2019", "$52.5M", "$121.0M", "2.30x"],
+        ["Keller Tooling", "Jun 2021", "$36.8M", "$96.4M", "2.80x"],
+        ["Brightline Castings", "Mar 2020", "$41.2M", "$88.9M", "2.16x"],
       ],
     },
   },
@@ -286,6 +310,43 @@ function DataTable({ table }: { table: Table }) {
   );
 }
 
+/** Object facts plus a "why this number?" disclosure (PAL-005, PAL-008). */
+function ObjectFacts({ facts, why }: { facts?: View["facts"]; why?: View["why"] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-lg border border-line">
+      {facts && (
+        <dl className="grid grid-cols-1 divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {facts.map(([k, v, tone]) => (
+            <div key={k} className="flex items-baseline justify-between gap-3 px-4 py-2.5 sm:block">
+              <dt className="text-xs text-ink-3">{k}</dt>
+              <dd className={cn("text-[13px] font-medium sm:mt-0.5", tone === "warn" ? "text-warn" : "text-ink")}>{v}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {why && (
+        <div className="border-t border-line px-4 py-3">
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="product-why"
+            onClick={() => setOpen((v) => !v)}
+            className={cn("inline-flex min-h-9 items-center gap-2 rounded-md text-[13px] font-medium text-accent hover:text-accent-hover", focusRing)}
+          >
+            {why.label} {open ? "Hide sources" : "Show sources"}
+          </button>
+          {open && (
+            <div id="product-why" className="mt-2">
+              <EvidenceList items={why.evidence} />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Lists({ lists }: { lists: ListBlock[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -380,6 +441,7 @@ export function ProductShowcase() {
                   <SampleLabel className="sm:hidden">Sample data</SampleLabel>
                 </div>
                 <KpiStrip kpis={view.kpis} />
+                {(view.facts || view.why) && <ObjectFacts key={view.tab} facts={view.facts} why={view.why} />}
                 {view.chart && <MiniChart chart={view.chart} />}
                 {view.lists && <Lists lists={view.lists} />}
                 {view.table && <DataTable table={view.table} />}

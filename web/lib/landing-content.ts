@@ -14,31 +14,35 @@ export const SIGN_IN_HREF = "/login";
 
 export const ANNOUNCEMENT = { label: "Private beta", text: "Onboarding a small number of private-markets firms.", cta: "Request access" };
 
+/**
+ * Grouped by mental model (PAL-007). Platform links deep-link into the OCTO Core
+ * switcher: the core section selects the layer named in the hash.
+ */
 export const NAV: NavGroup[] = [
   {
     label: "Platform",
     links: [
-      { title: "OCTO Core", description: "Ontology, book of record, intelligence, workflow", href: "#core" },
-      { title: "Product", description: "Control panel, portfolio, fund, and investment views", href: "#product" },
-      { title: "Governed AI", description: "Answers with evidence and human approval", href: "#ai" },
-      { title: "Capabilities", description: "Everything OCTO covers, in one index", href: "#capabilities" },
+      { title: "Investment Ontology", description: "Entities, relationships, events, context", href: "#core-tab-ontology" },
+      { title: "IBOR", description: "The governed book of record", href: "#core-tab-ibor" },
+      { title: "Intelligence", description: "Source-grounded analysis and questions", href: "#core-tab-intelligence" },
+      { title: "Workflow", description: "Exceptions, tasks, and approvals", href: "#core-tab-workflow" },
     ],
   },
   {
-    label: "System",
+    label: "Capabilities",
     links: [
-      { title: "Fragmented data", description: "Why firms lose one version of the truth", href: "#problem" },
-      { title: "Data to decision", description: "Connect, normalize, analyze, review, act", href: "#system" },
-      { title: "Lineage", description: "Trace a number to its source document", href: "#lineage" },
-      { title: "Investment workflow", description: "Sourcing to IC review to monitoring", href: "#workflow" },
+      { title: "Deal sourcing", description: "Screening to IC review", href: "#workflow" },
+      { title: "Portfolio", description: "Control panel, fund, and investment views", href: "#product" },
+      { title: "Analytics", description: "Metrics you can trace to the source", href: "#lineage" },
+      { title: "Reporting", description: "Every capability, one record underneath", href: "#capabilities" },
     ],
   },
   {
     label: "Governance",
     links: [
-      { title: "Controls", description: "Permissions, append-only records, approvals", href: "#governance" },
-      { title: "Audit trail", description: "Every material action is recorded", href: "#audit" },
-      { title: "Deployment", description: "Runs inside your environment", href: "#faq" },
+      { title: "Security", description: "Permission-scoped, controlled deployment", href: "#governance" },
+      { title: "Auditability", description: "Every material action is recorded", href: "#audit" },
+      { title: "Access", description: "Scope by role, fund, deal, and document", href: "#faq" },
     ],
   },
   {
@@ -214,6 +218,69 @@ export const CAPABILITIES = [
   { title: "AI-assisted analysis", benefit: "Draft explanations from governed context.", signal: "Citations · review", href: "#ai" },
   { title: "Governance", benefit: "Scope access by role, fund, and deal.", signal: "RBAC · ABAC", href: "#governance" },
   { title: "Audit and lineage", benefit: "Trace a number to its source document.", signal: "Ledger · audit log", href: "#lineage" },
+] as const;
+
+/**
+ * Capability architecture (PAL-002): seven connected nodes, each owning part of
+ * the capability index. Every capability title above appears under exactly one node.
+ */
+export const ARCHITECTURE = [
+  {
+    id: "ontology",
+    name: "Investment Ontology",
+    role: "Context",
+    body: "Funds, investments, companies, deals, and LPs as linked objects.",
+    capabilities: ["Investment data", "Deal sourcing"],
+    signals: [["Entity types", "Fund · Investment · Company · Deal · LP"], ["Relationships", "owns · invests-in · linked-to · reports-on"]],
+  },
+  {
+    id: "ibor",
+    name: "Investment Book of Record",
+    role: "Truth",
+    body: "An append-only ledger that positions, cash, and reports are derived from.",
+    capabilities: ["LP reporting", "Exceptions"],
+    signals: [["Last reconciled", "30 Sep 2026 · 09:42 UTC"], ["Open breaks", "3 flagged"]],
+  },
+  {
+    id: "intelligence",
+    name: "Intelligence",
+    role: "Reasoning",
+    body: "Questions and AI-assisted analysis over governed context, with sources attached.",
+    capabilities: ["AI-assisted analysis", "Investment monitoring"],
+    signals: [["Answer mode", "Source-grounded · cited"], ["Draft status", "Human review required"]],
+  },
+  {
+    id: "workflow",
+    name: "Workflow",
+    role: "Action",
+    body: "Diligence, committee review, and approvals routed to named owners.",
+    capabilities: ["Due diligence", "IC workflow"],
+    signals: [["IC review", "2 of 3 approvals"], ["Evidence requests", "1 outstanding"]],
+  },
+  {
+    id: "analytics",
+    name: "Analytics",
+    role: "Measurement",
+    body: "Performance and exposure calculated from the ledger with versioned definitions.",
+    capabilities: ["Portfolio analytics"],
+    signals: [["Gross IRR", "Definition v3.2"], ["Look-through", "Definition v1.4"]],
+  },
+  {
+    id: "governance",
+    name: "Governance",
+    role: "Control",
+    body: "Permissions, provenance, and an audit trail on every material action.",
+    capabilities: ["Governance", "Audit and lineage"],
+    signals: [["Access", "Role · fund · deal · document"], ["Audit", "Append-only log"]],
+  },
+  {
+    id: "control-panel",
+    name: "Control Panel",
+    role: "Attention",
+    body: "Alerts, drafts, tasks, exceptions, and approvals in one queue.",
+    capabilities: ["Alerts"],
+    signals: [["Open items", "19 across 6 queues"], ["Due this week", "7"]],
+  },
 ] as const;
 
 /* ---------- Contact ---------- */

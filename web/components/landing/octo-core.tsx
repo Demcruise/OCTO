@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -7,53 +8,10 @@ import { CORE_LAYERS, type CoreLayer } from "@/lib/landing-content";
 import { ProductFrame } from "@/components/octo/product-frame";
 import { EventLog } from "@/components/octo/event-log";
 import { EvidenceList } from "@/components/octo/evidence-list";
+import { OntologyExplorer } from "@/components/octo/ontology-explorer";
 import { DUR, EASE, Reveal, Section, SectionHeader, focusRing, useTabs } from "./primitives";
 
 /* ---------- Layer visuals (CORE-102..105) ---------- */
-
-type TreeNode = { label: string; kind: string; focus?: boolean; children?: TreeNode[] };
-
-const TREE: TreeNode = {
-  label: "Growth Fund II",
-  kind: "Fund",
-  children: [
-    {
-      label: "Series B · 2023",
-      kind: "Investment",
-      children: [
-        {
-          label: "Atlas Components",
-          kind: "Company",
-          focus: true,
-          children: [
-            { label: "Q3 2026 management accounts", kind: "Financials" },
-            { label: "Board pack · 24 Sep 2026", kind: "Documents" },
-          ],
-        },
-      ],
-    },
-    { label: "Northbridge Pension", kind: "LP" },
-  ],
-};
-
-function TreeRow({ node, child }: { node: TreeNode; child?: boolean }) {
-  return (
-    <li className={cn("relative", child && "pl-5 last:after:absolute last:after:-left-px last:after:bottom-0 last:after:top-[16px] last:after:w-px last:after:bg-canvas")}>
-      {child && <span aria-hidden className="absolute left-0 top-[15px] h-px w-3.5 bg-line-strong" />}
-      <div className="flex items-center gap-3 py-1">
-        <span className={cn("min-w-0 truncate", node.focus ? "font-medium text-accent" : "text-ink")}>{node.label}</span>
-        <span className="ml-auto shrink-0 rounded-sm bg-muted px-1.5 text-[10px] uppercase tracking-[0.06em] text-ink-3">{node.kind}</span>
-      </div>
-      {node.children && (
-        <ul className="ml-[7px] border-l border-line-strong">
-          {node.children.map((c) => (
-            <TreeRow key={c.label} node={c} child />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
 
 const EXCEPTION_STEPS = [
   { label: "Detected", at: "09:12", who: "Reconciliation" },
@@ -63,13 +21,7 @@ const EXCEPTION_STEPS = [
 ];
 
 const VISUALS: Record<CoreLayer["id"], React.ReactNode> = {
-  ontology: (
-    <ProductFrame path="ontology / growth-fund-ii" bodyClassName="p-4">
-      <ul className="font-data text-[13px]">
-        <TreeRow node={TREE} />
-      </ul>
-    </ProductFrame>
-  ),
+  ontology: <OntologyExplorer />,
   ibor: (
     <ProductFrame path="ibor / events · 30 Sep 2026" bodyClassName="p-4">
       <EventLog
@@ -131,9 +83,20 @@ const VISUALS: Record<CoreLayer["id"], React.ReactNode> = {
 
 /** OCTO Core: four layers with a switcher (PENDLE-002, CORE-100/101). */
 export function OctoCore() {
-  const { active, onKeyDown, tabProps } = useTabs(CORE_LAYERS.length);
+  const { active, setActive, onKeyDown, tabProps } = useTabs(CORE_LAYERS.length);
   const reduce = useReducedMotion();
   const layer = CORE_LAYERS[active];
+
+  // Navigation deep links (#core-tab-ibor, …) select the named layer (PAL-007).
+  useEffect(() => {
+    const sync = () => {
+      const i = CORE_LAYERS.findIndex((l) => window.location.hash === `#core-tab-${l.id}`);
+      if (i >= 0) setActive(i);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [setActive]);
 
   return (
     <Section id="core" labelledBy="core-title">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { AlertTriangle, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ApprovalState } from "@/components/octo/approval-state";
+import { ActionRun } from "@/components/octo/action-run";
 import { EvidenceList, type Evidence } from "@/components/octo/evidence-list";
 import { DUR, EASE, Pill, Reveal, SampleLabel, Section, SectionHeader, focusRing } from "./primitives";
 
@@ -28,6 +28,16 @@ const PARTIAL: Evidence[] = [
   { ref: "1", title: "IBOR event · Q3 valuation", kind: "Ledger" },
   { ref: "2", title: "Board report · 24 Sep 2026", kind: "Document" },
 ];
+
+/** The decision-context chain the page repeats: happened → why → affects → evidence → decision → approver (PAL-004). */
+const DECISION_CONTEXT = [
+  ["What happened?", "EBITDA fell 8.2% quarter on quarter."],
+  ["Why?", "Lower volume; higher input and headcount costs. [1] [2] [5]"],
+  ["What does it affect?", "Growth Fund II Q3 NAV and covenant headroom. [3]"],
+  ["What evidence supports it?", "5 cited records, all visible to you."],
+  ["What needs a decision?", "Whether to add this explanation to the Q3 IC memo."],
+  ["Who approves?", "Deal lead · Growth Fund II"],
+] as const;
 
 const CHAIN = [
   { title: "Context", body: "Answers start from the ontology and the book of record, not from the open web." },
@@ -72,6 +82,18 @@ function Answer() {
         </tbody>
       </table>
 
+      <section aria-label="Decision context">
+        <p className="mb-2 font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Decision context</p>
+        <dl className="divide-y divide-line rounded-lg border border-line">
+          {DECISION_CONTEXT.map(([q, a]) => (
+            <div key={q} className="grid grid-cols-1 gap-0.5 px-3 py-2 text-[13px] sm:grid-cols-[180px_1fr] sm:gap-3">
+              <dt className="text-ink-3">{q}</dt>
+              <dd className="text-ink">{a}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       <section aria-label="Sources">
         <p className="mb-2 font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Sources · select to inspect</p>
         <EvidenceList items={EVIDENCE} />
@@ -92,12 +114,10 @@ function Answer() {
       </dl>
 
       <div className="rounded-lg border border-line bg-subtle p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[13px] text-ink">
-            <span className="text-ink-3">Proposed action · </span>Add this explanation to the Q3 IC memo
-          </p>
-          <ApprovalState reached={review === "reviewed" ? "reviewer" : "evidence"} />
-        </div>
+        <p className="mb-3 text-[13px] text-ink">
+          <span className="text-ink-3">Proposed action · </span>Add this explanation to the Q3 IC memo
+        </p>
+        <ActionRun outcome={review} approver="deal lead" />
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <p aria-live="polite" className="text-[13px] text-ink-2">
             {review === "pending" && "Nothing is added until a person reviews it."}
