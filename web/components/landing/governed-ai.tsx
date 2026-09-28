@@ -1,275 +1,149 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { AlertTriangle, Check, X } from "lucide-react";
+import { AlertTriangle, Check, Lock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ActionRun } from "@/components/octo/action-run";
-import { EvidenceList, type Evidence } from "@/components/octo/evidence-list";
-import { DUR, EASE, Pill, Reveal, SampleLabel, Section, SectionHeader, focusRing } from "./primitives";
+import { EventLog } from "@/components/octo/event-log";
+import { Reveal, SampleLabel, Section, SectionHeader, focusRing } from "./primitives";
 
-const QUESTIONS = ["Why did EBITDA decline this quarter?", "What will Harbor Logistics be worth at exit?"] as const;
+type Outcome = "pending" | "approved" | "rejected";
 
-const DRIVERS = [
-  { name: "Revenue", change: "−4.1%", cite: 1 },
-  { name: "Cost of goods sold", change: "+6.3%", cite: 2 },
-  { name: "Headcount cost", change: "+12.0%", cite: 5 },
+const FLOW = [
+  { step: "AI proposal", detail: "Add the EBITDA explanation to the Q3 IC memo" },
+  { step: "Evidence", detail: "4 cited records · all resolve to a source" },
+  { step: "Permission check", detail: "Proposal and sources visible to the Growth Fund II deal team" },
+  { step: "Human review", detail: "Deal lead reviews the draft and its evidence" },
+  { step: "Approved action", detail: "Memo updated; decision logged with reviewer and reason" },
 ];
 
-const EVIDENCE: Evidence[] = [
-  { ref: "1", title: "Income statement · Q3 2026", kind: "Financials", excerpt: "Revenue $55.6M (Q2: $58.0M). Management accounts, reviewed 12 Oct." },
-  { ref: "2", title: "Board report · 24 Sep 2026", kind: "Document", excerpt: "p.14 — “Freight input costs rose 6% as fuel contracts reset in July.”" },
-  { ref: "3", title: "IBOR event · Q3 valuation", kind: "Ledger", excerpt: "Fair value marked down 4.8% on 30 Sep 2026 · approved by valuation committee." },
-  { ref: "4", title: "Portfolio record · Harbor Logistics", kind: "Ontology", excerpt: "Growth Fund II · Buyout · entered Nov 2021 · deal team of 3." },
-  { ref: "5", title: "Operating update · hiring plan", kind: "Document", excerpt: "42 hires in Q3 against a plan of 30 — depot expansion brought forward." },
-];
-
-const PARTIAL: Evidence[] = [
-  { ref: "1", title: "IBOR event · Q3 valuation", kind: "Ledger" },
-  { ref: "2", title: "Board report · 24 Sep 2026", kind: "Document" },
-];
-
-/** The decision-context chain the page repeats: happened → why → affects → evidence → decision → approver (PAL-004). */
-const DECISION_CONTEXT = [
-  ["What happened?", "EBITDA fell 8.2% quarter on quarter."],
-  ["Why?", "Lower volume; higher input and headcount costs. [1] [2] [5]"],
-  ["What does it affect?", "Growth Fund II Q3 NAV and covenant headroom. [3]"],
-  ["What evidence supports it?", "5 cited records, all visible to you."],
-  ["What needs a decision?", "Whether to add this explanation to the Q3 IC memo."],
-  ["Who approves?", "Deal lead · Growth Fund II"],
-] as const;
-
-const CHAIN = [
-  { title: "Context", body: "Answers start from the ontology and the book of record, not from the open web." },
-  { title: "Evidence", body: "Every statement cites the record or page it came from." },
-  { title: "Permissions", body: "AI sees only what the person asking may see. Confidential data never reaches external APIs." },
-  { title: "Draft", body: "Output is labelled as a draft until a person accepts it." },
-  { title: "Human approval", body: "A named reviewer approves anything that becomes a memo, report, or correction." },
-];
-
-type Review = "pending" | "reviewed" | "rejected";
-
-function Answer() {
-  const [review, setReview] = useState<Review>("pending");
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-1.5">
-        <Pill tone="accent">Drafted by AI</Pill>
-        {review === "pending" && <Pill tone="warn">Human review required</Pill>}
-        {review === "reviewed" && <Pill tone="ok">Reviewed by you</Pill>}
-        {review === "rejected" && <Pill tone="danger">Rejected</Pill>}
-      </div>
-
-      <section aria-label="Answer">
-        <p className="text-[15px] leading-relaxed text-ink">
-          Harbor Logistics EBITDA declined <span className="font-semibold tabular-nums">8.2%</span> quarter on quarter, from $11.0M to $10.1M. Lower volume
-          and higher input costs explain most of the change.
-        </p>
-      </section>
-
-      <table className="w-full text-[13px]">
-        <caption className="pb-2 text-left font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Drivers</caption>
-        <tbody className="divide-y divide-line border-y border-line">
-          {DRIVERS.map((d) => (
-            <tr key={d.name}>
-              <th scope="row" className="py-2 text-left font-normal text-ink">
-                {d.name}
-              </th>
-              <td className="py-2 text-right font-data tabular-nums text-danger">{d.change}</td>
-              <td className="w-10 py-2 text-right font-data text-[11px] text-accent">[{d.cite}]</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <section aria-label="Decision context">
-        <p className="mb-2 font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Decision context</p>
-        <dl className="divide-y divide-line rounded-lg border border-line">
-          {DECISION_CONTEXT.map(([q, a]) => (
-            <div key={q} className="grid grid-cols-1 gap-0.5 px-3 py-2 text-[13px] sm:grid-cols-[180px_1fr] sm:gap-3">
-              <dt className="text-ink-3">{q}</dt>
-              <dd className="text-ink">{a}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      <section aria-label="Sources">
-        <p className="mb-2 font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Sources · select to inspect</p>
-        <EvidenceList items={EVIDENCE} />
-      </section>
-
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-[12px] sm:grid-cols-2">
-        {[
-          ["Context", "Ontology · IBOR · financials · documents"],
-          ["Permission scope", "Growth Fund II deal team"],
-          ["Model", "Approved model · v3.2"],
-          ["Generated", "30 Sep 2026 · 09:42 UTC"],
-        ].map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-3 border-b border-line py-1">
-            <dt className="text-ink-3">{k}</dt>
-            <dd className="text-right text-ink-2">{v}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="rounded-lg border border-line bg-subtle p-4">
-        <p className="mb-3 text-[13px] text-ink">
-          <span className="text-ink-3">Proposed action · </span>Add this explanation to the Q3 IC memo
-        </p>
-        <ActionRun outcome={review} approver="deal lead" />
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p aria-live="polite" className="text-[13px] text-ink-2">
-            {review === "pending" && "Nothing is added until a person reviews it."}
-            {review === "reviewed" && "Reviewed. Waiting for the deal lead to approve."}
-            {review === "rejected" && "Draft discarded. Sources stay on the record."}
-          </p>
-          {review === "pending" ? (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setReview("rejected")}
-                className={cn("min-h-11 rounded-md border border-line-strong bg-canvas px-4 text-sm text-ink hover:bg-muted sm:min-h-9", focusRing)}
-              >
-                Reject
-              </button>
-              <button
-                type="button"
-                onClick={() => setReview("reviewed")}
-                className={cn("min-h-11 rounded-md bg-ink px-4 text-sm font-medium text-white hover:bg-ink-2 sm:min-h-9", focusRing)}
-              >
-                Review
-              </button>
-            </div>
-          ) : (
-            <button type="button" onClick={() => setReview("pending")} className={cn("min-h-11 rounded-md px-2 text-sm text-ink-2 hover:text-ink sm:min-h-9", focusRing)}>
-              Reset demo
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+function stepState(i: number, outcome: Outcome) {
+  if (i < 3) return "done";
+  if (outcome === "pending") return i === 3 ? "current" : "locked";
+  if (outcome === "approved") return "done";
+  return i === 3 ? "rejected" : "locked";
 }
 
-function InsufficientEvidence() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="space-y-5">
-      <div className="rounded-lg border border-warn/30 bg-warn/8 p-4">
-        <p className="flex items-center gap-2 text-[15px] font-semibold text-ink">
-          <AlertTriangle aria-hidden className="size-4 text-warn" />
-          Insufficient evidence
-        </p>
-        <p className="mt-1 text-sm text-ink-2">OCTO could not establish a complete evidence chain for this answer.</p>
-      </div>
-      <ul className="space-y-2 text-[13px]" aria-label="Evidence check">
-        <li className="flex items-center gap-2 text-ink">
-          <Check aria-hidden className="size-3.5 text-ok" /> Current valuation on record
-        </li>
-        <li className="flex items-center gap-2 text-ink">
-          <Check aria-hidden className="size-3.5 text-ok" /> Board report with trading update
-        </li>
-        <li className="flex items-center gap-2 text-ink">
-          <X aria-hidden className="size-3.5 text-danger" /> No approved exit model in the record
-        </li>
-        <li className="flex items-center gap-2 text-ink">
-          <X aria-hidden className="size-3.5 text-danger" /> No buyer indications on file
-        </li>
-      </ul>
-      <p className="text-[13px] text-ink-3">OCTO does not estimate a figure it cannot source. It shows you what exists instead.</p>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="ai-partial-records"
-        onClick={() => setOpen((v) => !v)}
-        className={cn("min-h-11 rounded-md border border-line-strong bg-canvas px-4 text-sm font-medium text-ink hover:bg-subtle sm:min-h-9", focusRing)}
-      >
-        {open ? "Hide source records" : "Open source records"}
-      </button>
-      {open && (
-        <div id="ai-partial-records">
-          <EvidenceList items={PARTIAL} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** AI as a governed layer: answer, drivers, sources, scope, provenance, approval, and an honest failure (AI-100..104). */
+/** Controls around every AI output: proposal → evidence → permission → review → action (PAL-020). */
 export function GovernedAI() {
-  const reduce = useReducedMotion();
-  const [q, setQ] = useState(0);
+  const [outcome, setOutcome] = useState<Outcome>("pending");
+
+  const controls: [string, string, "ok" | "warn" | "neutral"][] = [
+    ["Permission scope", "Growth Fund II deal team", "ok"],
+    ["Source grounding", "Every sentence cited", "ok"],
+    ["Evidence", "4 records · 0 unresolved", "ok"],
+    ["Model status", "Approved model · v3.2", "ok"],
+    ["Approval state", outcome === "pending" ? "Pending approval" : outcome === "approved" ? "Approved by deal lead" : "Rejected", outcome === "pending" ? "warn" : outcome === "approved" ? "ok" : "neutral"],
+  ];
 
   return (
     <Section id="ai" labelledBy="ai-title">
       <SectionHeader
         id="ai-title"
-        index="06"
+        index="11"
         eyebrow="Governed AI"
-        title="AI with a chain of custody."
-        lead="OCTO answers from governed context, keeps source evidence attached, and leaves high-impact actions to human approval."
+        title="Intelligence with controls built in."
+        lead="AI in OCTO drafts. It never approves. Every proposal passes an evidence check and a permission check, then waits for a named reviewer."
       />
 
-      <div className="mt-14 grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
-        <Reveal className="lg:col-span-5">
-          <p className="text-h3 font-semibold">
-            AI proposes.
-            <br />
-            <span className="text-accent">Humans approve.</span>
-          </p>
-          <ol className="mt-8 divide-y divide-line border-y border-line">
-            {CHAIN.map((c, i) => (
-              <li key={c.title} className="grid grid-cols-[28px_1fr] gap-3 py-4">
-                <span className="font-data text-meta text-accent">{String(i + 1).padStart(2, "0")}</span>
-                <div>
-                  <p className="text-[15px] font-medium text-ink">{c.title}</p>
-                  <p className="mt-0.5 text-sm leading-relaxed text-ink-2">{c.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </Reveal>
-
-        <Reveal className="min-w-0 lg:col-span-7" delay={0.08}>
-          <div className="overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.22)]">
+      <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <Reveal className="min-w-0 lg:col-span-7">
+          <div className="rounded-sm border border-line-strong bg-canvas">
             <div className="flex items-center justify-between border-b border-line bg-subtle px-4 py-2.5">
-              <p className="text-[13px] font-medium">OCTO Intelligence · Harbor Logistics</p>
+              <p className="font-data text-[11px] text-ink-2">octo / approvals / ic-memo-q3</p>
               <SampleLabel>Demo environment</SampleLabel>
             </div>
-            <div className="border-b border-line p-4">
-              <div role="radiogroup" aria-label="Question" className="flex flex-col gap-1.5 sm:flex-row">
-                {QUESTIONS.map((text, i) => (
-                  <button
-                    key={text}
-                    type="button"
-                    role="radio"
-                    aria-checked={q === i}
-                    onClick={() => setQ(i)}
-                    className={cn(
-                      "min-h-11 flex-1 rounded-md border px-3 py-2 text-left text-[13px] transition-colors sm:min-h-9",
-                      q === i ? "border-accent bg-accent-soft text-ink" : "border-line text-ink-2 hover:border-line-strong hover:text-ink",
-                      focusRing,
-                    )}
-                  >
-                    {text}
-                  </button>
-                ))}
+            <ol aria-label="Governed action" className="p-5">
+              {FLOW.map((f, i) => {
+                const st = stepState(i, outcome);
+                return (
+                  <li key={f.step} className="relative grid grid-cols-[28px_1fr] gap-4 pb-5 last:pb-0">
+                    {i < FLOW.length - 1 && <span aria-hidden className="absolute bottom-0 left-[13.5px] top-7 w-px bg-line-strong" />}
+                    <span
+                      className={cn(
+                        "relative z-10 flex size-7 items-center justify-center rounded-full border",
+                        st === "done" && "border-ok bg-ok text-white",
+                        st === "current" && "border-accent bg-accent-soft text-accent",
+                        st === "locked" && "border-line-strong bg-canvas text-ink-3",
+                        st === "rejected" && "border-danger bg-danger text-white",
+                      )}
+                    >
+                      {st === "done" && <Check aria-hidden className="size-3.5" />}
+                      {st === "locked" && <Lock aria-hidden className="size-3" />}
+                      {st === "rejected" && <X aria-hidden className="size-3.5" />}
+                      {st === "current" && <span aria-hidden className="size-2 rounded-full bg-accent" />}
+                      <span className="sr-only">{st}</span>
+                    </span>
+                    <div className={cn(st === "locked" && "opacity-60")}>
+                      <p className="text-[15px] font-medium text-ink">{f.step}</p>
+                      <p className="text-[13px] text-ink-3">{f.detail}</p>
+                      {st === "current" && (
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setOutcome("rejected")}
+                            className={cn("min-h-11 border border-line-strong px-4 text-sm text-ink hover:bg-subtle sm:min-h-9", focusRing)}
+                          >
+                            Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOutcome("approved")}
+                            className={cn("min-h-11 bg-ink px-4 text-sm font-medium text-white hover:bg-ink-2 sm:min-h-9", focusRing)}
+                          >
+                            Approve as deal lead
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+            <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3">
+              <p aria-live="polite" className="text-[13px] text-ink-2">
+                {outcome === "pending" && "Nothing changes until a person decides."}
+                {outcome === "approved" && "Approved. The memo update is recorded with its evidence."}
+                {outcome === "rejected" && "Rejected. The draft is discarded; its sources stay on record."}
+              </p>
+              {outcome !== "pending" && (
+                <button type="button" onClick={() => setOutcome("pending")} className={cn("min-h-9 px-2 text-[13px] text-ink-3 hover:text-ink", focusRing)}>
+                  Reset demo
+                </button>
+              )}
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal className="min-w-0 space-y-6 lg:col-span-5" delay={0.06}>
+          <dl className="border-t border-line-strong">
+            {controls.map(([k, v, tone]) => (
+              <div key={k} className="flex items-center justify-between gap-4 border-b border-line-strong py-3">
+                <dt className="font-data text-meta uppercase text-ink-3">{k}</dt>
+                <dd className={cn("text-right text-[13px]", tone === "ok" ? "text-ok" : tone === "warn" ? "text-warn" : "text-ink-2")}>{v}</dd>
               </div>
-            </div>
-            <div className="p-5" aria-live="polite">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={q}
-                  initial={reduce ? false : { opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduce ? undefined : { opacity: 0 }}
-                  transition={{ duration: DUR.standard, ease: EASE }}
-                >
-                  {q === 0 ? <Answer /> : <InsufficientEvidence />}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+            ))}
+          </dl>
+          <div>
+            <p className="font-data text-meta uppercase text-ink-3">Audit trail</p>
+            <EventLog
+              className="mt-3"
+              label="AI audit trail"
+              events={[
+                { time: "09:42", event: "Draft generated", detail: "Approved model v3.2 · 4 citations", actor: "ai" },
+                { time: "09:42", event: "Permission check passed", detail: "Deal team scope", actor: "system" },
+                ...(outcome === "approved" ? [{ time: "09:51", event: "Approved", detail: "Deal lead · reason recorded", actor: "person" as const, emphasis: true }] : []),
+                ...(outcome === "rejected" ? [{ time: "09:51", event: "Rejected", detail: "Deal lead · draft discarded", actor: "person" as const }] : []),
+              ]}
+            />
+          </div>
+          <div className="border border-warn/30 bg-warn/8 p-4">
+            <p className="flex items-center gap-2 text-sm font-medium text-ink">
+              <AlertTriangle aria-hidden className="size-4 text-warn" /> When evidence is missing
+            </p>
+            <p className="mt-1 text-[13px] text-ink-2">
+              Asked for Harbor Logistics&apos; exit value, OCTO answers “Insufficient evidence” — there is no approved exit model on record — and lists the records it
+              did find instead of estimating.
+            </p>
           </div>
         </Reveal>
       </div>

@@ -2,55 +2,47 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CTA_HREF, NAV, SIGN_IN_HREF, type NavGroup } from "@/lib/landing-content";
-import { Container, DUR, EASE, focusRing } from "./primitives";
+import { Container, DUR, EASE } from "./primitives";
 
-export function OctoWordmark({ inverse }: { inverse?: boolean }) {
+const darkRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-light focus-visible:ring-offset-2 focus-visible:ring-offset-void";
+
+export function OctoWordmark({ inverse = true }: { inverse?: boolean }) {
   return (
-    <span className={cn("flex items-center gap-2 text-[15px] font-semibold tracking-[0.18em]", inverse ? "text-white" : "text-ink")}>
+    <span className={cn("flex items-center gap-2.5 text-[15px] font-semibold tracking-[0.22em]", inverse ? "text-white" : "text-ink")}>
       <svg aria-hidden viewBox="0 0 20 20" className="size-5">
-        <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="10" cy="10" r="2.5" className="fill-accent" />
+        <rect x="1" y="1" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="7.5" y="7.5" width="5" height="5" className="fill-accent" />
       </svg>
       OCTO
     </span>
   );
 }
 
-function DesktopMenu({ group }: { group: NavGroup }) {
-  const [open, setOpen] = useState(false);
+function DesktopMenu({ group, open, onOpen, onClose }: { group: NavGroup; open: boolean; onOpen: () => void; onClose: () => void }) {
   const panelId = useId();
-  const wrapRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
+  const btn = useRef<HTMLButtonElement>(null);
 
   return (
     <div
-      ref={wrapRef}
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onBlur={(e) => {
-        if (!wrapRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
-      }}
+      onMouseEnter={onOpen}
       onKeyDown={(e) => {
         if (e.key === "Escape" && open) {
-          setOpen(false);
-          wrapRef.current?.querySelector("button")?.focus();
+          onClose();
+          btn.current?.focus();
         }
       }}
     >
       <button
+        ref={btn}
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "flex h-9 items-center gap-1 rounded-md px-3 text-sm text-ink-2 transition-colors hover:text-ink",
-          open && "text-ink",
-          focusRing,
-        )}
+        onClick={() => (open ? onClose() : onOpen())}
+        className={cn("flex h-16 items-center gap-1 px-3 text-sm transition-colors", open ? "text-white" : "text-fog hover:text-white", darkRing)}
       >
         {group.label}
         <ChevronDown aria-hidden className={cn("size-3.5 transition-transform duration-150", open && "rotate-180")} />
@@ -59,26 +51,31 @@ function DesktopMenu({ group }: { group: NavGroup }) {
         {open && (
           <motion.div
             id={panelId}
-            initial={reduce ? false : { opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4, transition: { duration: DUR.fast } }}
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: DUR.fast } }}
             transition={{ duration: DUR.standard, ease: EASE }}
-            className="absolute left-0 top-full z-50 pt-2"
+            className="absolute inset-x-0 top-full z-50 border-y border-night-line bg-night"
           >
-            <ul className="w-[340px] rounded-lg border border-line bg-canvas p-1.5 shadow-[0_8px_24px_-12px_rgb(17_19_24/0.18)]">
-              {group.links.map((link) => (
-                <li key={link.title}>
-                  <a
-                    href={link.href}
-                    onClick={() => setOpen(false)}
-                    className={cn("block rounded-md px-3 py-2.5 transition-colors hover:bg-subtle", focusRing)}
-                  >
-                    <span className="block text-sm font-medium text-ink">{link.title}</span>
-                    {link.description && <span className="mt-0.5 block text-[13px] text-ink-3">{link.description}</span>}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <Container className="grid grid-cols-12 gap-10 py-10">
+              <div className="col-span-3">
+                <p className="font-data text-meta uppercase text-accent-light">{group.label}</p>
+                {group.intro && <p className="mt-3 text-xl leading-snug text-white">{group.intro}</p>}
+              </div>
+              <ul className="col-span-9 grid grid-cols-3 gap-x-8 border-l border-night-line pl-10">
+                {group.links.map((link) => (
+                  <li key={link.title}>
+                    <a href={link.href} onClick={onClose} className={cn("group block border-b border-night-line py-4", darkRing)}>
+                      <span className="flex items-center justify-between text-[15px] text-white">
+                        {link.title}
+                        <ArrowUpRight aria-hidden className="size-3.5 text-fog transition-colors group-hover:text-accent-light" />
+                      </span>
+                      {link.description && <span className="mt-1 block text-[13px] text-fog">{link.description}</span>}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Container>
           </motion.div>
         )}
       </AnimatePresence>
@@ -111,18 +108,19 @@ function MobileMenu({ onClose, top }: { onClose: () => void; top: number }) {
       exit={{ opacity: 0 }}
       transition={{ duration: DUR.standard }}
       style={{ top }}
-      className="fixed inset-x-0 bottom-0 z-40 overflow-y-auto border-t border-line bg-canvas lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 overflow-y-auto border-t border-night-line bg-void text-white lg:hidden"
     >
       <Container className="flex min-h-full flex-col py-6">
-        <nav aria-label="Mobile" className="flex-1 space-y-7">
+        <nav aria-label="Mobile" className="flex-1 space-y-8">
           {NAV.map((group) => (
             <div key={group.label}>
-              <p className="font-data text-meta uppercase text-ink-3">{group.label}</p>
-              <ul className="mt-2 divide-y divide-line border-y border-line">
+              <p className="font-data text-meta uppercase text-accent-light">{group.label}</p>
+              <ul className="mt-2 divide-y divide-night-line border-y border-night-line">
                 {group.links.map((link) => (
                   <li key={link.title}>
-                    <a href={link.href} onClick={onClose} className={cn("flex min-h-11 items-center py-2 text-[15px] text-ink", focusRing)}>
+                    <a href={link.href} onClick={onClose} className={cn("flex min-h-12 items-center justify-between py-2 text-[15px]", darkRing)}>
                       {link.title}
+                      <ArrowUpRight aria-hidden className="size-3.5 text-fog" />
                     </a>
                   </li>
                 ))}
@@ -130,11 +128,11 @@ function MobileMenu({ onClose, top }: { onClose: () => void; top: number }) {
             </div>
           ))}
         </nav>
-        <div className="sticky bottom-0 mt-8 grid grid-cols-2 gap-3 bg-canvas pb-2 pt-4">
-          <a href={SIGN_IN_HREF} className={cn("flex h-11 items-center justify-center rounded-md border border-line-strong text-sm font-medium text-ink", focusRing)}>
+        <div className="sticky bottom-0 mt-8 grid grid-cols-2 gap-3 bg-void pb-2 pt-4">
+          <a href={SIGN_IN_HREF} className={cn("flex h-11 items-center justify-center rounded-sm border border-night-line text-sm font-medium", darkRing)}>
             Sign in
           </a>
-          <a href={CTA_HREF} onClick={onClose} className={cn("flex h-11 items-center justify-center rounded-md bg-accent text-sm font-medium text-white", focusRing)}>
+          <a href={CTA_HREF} onClick={onClose} className={cn("flex h-11 items-center justify-center rounded-sm bg-accent text-sm font-medium", darkRing)}>
             Request access
           </a>
         </div>
@@ -143,18 +141,14 @@ function MobileMenu({ onClose, top }: { onClose: () => void; top: number }) {
   );
 }
 
-/** Sticky institutional navigation (NAV-001/002/003). */
+/** Compact dark enterprise navigation with multi-column panels (PAL-007). */
 export function LandingNavigation() {
   const [scrolled, setScrolled] = useState(false);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuTop, setMenuTop] = useState(64);
   const headerRef = useRef<HTMLElement>(null);
   const closeMobile = useCallback(() => setMobileOpen(false), []);
-  const toggleMobile = () => {
-    // The announcement bar can sit above the sticky header, so anchor the drawer to its real bottom edge.
-    setMenuTop(headerRef.current?.getBoundingClientRect().bottom ?? 64);
-    setMobileOpen((v) => !v);
-  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -163,43 +157,48 @@ export function LandingNavigation() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const solid = scrolled || mobileOpen;
+  const toggleMobile = () => {
+    setMenuTop(headerRef.current?.getBoundingClientRect().bottom ?? 64);
+    setMobileOpen((v) => !v);
+  };
 
   return (
     <header
       ref={headerRef}
-      className={cn(
-        "sticky top-0 z-50 border-b transition-[background-color,border-color,box-shadow] duration-200",
-        solid
-          ? "border-line bg-canvas shadow-[0_1px_2px_rgb(17_19_24/0.04)]"
-          : "border-transparent bg-canvas",
-      )}
+      onMouseLeave={() => setOpenGroup(null)}
+      onBlur={(e) => {
+        if (!headerRef.current?.contains(e.relatedTarget as Node)) setOpenGroup(null);
+      }}
+      className={cn("sticky top-0 z-50 border-b bg-void text-white transition-colors duration-200", scrolled || openGroup || mobileOpen ? "border-night-line" : "border-transparent")}
     >
       <Container className="flex h-16 items-center justify-between gap-6">
-        <a href="#top" aria-label="OCTO home" className={cn("rounded-sm", focusRing)}>
+        <a href="#top" aria-label="OCTO home" className={darkRing}>
           <OctoWordmark />
         </a>
 
-        <nav aria-label="Primary" className="hidden flex-1 items-center gap-1 lg:flex">
+        <nav aria-label="Primary" className="hidden flex-1 items-center justify-center lg:flex">
           {NAV.map((group) => (
-            <DesktopMenu key={group.label} group={group} />
+            <DesktopMenu
+              key={group.label}
+              group={group}
+              open={openGroup === group.label}
+              onOpen={() => setOpenGroup(group.label)}
+              onClose={() => setOpenGroup(null)}
+            />
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex">
-          <a href={SIGN_IN_HREF} className={cn("flex h-9 items-center rounded-md px-3 text-sm text-ink-2 hover:text-ink", focusRing)}>
+        <div className="hidden items-center gap-1 lg:flex">
+          <a href={SIGN_IN_HREF} className={cn("flex h-9 items-center px-3 text-sm text-fog hover:text-white", darkRing)}>
             Sign in
           </a>
-          <a
-            href={CTA_HREF}
-            className={cn("flex h-9 items-center rounded-md bg-accent px-4 text-sm font-medium text-white transition-colors hover:bg-accent-hover", focusRing)}
-          >
+          <a href={CTA_HREF} className={cn("flex h-9 items-center rounded-sm bg-white px-4 text-sm font-medium text-void transition-colors hover:bg-subtle", darkRing)}>
             Request access
           </a>
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <a href={CTA_HREF} className={cn("flex h-11 items-center rounded-md bg-accent px-3.5 text-sm font-medium text-white", focusRing, mobileOpen && "invisible")}>
+          <a href={CTA_HREF} className={cn("flex h-11 items-center rounded-sm bg-white px-3.5 text-sm font-medium text-void", darkRing, mobileOpen && "invisible")}>
             Request access
           </a>
           <button
@@ -208,7 +207,7 @@ export function LandingNavigation() {
             aria-controls="mobile-menu"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             onClick={toggleMobile}
-            className={cn("flex size-11 items-center justify-center rounded-md border border-line text-ink", focusRing)}
+            className={cn("flex size-11 items-center justify-center rounded-sm border border-night-line", darkRing)}
           >
             {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>

@@ -29,44 +29,61 @@
 }
 
 /*
- * OCTO landing design tokens (DS-001 … DS-005).
+ * OCTO landing design tokens — Palantir-inspired direction (PAL-003 … PAL-006).
  *
- * Names are prefixed so they never collide with Tailwind defaults or the
- * React Bits tokens the /app shell uses. Radius follows Tailwind's scale:
- * DS xs=rounded-sm, sm=rounded-md, md=rounded-lg, lg=rounded-xl, xl=rounded-2xl.
+ * Near-black and warm-neutral foundation, hairline neutrals, violet only as a
+ * signal colour. Prefixed names never collide with Tailwind defaults or the
+ * React Bits tokens the /app shell uses.
  */
 @theme {
+    --color-void: #050505;
+    --color-night: #0b0c0e;
+    --color-night-line: rgb(255 255 255 / 0.12);
+    --color-fog: #8a8f98; /* secondary text on dark surfaces only */
+
     --color-canvas: #ffffff;
-    --color-subtle: #f8f9fb;
-    --color-muted: #f1f3f5;
-    --color-line: #e5e7eb;
-    --color-line-strong: #d1d5db;
+    --color-subtle: #f6f6f3;
+    --color-muted: #eeeeea;
+    --color-line: #e8e9ec;
+    --color-line-strong: #d6d9de;
     --color-ink: #111318;
-    --color-ink-2: #4b5563;
-    --color-ink-3: #6b7280;
+    --color-ink-2: #3f434a;
+    --color-ink-3: #666b73;
 
     --color-accent: #6d45ff;
     --color-accent-hover: #5b36e6;
     --color-accent-soft: rgb(109 69 255 / 0.08);
-    --color-accent-line: rgb(109 69 255 / 0.2);
+    --color-accent-line: rgb(109 69 255 / 0.3);
+    --color-accent-light: #b9a6ff; /* accent text on dark surfaces */
+    --color-ok-light: #6fcf97; /* status text on dark surfaces */
+    --color-warn-light: #f2c14e;
 
     --color-ok: #137350; /* darker than #16845B so 11px pill text passes AA on its tint */
     --color-warn: #975a16; /* #B7791F is 3.6:1 on white — below AA for small text */
     --color-danger: #c24141;
     --color-info: #3867d6;
 
-    --text-display: clamp(2.5rem, 1.5rem + 3.6vw, 4.5rem);
-    --text-display--line-height: 1.02;
-    --text-display--letter-spacing: -0.035em;
-    --text-h2: clamp(2.25rem, 1.7rem + 2.2vw, 3.5rem);
-    --text-h2--line-height: 1.05;
-    --text-h2--letter-spacing: -0.03em;
-    --text-h3: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
-    --text-h3--line-height: 1.15;
-    --text-h3--letter-spacing: -0.02em;
-    --text-meta: 0.75rem;
+    --text-display: clamp(2.625rem, 1.5rem + 4.4vw, 6rem);
+    --text-display--line-height: 0.98;
+    --text-display--letter-spacing: -0.045em;
+    --text-h2: clamp(2.125rem, 1.35rem + 2.9vw, 4.25rem);
+    --text-h2--line-height: 1.02;
+    --text-h2--letter-spacing: -0.04em;
+    --text-h3: clamp(1.75rem, 1.45rem + 0.9vw, 2.5rem);
+    --text-h3--line-height: 1.08;
+    --text-h3--letter-spacing: -0.03em;
+    --text-meta: 0.6875rem;
     --text-meta--line-height: 1rem;
-    --text-meta--letter-spacing: 0.08em;
+    --text-meta--letter-spacing: 0.1em;
+}
+
+/* Low-radius geometry for the landing only (PAL-005); /app keeps Tailwind defaults. */
+.landing {
+    --radius-sm: 2px;
+    --radius-md: 3px;
+    --radius-lg: 4px;
+    --radius-xl: 4px;
+    --radius-2xl: 6px;
 }
 
 @theme inline {

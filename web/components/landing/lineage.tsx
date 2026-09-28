@@ -9,96 +9,101 @@ import { DUR, EASE, Reveal, SampleLabel, Section, SectionHeader, focusRing } fro
 
 type Node = { level: string; value: string; meta: string; preview: React.ReactNode };
 
+const facts = (rows: [string, string][], mono = false) => (
+  <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
+    {rows.map(([k, v]) => (
+      <div key={k} className="flex justify-between gap-4 border-b border-line py-1.5">
+        <dt className="text-ink-3">{k}</dt>
+        <dd className={cn("text-right text-ink", mono && "font-data tabular-nums")}>{v}</dd>
+      </div>
+    ))}
+  </dl>
+);
+
 const NODES: Node[] = [
   {
     level: "Metric",
     value: "21.84% Gross IRR",
-    meta: "Keller Tooling · Q3 LP report",
-    preview: (
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
-        {[
-          ["Reported in", "Q3 LP report · page 6"],
-          ["Scope", "Keller Tooling · US Manufacturing III"],
-          ["As of", "30 Sep 2026"],
-          ["Definition", "Gross IRR v3.2"],
-        ].map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-4 border-b border-line py-1.5">
-            <dt className="text-ink-3">{k}</dt>
-            <dd className="text-right text-ink">{v}</dd>
-          </div>
-        ))}
-      </dl>
-    ),
+    meta: "US Manufacturing III · Q3 LP report",
+    preview: facts([
+      ["Reported in", "Q3 LP report · page 6"],
+      ["Scope", "US Manufacturing III"],
+      ["As of", "30 Sep 2026"],
+      ["Definition", "Gross IRR v3.2"],
+    ]),
   },
   {
     level: "Calculation",
     value: "XIRR(cash flows, NAV)",
     meta: "Definition v3.2 · approved by Finance",
     preview: (
-      <pre className="overflow-x-auto rounded-md bg-ink p-3 font-data text-[12px] leading-relaxed text-white/85">
+      <pre className="overflow-x-auto bg-ink p-3 font-data text-[12px] leading-relaxed text-white/85">
         {`XIRR(
-  −32.7  14 Jun 2021   capital call
-   −4.1  16 Mar 2022   follow-on
-   +6.8  26 Sep 2026   distribution
-  +96.4  30 Sep 2026   NAV
-) = 21.84%`}
+  48 fund cash flows, Oct 2019 – Sep 2026
+    capital calls      −612.0
+    distributions      +418.6
+  closing NAV 30 Sep  +1,234.8
+) = 21.84%        ($M)`}
       </pre>
     ),
   },
   {
     level: "IBOR events",
-    value: "12 ledger events",
-    meta: "Capital calls, distributions, NAV",
+    value: "48 ledger events",
+    meta: "Calls, distributions, valuations",
     preview: (
       <EventLog
-        label="Ledger events behind the metric"
+        label="Latest ledger events behind the metric"
         events={[
-          { time: "14 Jun", event: "Capital call · $32.7M", detail: "2021 · initial investment", actor: "system" },
-          { time: "16 Mar", event: "Follow-on · $4.1M", detail: "2022 · add-on acquisition", actor: "system" },
-          { time: "26 Sep", event: "Distribution · $6.8M", detail: "2026 · dividend recap", actor: "system" },
-          { time: "30 Sep", event: "NAV · $96.4M", detail: "2026 · valuation approved", actor: "person", emphasis: true },
+          { time: "30 Sep", event: "Valuation · Keller Tooling $96.4M", detail: "Event #4471 · approved", actor: "person", emphasis: true },
+          { time: "26 Sep", event: "Distribution · $6.8M", detail: "Event #4468 · reconciled", actor: "system" },
+          { time: "24 Sep", event: "Fair values proposed", detail: "12 companies · Q3", actor: "person" },
+          { time: "14 Jul", event: "Q2 valuations received", detail: "Fund administrator", actor: "system" },
         ]}
       />
     ),
   },
   {
-    level: "Investment record",
+    level: "Investment",
     value: "Keller Tooling · Buyout",
-    meta: "US Manufacturing III · since Jun 2021",
-    preview: (
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-2 text-[13px] sm:grid-cols-2">
-        {[
-          ["Fund", "US Manufacturing III"],
-          ["Instrument", "Common equity · 62%"],
-          ["Cost", "$36.8M"],
-          ["Fair value", "$96.4M"],
-        ].map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-4 border-b border-line py-1.5">
-            <dt className="text-ink-3">{k}</dt>
-            <dd className="text-right font-data tabular-nums text-ink">{v}</dd>
-          </div>
-        ))}
-      </dl>
+    meta: "Event #4471: 21.62% → 21.84%",
+    preview: facts(
+      [
+        ["Fund", "US Manufacturing III"],
+        ["Instrument", "Common equity · 62%"],
+        ["Cost", "$36.8M"],
+        ["Fair value", "$96.4M"],
+      ],
+      true,
     ),
   },
   {
-    level: "Source document",
+    level: "Source",
+    value: "Fund administrator",
+    meta: "Capital account statement feed",
+    preview: facts([
+      ["Adapter", "Administrator · SFTP"],
+      ["Last sync", "30 Sep 2026 · 06:00 UTC"],
+      ["Status", "Verified"],
+      ["Records", "3,912"],
+    ]),
+  },
+  {
+    level: "Document",
     value: "Q2 valuation report",
-    meta: "Fund administrator · page 14",
+    meta: "Page 14 of 22",
     preview: (
-      <div className="mx-auto max-w-md rounded-sm border border-line-strong bg-canvas p-4 shadow-[0_1px_0_var(--color-line)]">
+      <div className="mx-auto max-w-md border border-line-strong bg-canvas p-4">
         <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Q2 valuation report · page 14 of 22</p>
         <div aria-hidden className="mt-3 space-y-1.5">
-          <div className="h-1.5 w-3/4 rounded-full bg-muted" />
-          <div className="h-1.5 w-full rounded-full bg-muted" />
-          <div className="h-1.5 w-5/6 rounded-full bg-muted" />
+          <div className="h-1.5 w-3/4 bg-muted" />
+          <div className="h-1.5 w-full bg-muted" />
+          <div className="h-1.5 w-5/6 bg-muted" />
         </div>
-        <p className="my-3 rounded-sm bg-accent-soft px-2 py-1.5 font-data text-[12px] text-ink ring-1 ring-accent-line">
-          Keller Tooling — fair value $96.4M (Level 3, market approach)
-        </p>
+        <p className="my-3 bg-accent-soft px-2 py-1.5 font-data text-[12px] text-ink ring-1 ring-accent-line">Keller Tooling — fair value $96.4M (Level 3, market approach)</p>
         <div aria-hidden className="space-y-1.5">
-          <div className="h-1.5 w-full rounded-full bg-muted" />
-          <div className="h-1.5 w-2/3 rounded-full bg-muted" />
+          <div className="h-1.5 w-full bg-muted" />
+          <div className="h-1.5 w-2/3 bg-muted" />
         </div>
         <p className="mt-3 text-[11px] text-ink-3">Received 14 Jul 2026 · checksum verified</p>
       </div>
@@ -125,19 +130,19 @@ export function Lineage() {
   }, [seen]);
 
   return (
-    <Section id="lineage" tone="subtle" labelledBy="lineage-title">
+    <Section id="lineage" labelledBy="lineage-title">
       <SectionHeader
         id="lineage-title"
-        index="05"
+        index="15"
         eyebrow="Lineage"
         title="Every number defends itself."
-        lead="Trace a portfolio metric from its calculation to the ledger events, the investment record, and the page of the source document."
+        lead="Trace a reported figure to its calculation, the ledger events behind it, the investment that moved it, the source, and the page it came from."
       />
 
       <Reveal className="mt-14">
         <div ref={cardRef} className="flex flex-col gap-4 rounded-xl border border-line bg-canvas p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
           <div>
-            <p className="text-sm text-ink-3">Keller Tooling · US Manufacturing III</p>
+            <p className="text-sm text-ink-3">US Manufacturing III · Gross IRR</p>
             <p className="mt-1 flex items-baseline gap-3">
               <span className="text-4xl font-semibold tabular-nums tracking-tight">21.84%</span>
               <span className="text-sm font-medium text-ink">Gross IRR</span>
@@ -170,7 +175,7 @@ export function Lineage() {
               transition={{ duration: DUR.complex, ease: EASE }}
               className="overflow-hidden"
             >
-              <ol aria-label="Lineage of 21.84% Gross IRR" className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-5 lg:gap-0" onMouseLeave={() => setHover(null)}>
+              <ol aria-label="Lineage of 21.84% Gross IRR" className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-6 lg:gap-0" onMouseLeave={() => setHover(null)}>
                 {NODES.map((n, i) => (
                   <motion.li
                     key={n.level}

@@ -1,106 +1,86 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ARCHITECTURE, CAPABILITIES } from "@/lib/landing-content";
-import { DUR, EASE, Reveal, SampleLabel, Section, SectionHeader, focusRing, useTabs } from "./primitives";
+import { CAPABILITY_GROUPS } from "@/lib/landing-content";
+import { Reveal, Section, SectionHeader, focusRing } from "./primitives";
+
+type Item = (typeof CAPABILITY_GROUPS)[number]["items"][number];
 
 /**
- * Capability architecture instead of a feature grid (PAL-002, CAP-100/101).
- * Seven connected nodes; the active node shows its capabilities and a product signal.
+ * Dense capability index (PAL-027). Hover or focus an item to preview it; the
+ * description is also printed inline on small screens, so nothing is hover-only.
  */
 export function CapabilityIndex() {
-  const { active, onKeyDown, tabProps } = useTabs(ARCHITECTURE.length);
-  const reduce = useReducedMotion();
-  const node = ARCHITECTURE[active];
-  const caps = CAPABILITIES.filter((c) => (node.capabilities as readonly string[]).includes(c.title));
+  const first = CAPABILITY_GROUPS[0].items[0] as Item;
+  const [active, setActive] = useState<Item>(first);
 
   return (
-    <Section id="capabilities" tone="subtle" labelledBy="capabilities-title">
+    <Section id="capabilities" labelledBy="capabilities-title">
       <SectionHeader
         id="capabilities-title"
-        index="09"
-        eyebrow="Capabilities"
-        title="One record under every capability."
-        lead="Seven parts of one architecture. Select one to see what it covers and the signal it puts in front of your team."
+        index="18"
+        eyebrow="Capability index"
+        title="What OCTO covers."
+        lead="Sixteen capabilities across platform, workflow, governance, and data. One record underneath all of them."
       />
 
-      <Reveal className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-10">
-        <div role="tablist" aria-label="OCTO architecture" onKeyDown={onKeyDown} className="relative lg:col-span-5">
-          <span aria-hidden className="absolute bottom-6 left-[19px] top-6 w-px bg-line-strong" />
-          {ARCHITECTURE.map((n, i) => (
-            <button
-              key={n.id}
-              {...tabProps(i)}
-              id={`arch-tab-${n.id}`}
-              aria-controls="arch-panel"
-              className={cn("relative flex min-h-12 w-full items-center gap-4 rounded-md py-2 pl-1 pr-3 text-left transition-colors hover:bg-canvas", focusRing)}
-            >
-              <span
-                className={cn(
-                  "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full border font-data text-[11px]",
-                  i === active ? "border-accent bg-accent text-white" : "border-line-strong bg-subtle text-ink-3",
-                )}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="min-w-0">
-                <span className={cn("block text-[15px] font-medium", i === active ? "text-ink" : "text-ink-2")}>{n.name}</span>
-                <span className="block font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">{n.role}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div id="arch-panel" role="tabpanel" aria-labelledby={`arch-tab-${node.id}`} className="min-w-0 lg:col-span-7">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={node.id}
-              initial={reduce ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? undefined : { opacity: 0 }}
-              transition={{ duration: DUR.standard, ease: EASE }}
-              className="overflow-hidden rounded-xl border border-line bg-canvas"
-            >
-              <div className="border-b border-line p-5 md:p-6">
-                <p className="font-data text-meta uppercase text-accent">
-                  {String(active + 1).padStart(2, "0")} · {node.role}
-                </p>
-                <h3 className="mt-2 text-2xl font-semibold tracking-tight">{node.name}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{node.body}</p>
-              </div>
-              <ul className="divide-y divide-line">
-                {caps.map((c) => (
-                  <li key={c.title}>
-                    <a href={c.href} className={cn("group flex min-h-11 items-start gap-4 px-5 py-4 hover:bg-subtle md:px-6", focusRing)}>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[15px] font-medium text-ink">{c.title}</p>
-                        <p className="mt-0.5 text-sm text-ink-2">{c.benefit}</p>
-                      </div>
-                      <span className="hidden shrink-0 font-data text-[11px] text-ink-3 sm:inline">{c.signal}</span>
-                      <ArrowUpRight aria-hidden className="mt-0.5 size-4 shrink-0 text-ink-3 group-hover:text-accent" />
+      <Reveal className="mt-16 grid grid-cols-1 gap-10 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:col-span-8 xl:grid-cols-4">
+          {CAPABILITY_GROUPS.map((g) => (
+            <div key={g.label}>
+              <p className="border-b border-ink pb-2 font-data text-meta uppercase text-ink">{g.label}</p>
+              <ul>
+                {g.items.map((it) => (
+                  <li key={it.title} className="border-b border-line">
+                    <a
+                      href={it.href}
+                      onMouseEnter={() => setActive(it as Item)}
+                      onFocus={() => setActive(it as Item)}
+                      className={cn("group flex min-h-11 items-start justify-between gap-3 py-2.5", focusRing)}
+                    >
+                      <span>
+                        <span className={cn("block text-[15px] transition-colors", active.title === it.title ? "text-accent" : "text-ink group-hover:text-accent")}>{it.title}</span>
+                        <span className="mt-0.5 block text-[12px] leading-relaxed text-ink-3 lg:hidden">{it.body}</span>
+                      </span>
+                      <ArrowUpRight aria-hidden className="mt-1 size-3.5 shrink-0 text-ink-3 group-hover:text-accent" />
                     </a>
                   </li>
                 ))}
               </ul>
-              <div className="border-t border-line bg-subtle px-5 py-4 md:px-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Product signal</p>
-                  <SampleLabel />
-                </div>
-                <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  {node.signals.map(([k, v]) => (
-                    <div key={k}>
-                      <dt className="text-xs text-ink-3">{k}</dt>
-                      <dd className="font-data text-[12px] text-ink">{v}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          ))}
         </div>
+
+        <aside aria-live="polite" className="hidden lg:col-span-4 lg:block">
+          <div className="sticky top-24 border border-line-strong">
+            <div className="flex items-center gap-2 border-b border-line bg-subtle px-4 py-2.5">
+              <span aria-hidden className="flex gap-1">
+                {[0, 1, 2].map((d) => (
+                  <span key={d} className="size-1.5 rounded-full bg-line-strong" />
+                ))}
+              </span>
+              <p className="truncate font-data text-[11px] text-ink-2">octo / {active.view}</p>
+            </div>
+            <div className="p-5">
+              <p className="font-data text-meta uppercase text-accent">Preview</p>
+              <p className="mt-2 text-2xl font-medium tracking-tight">{active.title}</p>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{active.body}</p>
+              <div aria-hidden className="mt-5 space-y-2 border-t border-line pt-4">
+                {[88, 72, 94, 60].map((w, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="h-2 bg-muted" style={{ width: `${w}%` }} />
+                    <span className="font-data text-[10px] text-ink-3">{["Current", "Verified", "Source available", "Updated 12 min ago"][i]}</span>
+                  </div>
+                ))}
+              </div>
+              <a href={active.href} className={cn("mt-6 inline-flex min-h-10 items-center gap-2 bg-ink px-4 text-[13px] font-medium text-white hover:bg-ink-2", focusRing)}>
+                Open {active.title} <ArrowUpRight aria-hidden className="size-3.5" />
+              </a>
+            </div>
+          </div>
+        </aside>
       </Reveal>
     </Section>
   );

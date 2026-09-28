@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   // Next infer a monorepo root and nest the standalone output. Pin tracing to web/
   // so .next/standalone/server.js lands at the root the Dockerfile CMD expects.
   outputFileTracingRoot: path.join(__dirname),
+  // Landing-page editorial photography is served from Unsplash through next/image
+  // so it is resized and re-encoded (AVIF/WebP) instead of shipped full size.
+  images: {
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+  },
   // Browser → same-origin /api/* → internal API service. Keeps the API off the
   // public web origin entirely (no CORS surface); Authorization headers pass
   // through to the resource server. API_INTERNAL_URL is a runtime env — compose

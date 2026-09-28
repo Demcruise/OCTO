@@ -1,167 +1,138 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Search } from "lucide-react";
+import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
+import { ArrowRight, FileText, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ApprovalState } from "@/components/octo/approval-state";
 import { DUR, EASE, SampleLabel, focusRing } from "./primitives";
 
 type Tone = "ok" | "warn" | "danger" | "accent" | "info" | "neutral";
-type ContextKey = "Investment Ontology" | "IBOR" | "Financials" | "Documents" | "Permissions";
-type Preset = { q: string; answer: string; rows: [string, string, Tone][]; context: Record<ContextKey, string> };
+type Preset = { q: string; answer: string; rows: [string, string, Tone][]; context: string[]; sources: [string, string][]; action: string; actionHref: string };
 
-const CONTEXT_KEYS: ContextKey[] = ["Investment Ontology", "IBOR", "Financials", "Documents", "Permissions"];
-
+/** PAL-009 suggested questions. Deterministic demo data; no network call. */
 const PRESETS: Preset[] = [
   {
-    q: "Why did EBITDA fall?",
-    answer: "Harbor Logistics EBITDA fell 8.2% quarter on quarter.",
+    q: "Which investments need attention?",
+    answer: "3 investments need a decision this week.",
     rows: [
-      ["Revenue", "−4.1%", "danger"],
-      ["Cost of goods sold", "+6.3%", "danger"],
-      ["Headcount cost", "+12.0%", "danger"],
+      ["Atlas Components · covenant headroom 12%", "Exception", "warn"],
+      ["Harbor Logistics · EBITDA −8.2% QoQ", "Needs review", "warn"],
+      ["FN NYC · Q3 accounts overdue", "Task", "info"],
     ],
-    context: {
-      "Investment Ontology": "Harbor Logistics → Growth Fund II → deal team",
-      IBOR: "12 ledger events, Q2–Q3 2026",
-      Financials: "Management accounts, Q3 2026",
-      Documents: "Board pack, 24 Sep 2026 · page 14",
-      Permissions: "Scoped to the Growth Fund II deal team",
-    },
+    context: ["Investment Ontology", "IBOR", "Alert rules", "Permissions"],
+    sources: [
+      ["Covenant model v4", "Model"],
+      ["Q3 management accounts", "Financials"],
+      ["Reporting calendar", "IBOR"],
+    ],
+    action: "Open Control Panel",
+    actionHref: "#control-panel",
   },
   {
-    q: "Which fund is performing best?",
+    q: "Why did EBITDA fall?",
+    answer: "EBITDA declined 8.2% this quarter.",
+    rows: [
+      ["Revenue", "−4.1%", "danger"],
+      ["COGS", "+6.3%", "danger"],
+      ["Hiring", "+12.0%", "danger"],
+    ],
+    context: ["Investment Ontology", "IBOR", "Documents", "Permissions"],
+    sources: [
+      ["Financial model · Harbor Logistics", "Model"],
+      ["IBOR · Q3 valuation event", "IBOR"],
+      ["Board pack · 24 Sep 2026 · p.14", "Document"],
+    ],
+    action: "Review investment",
+    actionHref: "#object-view",
+  },
+  {
+    q: "Which fund has the highest IRR?",
     answer: "US Manufacturing III leads the portfolio on gross IRR.",
     rows: [
       ["US Manufacturing III", "21.8% · 2.70x", "ok"],
       ["Growth Fund II", "18.2% · 2.30x", "neutral"],
       ["Growth Fund I", "16.9% · 2.10x", "neutral"],
     ],
-    context: {
-      "Investment Ontology": "4 funds · 38 portfolio companies",
-      IBOR: "Cash flows and NAV as of 30 Sep 2026",
-      Financials: "Quarterly valuations, Q3 2026",
-      Documents: "Capital account statements",
-      Permissions: "Portfolio-level view for the investment committee",
-    },
+    context: ["Investment Ontology", "IBOR", "Metric definitions"],
+    sources: [
+      ["Fund cash flows 2016–2026", "IBOR"],
+      ["Gross IRR definition v3.2", "Metric"],
+      ["Q3 valuation report", "Document"],
+    ],
+    action: "Trace source",
+    actionHref: "#lineage",
   },
   {
-    q: "What needs my attention?",
-    answer: "7 items need a decision this week. 3 are exceptions.",
+    q: "Show unresolved diligence items.",
+    answer: "2 diligence items are open on Acme Robotics.",
     rows: [
-      ["Covenant headroom < 15% · Atlas Components", "Exception", "warn"],
-      ["Valuation variance > 5% · Growth Fund II", "Review", "accent"],
-      ["Q3 accounts missing · FN NYC", "Task", "info"],
+      ["EBITDA bridge FY24–FY26", "Outstanding", "warn"],
+      ["EBITDA margin (screening)", "Missing", "warn"],
+      ["Quality of earnings report", "Received", "ok"],
     ],
-    context: {
-      "Investment Ontology": "Items linked to 3 companies and 2 funds",
-      IBOR: "Variance measured against the administrator record",
-      Financials: "Covenant model v4, lender report",
-      Documents: "Valuation memo draft · Q3",
-      Permissions: "Items assigned to you or your team",
-    },
-  },
-  {
-    q: "Which investments have unresolved exceptions?",
-    answer: "3 investments have open exceptions.",
-    rows: [
-      ["Atlas Components", "Covenant headroom", "warn"],
-      ["FN NYC", "Missing Q3 accounts", "warn"],
-      ["Harbor Logistics", "FX rate mismatch", "warn"],
+    context: ["Deal record", "Checklist", "Documents", "Permissions"],
+    sources: [
+      ["Diligence checklist · Acme Robotics", "Workflow"],
+      ["Data room index · 29 Sep 2026", "Document"],
+      ["Screening criteria v2", "Rule"],
     ],
-    context: {
-      "Investment Ontology": "Exceptions attached to investment records",
-      IBOR: "FX adjustment pending approval · Harbor Logistics",
-      Financials: "Q3 reporting calendar",
-      Documents: "Lender report, 30 Sep 2026",
-      Permissions: "Exceptions you are allowed to see",
-    },
+    action: "Review recommendation",
+    actionHref: "#workflow",
   },
 ];
 
-const TONE: Record<Tone, string> = {
-  ok: "text-ok",
-  warn: "text-warn",
-  danger: "text-danger",
-  accent: "text-accent",
-  info: "text-info",
-  neutral: "text-ink-2",
-};
-
-const KPIS = [
-  ["Coverage", "4 funds"],
-  ["Gross IRR", "18.4%"],
-  ["Needs attention", "7 items"],
-] as const;
+const TONE: Record<Tone, string> = { ok: "text-ok", warn: "text-warn", danger: "text-danger", accent: "text-accent", info: "text-info", neutral: "text-ink-2" };
 
 /**
- * Hero product demo (HERO-102, AGENT-002/003/004). A preset question walks the
- * panel through query → context → answer → governance. Deterministic; no network.
- * Reduced motion shows the final state immediately with the same content.
+ * Ask OCTO (PAL-009): select → query → context → answer → evidence → action.
+ * Runs once when the panel enters view; reduced motion shows the final state.
  */
 export function HeroQuery() {
   const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-120px" });
   const [selected, setSelected] = useState<number | null>(null);
   const [phase, setPhase] = useState(0);
-  const [drawer, setDrawer] = useState<ContextKey | null>(null);
   const touched = useRef(false);
   const timers = useRef<number[]>([]);
 
   const run = (i: number) => {
     timers.current.forEach(window.clearTimeout);
     setSelected(i);
-    setDrawer(null);
-    if (reduce) return setPhase(4);
+    if (reduce) return setPhase(5);
     setPhase(1);
-    timers.current = [250, 600, 950].map((t, k) => window.setTimeout(() => setPhase(k + 2), t));
+    timers.current = [300, 700, 1050, 1350].map((t, k) => window.setTimeout(() => setPhase(k + 2), t));
   };
 
-  // State A → B once on load, so the first viewport shows the mechanism. Never repeats.
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      if (!touched.current) run(0);
-    }, 900);
-    const pending = timers.current;
-    return () => {
-      window.clearTimeout(id);
-      pending.forEach(window.clearTimeout);
-    };
+    if (!inView || touched.current) return;
+    const id = window.setTimeout(() => !touched.current && run(1), 500);
+    return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [inView]);
 
-  const preset = selected === null ? null : PRESETS[selected];
-  const reveal = {
-    initial: reduce ? false : { opacity: 0, y: 6 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: DUR.standard, ease: EASE },
-  } as const;
+  useEffect(() => () => timers.current.forEach(window.clearTimeout), []);
+
+  const p = selected === null ? null : PRESETS[selected];
+  const reveal = { initial: reduce ? false : { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, transition: { duration: DUR.standard, ease: EASE } } as const;
+  const label = "font-data text-[10px] uppercase tracking-[0.1em] text-ink-3";
 
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_20px_40px_-32px_rgb(17_19_24/0.22)]">
+    <div ref={ref} className="overflow-hidden rounded-sm border border-line-strong bg-canvas">
       <div className="flex items-center justify-between border-b border-line bg-subtle px-4 py-2.5">
-        <p className="text-[13px] font-medium text-ink">OCTO Intelligence</p>
+        <p className="font-data text-[11px] text-ink-2">octo / intelligence / ask</p>
         <SampleLabel>Demo environment</SampleLabel>
       </div>
 
-      <dl className="grid grid-cols-3 divide-x divide-line border-b border-line">
-        {KPIS.map(([k, v]) => (
-          <div key={k} className="min-w-0 px-3 py-2.5 sm:px-4">
-            <dt className="truncate text-[11px] text-ink-3">{k}</dt>
-            <dd className="mt-0.5 truncate text-sm font-semibold tabular-nums">{v}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <div className="p-4">
-        <div className="flex min-h-12 items-center gap-2.5 rounded-lg border border-line-strong bg-canvas px-3 py-2">
+      <div className="border-b border-line p-4">
+        <div className="flex min-h-12 items-center gap-2.5 border border-line-strong px-3 py-2">
           <Search aria-hidden className="size-4 shrink-0 text-ink-3" />
-          <p className={cn("text-[15px] leading-snug", preset ? "text-ink" : "text-ink-3")}>{preset ? preset.q : "Ask across your investment system"}</p>
+          <p className={cn("text-[15px]", p ? "text-ink" : "text-ink-3")}>{p ? p.q : "Ask across your investment book..."}</p>
         </div>
-        <div role="group" aria-label="Example questions" className="mt-3 flex flex-wrap gap-1.5">
-          {PRESETS.map((p, i) => (
+        <div role="group" aria-label="Suggested questions" className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          {PRESETS.map((x, i) => (
             <button
-              key={p.q}
+              key={x.q}
               type="button"
               aria-pressed={selected === i}
               onClick={() => {
@@ -169,67 +140,71 @@ export function HeroQuery() {
                 run(i);
               }}
               className={cn(
-                "min-h-9 rounded-md border px-2.5 py-1.5 text-left text-[13px] transition-colors",
-                selected === i ? "border-accent bg-accent-soft text-accent" : "border-line bg-canvas text-ink-2 hover:border-line-strong hover:text-ink",
+                "min-h-10 border px-3 py-2 text-left text-[13px] transition-colors",
+                selected === i ? "border-accent bg-accent-soft text-ink" : "border-line text-ink-2 hover:border-line-strong hover:text-ink",
                 focusRing,
               )}
             >
-              {p.q}
+              {x.q}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="min-h-[252px] border-t border-line px-4 pb-4 pt-3" aria-live="polite">
-        {!preset && <p className="pt-8 text-center text-[13px] text-ink-3">Choose a question to see how OCTO answers from governed context.</p>}
+      <div className="min-h-[340px] p-4" aria-live="polite">
+        {!p && <p className="pt-10 text-center text-[13px] text-ink-3">Select a question. OCTO shows its context and evidence before the answer.</p>}
         <AnimatePresence mode="wait">
-          {preset && (
-            <motion.div key={selected} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: DUR.fast }}>
+          {p && (
+            <motion.div key={selected} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: DUR.fast }} className="space-y-4">
               {phase >= 2 && (
                 <motion.div {...reveal}>
-                  <p className="font-data text-[10px] uppercase tracking-[0.08em] text-ink-3">Context</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {CONTEXT_KEYS.map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        aria-expanded={drawer === k}
-                        aria-controls="hero-context-drawer"
-                        onClick={() => setDrawer(drawer === k ? null : k)}
-                        className={cn(
-                          "min-h-7 rounded-sm border px-1.5 font-data text-[11px] transition-colors",
-                          drawer === k ? "border-accent bg-accent-soft text-accent" : "border-line bg-subtle text-ink-2 hover:text-ink",
-                          focusRing,
-                        )}
-                      >
-                        {k}
-                      </button>
+                  <p className={label}>Context</p>
+                  <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                    {p.context.map((c) => (
+                      <li key={c} className="flex items-center gap-1.5 border border-line bg-subtle px-1.5 py-0.5 font-data text-[11px] text-ink-2">
+                        <span aria-hidden className="size-1.5 rounded-full bg-ok" />
+                        {c}
+                      </li>
                     ))}
-                  </div>
-                  {drawer && (
-                    <p id="hero-context-drawer" className="mt-2 rounded-md border border-dashed border-line-strong bg-subtle px-2.5 py-1.5 text-[12px] text-ink-2">
-                      <span className="font-medium text-ink">{drawer}:</span> {preset.context[drawer]}
-                    </p>
-                  )}
+                  </ul>
                 </motion.div>
               )}
               {phase >= 3 && (
-                <motion.div {...reveal} className="mt-3">
-                  <p className="text-sm font-medium text-ink">{preset.answer}</p>
-                  <ul className="mt-1.5 divide-y divide-line border-y border-line">
-                    {preset.rows.map(([label, value, tone]) => (
-                      <li key={label} className="flex items-center justify-between gap-4 py-1.5 text-[13px]">
-                        <span className="min-w-0 truncate text-ink-2">{label}</span>
-                        <span className={cn("shrink-0 font-data tabular-nums", TONE[tone])}>{value}</span>
+                <motion.div {...reveal}>
+                  <p className={label}>Answer</p>
+                  <p className="mt-1 text-[15px] font-medium text-ink">{p.answer}</p>
+                  <ul className="mt-2 divide-y divide-line border-y border-line">
+                    {p.rows.map(([k, v, tone]) => (
+                      <li key={k} className="flex items-center justify-between gap-4 py-1.5 text-[13px]">
+                        <span className="min-w-0 truncate text-ink-2">{k}</span>
+                        <span className={cn("shrink-0 font-data tabular-nums", TONE[tone])}>{v}</span>
                       </li>
                     ))}
                   </ul>
                 </motion.div>
               )}
               {phase >= 4 && (
-                <motion.div {...reveal} className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  <ApprovalState reached="evidence" />
-                  <p className="font-data text-[11px] text-warn">Draft · human review required</p>
+                <motion.div {...reveal}>
+                  <p className={label}>Sources</p>
+                  <ol className="mt-1.5 space-y-1">
+                    {p.sources.map(([s, kind], i) => (
+                      <li key={s} className="flex items-center gap-2 text-[13px]">
+                        <span className="font-data text-[11px] text-accent">[{i + 1}]</span>
+                        <FileText aria-hidden className="size-3.5 text-ink-3" />
+                        <span className="min-w-0 flex-1 truncate text-ink">{s}</span>
+                        <span className="font-data text-[10px] uppercase tracking-[0.06em] text-ink-3">{kind}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </motion.div>
+              )}
+              {phase >= 5 && (
+                <motion.div {...reveal} className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+                  <p className="font-data text-[11px] text-warn">Drafted by AI · human approval required</p>
+                  <a href={p.actionHref} className={cn("inline-flex min-h-10 items-center gap-2 bg-ink px-3.5 text-[13px] font-medium text-white hover:bg-ink-2", focusRing)}>
+                    {p.action}
+                    <ArrowRight aria-hidden className="size-3.5" />
+                  </a>
                 </motion.div>
               )}
             </motion.div>

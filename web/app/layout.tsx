@@ -15,15 +15,16 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const title = "OCTO — The Operating System for Private Markets";
+const title = "OCTO — Private Markets Investment Intelligence Infrastructure";
 const description =
-  "OCTO connects investment data, portfolio intelligence, workflow, analytics, and reporting in one governed system for private markets.";
+  "OCTO connects investment data, ontology, intelligence, analytics, and governed workflows into one operational system for private markets.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://octo.mesta.click"),
   title,
   description,
-  openGraph: { title, description, type: "website", siteName: "OCTO" },
+  alternates: { canonical: "/" },
+  openGraph: { title, description, type: "website", siteName: "OCTO", url: "/" },
   twitter: { card: "summary_large_image", title, description },
 };
 
