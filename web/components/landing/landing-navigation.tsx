@@ -10,9 +10,14 @@ import { Container, DUR, EASE, focusRing } from "./primitives";
 export function OctoWordmark({ inverse = true }: { inverse?: boolean }) {
   return (
     <span className={cn("flex items-center gap-2.5 text-[15px] font-semibold tracking-[0.22em]", inverse ? "text-white" : "text-ink")}>
-      <svg aria-hidden viewBox="0 0 20 20" className="size-5">
-        <rect x="1" y="1" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="7.5" y="7.5" width="5" height="5" className="fill-accent" />
+      <svg aria-hidden viewBox="0 0 48 48" className="size-6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="4.2">
+        <ellipse cx="26" cy="26" rx="8.2" ry="7.2" fill="currentColor" stroke="none" />
+        <path d="M20 26H4" />
+        <path d="M23 21 13 5" />
+        <path d="M31 20 41 6" />
+        <path d="M22 31 15 44" />
+        <path d="M29 32 29 45" />
+        <path d="M34 26 41 24.5" />
       </svg>
       OCTO
     </span>
