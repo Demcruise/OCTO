@@ -34,7 +34,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${plexMono.variable}`}>
-      <body className="bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-white">
+      <body className="bg-white text-neutral-900 antialiased">
         {children}
       </body>
     </html>

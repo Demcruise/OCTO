@@ -59,12 +59,9 @@ export function Hero() {
           </motion.span>
         </h1>
 
-        <motion.div {...rise(0.75)} className="mt-10 flex flex-col gap-3 sm:flex-row">
+        <motion.div {...rise(0.75)} className="mt-10">
           <ButtonLink href={CTA_HREF} variant="inverse" arrow>
             Request access
-          </ButtonLink>
-          <ButtonLink href="#stories" variant="ghost-inverse">
-            Explore OCTO
           </ButtonLink>
         </motion.div>
 

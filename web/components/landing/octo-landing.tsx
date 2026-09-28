@@ -1,40 +1,21 @@
 import { LandingNavigation } from "./landing-navigation";
 import { Hero } from "./hero";
 import { FeaturedStories } from "./featured-stories";
-import { PlatformStatement } from "./platform-statement";
-import { SourceNetwork } from "./source-network";
-import { SystemIndex } from "./system-index";
-import { OntologySection } from "./ontology-section";
-import { ObjectGraph } from "./object-graph";
-import { InvestmentObjectView } from "./investment-object-view";
-import { IborShowcase } from "./ibor-showcase";
-import { Lineage } from "./lineage";
-import { AiContext } from "./ai-context";
-import { GovernedAI } from "./governed-ai";
-import { InvestmentWorkflow } from "./investment-workflow";
-import { ControlPanel } from "./control-panel";
-import { ExceptionQueue } from "./exception-queue";
-import { AnalyticsShowcase } from "./analytics-showcase";
-import { Governance } from "./governance";
-import { Deployment } from "./deployment";
-import { LargeTransition } from "./large-transition";
-import { Proof } from "./proof";
-import { Editorial } from "./editorial";
-import { UseCaseIndex } from "./use-case-index";
+import { OctoSystem } from "./octo-system";
+import { FragmentedTruth } from "./fragmented-truth";
+import { FutureEditorial } from "./future-editorial";
+import { DataToDecision } from "./data-to-decision";
 import { Cta } from "./cta";
-import { Contact } from "./contact";
 import { Footer } from "./footer";
 
 /**
- * OCTO landing page — editorial sequence per the megaplan (PAL-002):
+ * OCTO landing page — exactly eight sections per the light-theme master
+ * backlog:
  *
- * nav → cinematic hero → topic strip / featured story → the OCTO system
- * statement → system index → product stories (ontology → record → lineage →
- * intelligence → workflow → control → analytics → governance) → large
- * transition → proof → case studies → use-case index → CTA → footer.
+ * 01 Hero · 02 Featured · 03 OCTO System · 04 Fragmented Truth ·
+ * 05 The Future · 06 From Data to Decision · 07 CTA · 08 Footer.
  *
- * Dark sections carry system diagrams and statements; light sections carry
- * product surfaces.
+ * Light theme throughout; the only dark pixels live inside photography.
  */
 export function OctoLanding() {
   return (
@@ -49,28 +30,11 @@ export function OctoLanding() {
       <main id="main">
         <Hero />
         <FeaturedStories />
-        <PlatformStatement />
-        <SystemIndex />
-        <SourceNetwork />
-        <OntologySection />
-        <ObjectGraph />
-        <InvestmentObjectView />
-        <IborShowcase />
-        <Lineage />
-        <AiContext />
-        <GovernedAI />
-        <InvestmentWorkflow />
-        <ControlPanel />
-        <ExceptionQueue />
-        <AnalyticsShowcase />
-        <Governance />
-        <Deployment />
-        <LargeTransition />
-        <Proof />
-        <Editorial />
-        <UseCaseIndex />
+        <OctoSystem />
+        <FragmentedTruth />
+        <FutureEditorial />
+        <DataToDecision />
         <Cta />
-        <Contact />
       </main>
       <Footer />
     </div>
