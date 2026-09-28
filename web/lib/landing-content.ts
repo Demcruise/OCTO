@@ -84,19 +84,19 @@ export const SYSTEM_INDEX: ProductSystem[] = [
     index: "01",
     name: "Investment Ontology",
     description: "Model the objects and relationships behind every investment decision.",
-    href: "#system-graph",
+    href: "#system",
   },
   {
     index: "02",
     name: "Investment Book of Record",
     description: "Establish the governed financial record.",
-    href: "#system-record",
+    href: "#system",
   },
   {
     index: "03",
     name: "Intelligence",
     description: "Turn investment data into usable insight.",
-    href: "#system-control",
+    href: "#system",
   },
   {
     index: "04",
@@ -108,7 +108,7 @@ export const SYSTEM_INDEX: ProductSystem[] = [
     index: "05",
     name: "Governance",
     description: "Control permissions, approvals, lineage, and auditability.",
-    href: "#system-record",
+    href: "#system",
   },
 ];
 
@@ -129,8 +129,8 @@ export const FOOTER: { label: string; links: NavLink[] }[] = [
     label: "Platform",
     links: [
       { title: "Investment Ontology", href: "#system" },
-      { title: "Book of Record", href: "#system-record" },
-      { title: "Control Panel", href: "#system-control" },
+      { title: "Book of Record", href: "#system" },
+      { title: "From data to decision", href: "#decision" },
     ],
   },
   {
