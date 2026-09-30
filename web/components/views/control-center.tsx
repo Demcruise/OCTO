@@ -1,324 +1,381 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Info, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ago, date } from "@/lib/format";
-import { ACTIVITY, BRIDGE, CASH_FLOWS, DEMO_NOW, EXPOSURE_CHANGES, INTELLIGENCE, KPIS, NAV_SERIES, SEVERITY_ORDER, WORK, type Kpi, type WorkItem, type WorkKind } from "@/lib/demo-data";
+import { AlertOctagon, ArrowRight, Banknote, Bell, Briefcase, CircleDollarSign, GitCompareArrows, Hourglass, Landmark, Percent, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
+import { useFormat } from "@/lib/use-format";
 import { useWorkspace } from "@/lib/workspace";
-import { PageBody, PageHeader } from "@/components/layout/page-header";
-import { AiProposalCard, Card, MetricCard, ProvenanceSheet } from "@/components/data/cards";
-import { AreaChart, PairedBars, Waterfall } from "@/components/data/charts";
-import { Button, ringInset } from "@/components/ui/button";
-import { EntityChip, StatusBadge, type Tone } from "@/components/ui/badge";
-import { Tabs, Textarea } from "@/components/ui/controls";
+import { useAiDrafts, useAlerts, useApprovals, useExceptions, useFunds, usePortfolioMetrics, useRecon, useSignals, useTasks } from "@/lib/data/queries";
+import { ACTIVITY, AS_OF, DEMO_NOW, NAV_SERIES, SEVERITY_ORDER, fundDpi, fundTvpi, hrefFor, type Fund, type Metric, type Severity } from "@/lib/demo";
+import { PageBody, PageHeader } from "@/components/page/page-header";
+import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
+import { MetricCard, MetricGrid } from "@/components/metric/metric-card";
+import { LineageDrawer } from "@/components/metric/metric-lineage";
+import { useMetricValue } from "@/components/metric/metric-card";
+import { ChartShell } from "@/components/chart/chart-shell";
+import { TrendChart } from "@/components/chart/line-chart";
+import { Timeline } from "@/components/chart/timeline";
+import { DataTable, type Column } from "@/components/data/data-table";
+import { EntityCell, NumericCell, StatusCell } from "@/components/data/cells";
+import { Button, LinkButton } from "@/components/ui/button";
+import { Tag, type Tone } from "@/components/ui/badge";
+import { Tabs } from "@/components/ui/controls";
 import { Sheet } from "@/components/ui/overlay";
-import { EmptyState, FreshnessBadge, useToast } from "@/components/ui/states";
-
-export const SEVERITY_TONE: Record<WorkItem["severity"], Tone> = { critical: "danger", high: "warn", medium: "info", low: "neutral" };
-const KIND_LABEL: Record<WorkKind, string> = { alert: "Alert", approval: "Approval", recon: "Recon break", stale: "Stale data", "ai-draft": "AI draft", evidence: "Evidence" };
-
-type QueueFilter = "all" | "approval" | "recon" | "alert" | "ai-draft";
+import { EmptyState, FreshnessBadge, InlineAlert, Skeleton, useToast } from "@/components/feedback";
+import { AiDraftCard } from "@/components/ai/ai-draft";
+import { DecisionPanel, SeverityBadge, WorkItem, WorkflowStepper } from "@/components/workflow/workflow";
+import { useBreadcrumb } from "@/components/shell/shell-context";
 
 const now = new Date(DEMO_NOW);
-const money1 = (v: number) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(1)}M`;
+const ICONS: Record<string, React.ReactNode> = { nav: <Landmark />, irr: <Percent />, tvpi: <TrendingUp />, dpi: <Banknote />, invested: <Briefcase />, dry: <CircleDollarSign /> };
+
+type FeedKind = "task" | "approval" | "exception" | "recon" | "ai" | "alert" | "news";
+type FeedItem = { id: string; kind: FeedKind; label: string; title: string; severity?: Severity; entity?: { type: string; name: string; href?: string }; at?: string; body?: string; action: string; href?: string };
+type Filter = "all" | FeedKind;
+
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "task", label: "My work" },
+  { value: "approval", label: "Approvals" },
+  { value: "exception", label: "Exceptions" },
+  { value: "recon", label: "Recon" },
+  { value: "ai", label: "AI drafts" },
+  { value: "alert", label: "Alerts" },
+  { value: "news", label: "News matches" },
+];
+
+const STATUS_TONE: Record<Fund["status"], Tone> = { Investing: "ok", Harvesting: "info", Watch: "warn", Exiting: "neutral", Fundraising: "accent" };
 
 /**
- * Control Center (CC-001): what changed, what needs a decision, and what the
- * portfolio did this period — every number traceable to its calculation.
+ * Control Center (plan §17, §38 `/app`): one question — "what needs me, and
+ * how is the portfolio doing?" Executive KPIs with lineage, a unified
+ * priority feed with detail sheets, attention counts, fund performance,
+ * signals and activity.
  */
 export function ControlCenter() {
-  const { current } = useWorkspace();
+  const f = useFormat();
   const router = useRouter();
   const toast = useToast();
-  const [explain, setExplain] = useState<Kpi | null>(null);
-  const [filter, setFilter] = useState<QueueFilter>("all");
+  const fmtMetric = useMetricValue();
+  const { current } = useWorkspace();
+  useBreadcrumb(null);
+
+  const metrics = usePortfolioMetrics();
+  const funds = useFunds();
+  const tasks = useTasks();
+  const approvals = useApprovals();
+  const exceptions = useExceptions();
+  const recon = useRecon();
+  const drafts = useAiDrafts();
+  const alerts = useAlerts();
+  const signals = useSignals();
+
+  const [lineage, setLineage] = useState<Metric | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [open, setOpen] = useState<FeedItem | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
-  const [proposal, setProposal] = useState<WorkItem | null>(null);
+  const [hover, setHover] = useState<number | null>(null);
 
-  const open = WORK.filter((w) => !done.has(w.id)).sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
-  const queue = filter === "all" ? open : open.filter((w) => w.kind === filter);
-  const count = (k: WorkKind) => open.filter((w) => w.kind === k).length;
+  const feed = useMemo<FeedItem[]>(() => {
+    const items: FeedItem[] = [
+      ...(tasks.data ?? []).filter((t) => t.assignee === "You" && t.status !== "Done").map((t) => ({ id: t.id, kind: "task" as const, label: `Task · ${t.type}`, title: t.title, severity: t.priority, entity: { type: t.entity.type, name: t.entity.name, href: hrefFor(t.entity) }, body: `${t.status} · due ${t.due}`, action: "Open" })),
+      ...(approvals.data ?? []).map((a) => ({ id: a.id, kind: "approval" as const, label: `Approval · ${a.kind}`, title: a.title, severity: (a.due === "Today" ? "high" : "medium") as Severity, entity: { type: a.entity.type, name: a.entity.name, href: hrefFor(a.entity) }, at: a.requestedAt, body: a.summary, action: "Review" })),
+      ...(exceptions.data ?? []).filter((e) => e.kind === "Valuation stale" || e.kind === "Covenant").map((e) => ({ id: e.id, kind: "exception" as const, label: `Exception · ${e.kind}`, title: e.title, severity: e.severity, entity: { type: e.entity.type, name: e.entity.name, href: hrefFor(e.entity) }, action: e.action, href: e.href })),
+      ...(recon.data ?? []).filter((r) => r.state !== "Resolved").map((r) => ({ id: r.id, kind: "recon" as const, label: "Recon break", title: `${r.field} · ${r.variance}`, severity: r.severity, entity: { type: r.entity.type, name: r.entity.name, href: hrefFor(r.entity) }, body: r.cause, action: "Resolve", href: `/app/reconciliation?id=${r.id}` })),
+      ...(drafts.data ?? []).map((d) => ({ id: d.id, kind: "ai" as const, label: `AI draft · ${d.kind}`, title: d.title, severity: "medium" as Severity, entity: { type: d.entity.type, name: d.entity.name, href: hrefFor(d.entity) }, at: d.createdAt, body: d.body, action: "Review draft" })),
+      ...(alerts.data ?? []).filter((a) => a.state === "Open").map((a) => ({ id: a.id, kind: "alert" as const, label: "Alert", title: a.title, severity: a.severity, entity: { type: a.entity.type, name: a.entity.name, href: hrefFor(a.entity) }, at: a.triggeredAt, body: `Observed ${a.observed} vs ${a.threshold}`, action: "Review", href: `/app/alerts?id=${a.id}` })),
+      ...(signals.data ?? []).filter((s) => s.entity).map((s) => ({ id: s.id, kind: "news" as const, label: s.kind, title: s.title, entity: s.entity ? { type: s.entity.type, name: s.entity.name, href: hrefFor(s.entity) } : undefined, at: s.at, body: s.body, action: "Open" })),
+    ];
+    return items.filter((i) => !done.has(i.id)).sort((a, b) => SEVERITY_ORDER[a.severity ?? "low"] - SEVERITY_ORDER[b.severity ?? "low"]);
+  }, [tasks.data, approvals.data, exceptions.data, recon.data, drafts.data, alerts.data, signals.data, done]);
 
-  const act = (w: WorkItem) => {
-    if (w.kind === "ai-draft") return setProposal(w);
-    if (w.kind === "approval") return router.push(`/app/workflows?tab=approvals&id=${w.id}`);
-    if (w.kind === "recon") return router.push(`/app/workflows?tab=recon&id=${w.id}`);
-    if (w.kind === "alert") return router.push(`/app/alerts?id=${w.id}`);
-    toast({ tone: "info", title: `${w.action} — not sent`, body: "Demo workspace: requests are recorded once the workflow API ships." });
+  const shown = filter === "all" ? feed : feed.filter((i) => i.kind === filter);
+  const count = (k: FeedKind) => feed.filter((i) => i.kind === k).length;
+  const loadingFeed = tasks.isLoading || approvals.isLoading || alerts.isLoading;
+
+  const attention = [
+    { label: "Covenant issues", value: (exceptions.data ?? []).filter((e) => e.kind === "Covenant").length, icon: <AlertOctagon />, href: "/app/alerts", tone: "text-danger" },
+    { label: "Valuations stale", value: (exceptions.data ?? []).filter((e) => e.kind === "Valuation stale").length, icon: <Hourglass />, href: "/app/investments", tone: "text-warn" },
+    { label: "Recon breaks", value: (recon.data ?? []).filter((r) => r.state !== "Resolved").length, icon: <GitCompareArrows />, href: "/app/reconciliation", tone: "text-warn" },
+    { label: "Approvals waiting", value: (approvals.data ?? []).length, icon: <ShieldCheck />, href: "/app/workflows?tab=approvals", tone: "text-accent" },
+  ];
+
+  const fundCols: Column<Fund>[] = [
+    { id: "name", header: "Fund", value: (x) => x.name, width: 240, cell: (x) => <EntityCell name={x.name} sub={`${x.strategy} · ${x.vintage}`} href={`/app/funds/${x.slug}`} /> },
+    { id: "committed", header: "Committed", value: (x) => x.committed, align: "right", cell: (x) => <NumericCell value={x.committed} muted /> },
+    { id: "called", header: "Called", value: (x) => x.called, align: "right", cell: (x) => <NumericCell value={x.called} muted /> },
+    { id: "nav", header: "NAV", value: (x) => x.nav, align: "right", cell: (x) => <NumericCell value={x.nav} /> },
+    { id: "tvpi", header: "TVPI", value: (x) => fundTvpi(x), align: "right", cell: (x) => <NumericCell value={fundTvpi(x)} kind="multiple" /> },
+    { id: "dpi", header: "DPI", value: (x) => fundDpi(x), align: "right", cell: (x) => <NumericCell value={fundDpi(x)} kind="multiple" /> },
+    { id: "irr", header: "Net IRR", value: (x) => x.netIrr, align: "right", cell: (x) => <NumericCell value={x.netIrr} kind="pct" /> },
+    { id: "status", header: "Status", value: (x) => x.status, cell: (x) => <StatusCell tone={STATUS_TONE[x.status]}>{x.status}</StatusCell> },
+  ];
+
+  const navPoint = hover === null ? NAV_SERIES[NAV_SERIES.length - 1] : NAV_SERIES[hover];
+  const navPrev = hover === null || hover === 0 ? NAV_SERIES[NAV_SERIES.length - 2] : NAV_SERIES[hover - 1];
+
+  const resolve = (item: FeedItem, title: string, body = "Recorded in this session only (demo).") => {
+    setDone((d) => new Set(d).add(item.id));
+    setOpen(null);
+    toast({ tone: "ok", title, body });
   };
 
   return (
     <>
       <PageHeader
+        variant="dashboard"
         eyebrow={current.name}
         title="Control Center"
-        description="What changed, what needs a decision, and how the portfolio moved this quarter."
+        description="What needs a decision today, and how the portfolio moved this quarter."
         meta={
           <>
-            <FreshnessBadge state="demo" asOf={`as of ${date(DEMO_NOW)}`} />
-            <span className="text-[12px] text-ink-3">{open.length} open items · {count("approval")} approvals waiting on you</span>
+            <FreshnessBadge state="demo" asOf={`as of ${f.date(AS_OF)}`} />
+            <span className="text-[12px] text-ink-3">
+              {feed.length} open items · {count("approval")} approvals waiting on you
+            </span>
           </>
         }
         actions={
           <>
-            <Button size="sm" onClick={() => router.push("/app/alerts")}>
-              View alerts
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => router.push("/app/workflows")}>
+            <LinkButton href="/app/portfolio" size="md">
+              Portfolio overview
+            </LinkButton>
+            <LinkButton href="/app/workflows" size="md" variant="primary">
               Open workflows <ArrowRight />
-            </Button>
+            </LinkButton>
           </>
         }
       />
 
-      <PageBody className="space-y-5">
-        <p className="flex items-start gap-2 rounded-md border border-info/25 bg-info/8 px-3 py-2 text-[12px] text-ink-2">
-          <Info aria-hidden className="mt-px size-3.5 shrink-0 text-info" />
-          Portfolio metrics, queues, and feeds below are illustrative demo data. Workspaces load from the OCTO API when it is reachable.
-        </p>
+      <PageBody className="space-y-4">
+        <InlineAlert tone="demo">Portfolio numbers, queues and feeds are illustrative demo data. Workspaces load from the OCTO API when it is reachable.</InlineAlert>
 
-        {/* KPI row */}
-        {/* Performance on the first row, operational load on the second. */}
-        <section aria-label="Key metrics" className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 md:grid-cols-12">
-          {KPIS.map((k, i) => (
-            <div key={k.id} className={cn("grid", i < 4 ? "md:col-span-3" : "md:col-span-4", i === KPIS.length - 1 && "min-[420px]:max-md:col-span-2")}>
-              <MetricCard kpi={k} onExplain={setExplain} />
-            </div>
-          ))}
-        </section>
+        <MetricGrid cols={6}>
+          {(metrics.data ?? Array.from({ length: 6 }, () => null)).map((m, i) =>
+            m ? <MetricCard key={m.id} metric={m} icon={ICONS[m.id]} onLineage={setLineage} asOf={f.date(AS_OF)} /> : <MetricCard key={i} metric={{} as Metric} state="loading" />,
+          )}
+        </MetricGrid>
 
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          {/* Priority action queue */}
-          <Card
-            title="Needs attention"
-            meta="Sorted by severity, then age"
-            className="xl:col-span-2"
-            bodyClassName="p-0"
-            actions={
-              <Link href="/app/workflows" className={cn("rounded-sm text-[12px] text-accent hover:underline", ringInset)}>
-                All work
-              </Link>
-            }
-          >
-            <Tabs<QueueFilter>
-              label="Filter queue"
-              value={filter}
-              onChange={setFilter}
-              className="px-4"
-              items={[
-                { value: "all", label: "All", count: open.length },
-                { value: "approval", label: "Approvals", count: count("approval") },
-                { value: "recon", label: "Recon", count: count("recon") },
-                { value: "alert", label: "Alerts", count: count("alert") },
-                { value: "ai-draft", label: "AI drafts", count: count("ai-draft") },
-              ]}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+          <Panel className="xl:col-span-8">
+            <PanelHead
+              title="Priority queue"
+              icon={<Bell />}
+              description="Sorted by severity. One primary action per item; details open without losing your place."
+              toolbar={
+                <LinkButton href="/app/workflows" size="sm" variant="ghost">
+                  All work <ArrowRight />
+                </LinkButton>
+              }
             />
-            {queue.length === 0 ? (
-              <EmptyState title="Nothing waiting here" body="New items appear as alerts fire, breaks are detected, or approvals are requested." />
-            ) : (
-              <ul className="divide-y divide-line">
-                {queue.map((w) => (
-                  <li key={w.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
-                    <div className="flex w-28 shrink-0 items-center gap-2">
-                      <StatusBadge tone={SEVERITY_TONE[w.severity]} className="capitalize">
-                        {w.severity}
-                      </StatusBadge>
+            <div className="px-4 pb-2">
+              <Tabs<Filter> variant="pill" label="Filter priority queue" value={filter} onChange={setFilter} items={FILTERS.map((x) => ({ ...x, count: x.value === "all" ? feed.length : count(x.value) }))} />
+            </div>
+            <PanelBody flush className="border-t border-line">
+              {loadingFeed ? (
+                <div className="space-y-3 p-4" role="status" aria-label="Loading priority queue">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-4 w-2/3" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 text-[13px] font-medium text-ink">
-                        <span className="truncate">{w.title}</span>
-                        {w.kind === "ai-draft" && <Sparkles aria-label="AI generated" className="size-3.5 shrink-0 text-accent" />}
-                      </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-3">
-                        <EntityChip type={w.entity.type} name={w.entity.name} />
-                        <span>{KIND_LABEL[w.kind]}</span>
-                        <span>{w.owner}</span>
-                        <span>{w.due ? <span className={cn(w.due === "Today" && "font-medium text-warn")}>Due {w.due}</span> : ago(w.createdAt, now)}</span>
-                        <span className="font-data text-[11px] text-ink-4">{w.id}</span>
-                      </div>
-                    </div>
-                    <Button size="sm" variant={w.severity === "critical" ? "primary" : "secondary"} onClick={() => act(w)} className="self-start sm:self-auto">
-                      {w.action}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          {/* Intelligence feed */}
-          <Card title="Intelligence" meta="Signals matched to your portfolio" bodyClassName="p-0">
-            <ul className="divide-y divide-line">
-              {INTELLIGENCE.map((n) => (
-                <li key={n.id} className="px-4 py-3">
-                  <div className="flex items-center justify-between gap-2 text-[11px]">
-                    <span className="font-data uppercase tracking-[0.06em] text-accent">{n.kind}</span>
-                    <span className="text-ink-4">{ago(n.at, now)}</span>
-                  </div>
-                  <p className="mt-1 text-[13px] font-medium leading-snug text-ink">{n.title}</p>
-                  <p className="mt-0.5 text-[12px] leading-relaxed text-ink-3">{n.body}</p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-
-        {/* Portfolio movement */}
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <Card title="Portfolio NAV" meta="Quarter-end, $M" className="xl:col-span-2">
-            <AreaChart data={NAV_SERIES.map((d) => ({ x: d.q, y: d.nav }))} label="Portfolio NAV by quarter" format={(v) => `$${Math.round(v)}M`} />
-          </Card>
-          <Card title="Capital flows" meta="Calls vs distributions, $M">
-            <PairedBars data={CASH_FLOWS.map((d) => ({ x: d.q, a: d.calls, b: d.dists }))} series={["Capital calls", "Distributions"]} label="Capital calls and distributions by quarter" format={money1} />
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-          <Card title="Q3 NAV bridge" meta="Opening to closing NAV, $M · axis starts above zero" className="xl:col-span-2">
-            <Waterfall data={BRIDGE} label="Q3 NAV bridge" format={money1} />
-          </Card>
-          <div className="grid grid-cols-1 gap-5">
-            <Card title="Exposure change" meta="Sector weight, change vs Q2" bodyClassName="p-0">
-              <table className="w-full text-[13px]">
-                <caption className="sr-only">Sector exposure and change versus prior quarter</caption>
-                <tbody className="divide-y divide-line">
-                  {EXPOSURE_CHANGES.map((e) => (
-                    <tr key={e.sector}>
-                      <th scope="row" className="px-4 py-2 text-left font-normal text-ink-2">
-                        {e.sector}
-                      </th>
-                      <td className="px-2 py-2 text-right font-data tabular-nums text-ink">{e.weight.toFixed(1)}%</td>
-                      <td className={cn("px-4 py-2 text-right font-data tabular-nums", e.change >= 0 ? "text-ok" : "text-danger")}>
-                        {e.change >= 0 ? "+" : "−"}
-                        {Math.abs(e.change).toFixed(1)} pp
-                      </td>
-                    </tr>
                   ))}
-                </tbody>
-              </table>
-            </Card>
-            <Card title="Recent activity" bodyClassName="p-0">
-              <ol className="divide-y divide-line">
-                {ACTIVITY.map((a) => (
-                  <li key={a.id} className="flex items-baseline justify-between gap-3 px-4 py-2 text-[12px]">
-                    <span className="min-w-0 text-ink-3">
-                      <span className="font-medium text-ink">{a.actor}</span> {a.verb} <span className="text-ink-2">{a.object}</span>
-                    </span>
-                    <span className="shrink-0 text-ink-4">{ago(a.at, now)}</span>
-                  </li>
-                ))}
-              </ol>
-            </Card>
+                </div>
+              ) : shown.length === 0 ? (
+                <EmptyState icon={<ShieldCheck />} title="Nothing waiting here" body="New items appear when alerts fire, breaks are detected, drafts are generated, or approvals are requested." />
+              ) : (
+                <ul className="max-h-[560px] divide-y divide-line overflow-y-auto">
+                  {shown.map((item) => (
+                    <li key={item.id}>
+                      <WorkItem
+                        kind={item.label}
+                        title={item.title}
+                        entity={item.entity}
+                        severity={item.severity}
+                        body={item.body}
+                        meta={item.at ? <span>{f.ago(item.at, now)}</span> : <span className="font-data text-[11px] text-ink-4">{item.id}</span>}
+                        action={item.action}
+                        href={item.href}
+                        onAction={item.href ? undefined : () => setOpen(item)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </PanelBody>
+          </Panel>
+
+          <div className="grid grid-cols-1 content-start gap-4 xl:col-span-4">
+            <Panel>
+              <PanelHead title="Needs attention" icon={<AlertOctagon />} />
+              <PanelBody>
+                <ul className="grid grid-cols-2 gap-2">
+                  {attention.map((a) => (
+                    <li key={a.label}>
+                      <button type="button" onClick={() => router.push(a.href)} className="flex w-full cursor-pointer flex-col items-start gap-1.5 rounded-lg border border-line p-3 text-left transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent">
+                        <span className={`[&_svg]:size-4 ${a.tone}`}>{a.icon}</span>
+                        <span className="text-kpi font-semibold tabular-nums text-ink">{a.value}</span>
+                        <span className="text-[12px] text-ink-3">{a.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </PanelBody>
+            </Panel>
+
+            <Panel>
+              <PanelHead title="Market & company signals" icon={<Sparkles />} toolbar={<Tag tone="info">Demo</Tag>} />
+              <PanelBody flush>
+                <ul className="divide-y divide-line">
+                  {(signals.data ?? []).slice(0, 4).map((s) => (
+                    <li key={s.id} className="px-4 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <Tag tone={s.kind === "Portfolio update" ? "warn" : s.kind === "Regulatory event" ? "info" : "accent"}>{s.kind}</Tag>
+                        <span className="text-[11px] text-ink-4">{f.ago(s.at, now)}</span>
+                      </div>
+                      <p className="mt-1.5 text-[13px] font-medium leading-snug text-ink">{s.title}</p>
+                      <p className="mt-0.5 text-[12px] leading-relaxed text-ink-3">{s.body}</p>
+                    </li>
+                  ))}
+                </ul>
+              </PanelBody>
+            </Panel>
           </div>
         </div>
+
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+          <ChartShell
+            className="xl:col-span-8"
+            title="Portfolio NAV"
+            subtitle="Quarter-end, $M — hover or use arrow keys to inspect a quarter"
+            headline={
+              <div className="flex flex-wrap items-baseline gap-3">
+                <span className="text-kpi-xl font-bold tabular-nums text-ink">${navPoint.nav.toFixed(1)}M</span>
+                <span className="text-[12px] font-medium text-ink-3">
+                  {navPoint.q} · {f.delta(((navPoint.nav - navPrev.nav) / navPrev.nav) * 100)} QoQ
+                </span>
+              </div>
+            }
+            freshness={<FreshnessBadge state="demo" asOf={f.date(AS_OF)} />}
+            source="IBOR valuations"
+            onLineage={() => setLineage(metrics.data?.[0] ?? null)}
+            exportData={{ filename: "portfolio-nav", head: ["Quarter", "NAV ($M)", "Benchmark ($M)"], rows: NAV_SERIES.map((p) => [p.q, p.nav, p.benchmark]) }}
+            state={metrics.isLoading ? "loading" : "ready"}
+            height={240}
+          >
+            <TrendChart
+              x={NAV_SERIES.map((p) => p.q)}
+              series={[
+                { id: "nav", label: "NAV", values: NAV_SERIES.map((p) => p.nav) },
+                { id: "bm", label: "Public benchmark", values: NAV_SERIES.map((p) => p.benchmark), color: "var(--color-ink-4)", dashed: true, area: false },
+              ]}
+              format={(v) => `$${Math.round(v)}M`}
+              label="Portfolio NAV by quarter"
+              onHover={setHover}
+            />
+          </ChartShell>
+
+          <Panel className="xl:col-span-4">
+            <PanelHead title="Recent activity" />
+            <PanelBody>
+              <Timeline
+                events={ACTIVITY.map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, tone: a.actor === "OCTO" || a.actor.includes("model") ? "accent" : "neutral" }))}
+              />
+            </PanelBody>
+          </Panel>
+        </div>
+
+        <Panel>
+          <PanelHead title="Fund performance" description="Net of fees, as of quarter end" toolbar={<LinkButton href="/app/funds" size="sm" variant="ghost">All funds <ArrowRight /></LinkButton>} />
+          <DataTable
+            id="cc-funds"
+            chrome="minimal"
+            label="Fund performance"
+            data={funds.data ?? []}
+            status={funds.isLoading ? "loading" : "ready"}
+            columns={fundCols}
+            rowId={(x) => x.id}
+            onRowOpen={(x) => router.push(`/app/funds/${x.slug}`)}
+            empty={{ title: "No funds", body: "Funds appear once a workspace has commitments recorded." }}
+            totals={false}
+          />
+        </Panel>
       </PageBody>
 
-      <ProvenanceSheet kpi={explain} onClose={() => setExplain(null)} />
-      <ProposalSheet
-        item={proposal}
-        onClose={() => setProposal(null)}
-        onResolved={(id, outcome) => {
-          setDone((d) => new Set(d).add(id));
-          setProposal(null);
-          toast({ tone: outcome === "rejected" ? "info" : "ok", title: outcome === "rejected" ? "Draft rejected" : "Draft approved", body: "Recorded in this session only (demo)." });
-        }}
-      />
+      <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmtMetric(lineage) : ""} provenance={lineage?.provenance ?? null} />
+
+      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open?.label} title={open?.title ?? ""} width="max-w-xl">
+        {open && <FeedDetail item={open} onResolve={resolve} />}
+      </Sheet>
     </>
   );
 }
 
-const DRAFT = `Meridian Health EBITDA fell 6.1% quarter on quarter to $14.2M, driven by a one-off $1.1M ward refurbishment expensed in August and a 2.4-point rise in nurse agency costs. Revenue grew 3.8% on higher outpatient volumes. Management expects agency costs to normalise by Q1 2027 as 42 permanent hires start.`;
+function FeedDetail({ item, onResolve }: { item: FeedItem; onResolve: (item: FeedItem, title: string, body?: string) => void }) {
+  const f = useFormat();
+  const approvals = useApprovals();
+  const drafts = useAiDrafts();
+  const tasks = useTasks();
+  const signals = useSignals();
 
-function ProposalSheet({ item, onClose, onResolved }: { item: WorkItem | null; onClose: () => void; onResolved: (id: string, outcome: "approved" | "rejected") => void }) {
-  const [mode, setMode] = useState<"review" | "edit" | "reject">("review");
-  const [text, setText] = useState(DRAFT);
-  const [reason, setReason] = useState("");
-  const reset = useMemo(
-    () => () => {
-      setMode("review");
-      setText(DRAFT);
-      setReason("");
-    },
-    [],
-  );
-  if (!item) return null;
-  const close = () => {
-    reset();
-    onClose();
-  };
+  if (item.kind === "ai") {
+    const d = drafts.data?.find((x) => x.id === item.id);
+    return d ? <AiDraftCard draft={d} onResolve={(o) => onResolve(item, o === "rejected" ? "Draft rejected" : o === "evidence-requested" ? "Evidence requested" : "Draft accepted")} /> : null;
+  }
+  if (item.kind === "approval") {
+    const a = approvals.data?.find((x) => x.id === item.id);
+    if (!a) return null;
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-center gap-2">
+          {item.severity && <SeverityBadge severity={item.severity} />}
+          <span className="text-[12px] text-ink-3">
+            Requested by {a.requestedBy} · {f.ago(a.requestedAt, now)} · due {a.due}
+          </span>
+        </div>
+        <WorkflowStepper steps={a.steps} />
+        <p className="text-[13px] leading-relaxed text-ink-2">{a.summary}</p>
+        <DecisionPanel
+          idPrefix={`cc-${a.id}`}
+          decisions={[
+            { id: "reject", label: "Reject", variant: "danger" },
+            { id: "changes", label: "Request changes" },
+            { id: "approve", label: "Approve", variant: "primary" },
+          ]}
+          onDecide={(d) => onResolve(item, `${a.id} · ${d.label.toLowerCase()}`)}
+        />
+      </div>
+    );
+  }
+  if (item.kind === "task") {
+    const t = tasks.data?.find((x) => x.id === item.id);
+    if (!t) return null;
+    return (
+      <div className="space-y-4 text-[13px]">
+        <p className="text-ink-2">
+          {t.type} task for <span className="font-medium text-ink">{t.entity.name}</span>, due {t.due}. Current status: {t.status}.
+        </p>
+        <div className="flex gap-2">
+          <Button size="sm" variant="primary" onClick={() => onResolve(item, `${t.id} marked done`)}>
+            Mark done
+          </Button>
+          <LinkButton size="sm" href={hrefFor(t.entity) ?? "/app"}>
+            Open {t.entity.type.toLowerCase()}
+          </LinkButton>
+        </div>
+      </div>
+    );
+  }
+  const s = signals.data?.find((x) => x.id === item.id);
   return (
-    <Sheet
-      open
-      onClose={close}
-      eyebrow={`${item.entity.type} · ${item.entity.name}`}
-      title={item.title}
-      footer={
-        mode === "edit" ? (
-          <div className="flex justify-end gap-2">
-            <Button size="sm" onClick={() => setMode("review")}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => (reset(), onResolved(item.id, "approved"))}>
-              Approve edited draft
-            </Button>
-          </div>
-        ) : mode === "reject" ? (
-          <div className="flex justify-end gap-2">
-            <Button size="sm" onClick={() => setMode("review")}>
-              Back
-            </Button>
-            <Button variant="danger" size="sm" disabled={reason.trim().length < 5} onClick={() => (reset(), onResolved(item.id, "rejected"))}>
-              Reject draft
-            </Button>
-          </div>
-        ) : null
-      }
-    >
-      {mode === "review" && (
-        <AiProposalCard
-          title="Variance explanation"
-          confidence="Medium"
-          sources={["Q3 management accounts", "Aug board pack p.14", "Payroll extract Sep", "IBOR valuation Q3"]}
-          onApprove={() => (reset(), onResolved(item.id, "approved"))}
-          onEdit={() => setMode("edit")}
-          onReject={() => setMode("reject")}
-        >
-          <p>{text}</p>
-        </AiProposalCard>
+    <div className="space-y-3 text-[13px]">
+      <p className="leading-relaxed text-ink-2">{item.body}</p>
+      {s && <p className="text-[12px] text-ink-3">Source: {s.source}</p>}
+      {item.entity?.href && (
+        <LinkButton size="sm" href={item.entity.href}>
+          Open {item.entity.name}
+        </LinkButton>
       )}
-      {mode === "edit" && (
-        <div>
-          <label htmlFor="draft-edit" className="text-[12px] font-medium text-ink-2">
-            Edit draft before approving
-          </label>
-          <Textarea id="draft-edit" value={text} onChange={(e) => setText(e.target.value)} className="mt-1.5 min-h-48" />
-          <p className="mt-1.5 text-[12px] text-ink-3">Edits are attributed to you in the audit trail.</p>
-        </div>
-      )}
-      {mode === "reject" && (
-        <div>
-          <label htmlFor="reject-reason" className="text-[12px] font-medium text-ink-2">
-            Why is this draft wrong? <span className="text-danger">*</span>
-          </label>
-          <Textarea id="reject-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1.5" placeholder="e.g. refurbishment was capitalised, not expensed" aria-describedby="reject-hint" />
-          <p id="reject-hint" className="mt-1.5 text-[12px] text-ink-3">
-            Required. The reason is fed back to improve future drafts.
-          </p>
-        </div>
-      )}
-      <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-line pt-4 text-[12px]">
-        <div>
-          <dt className="text-ink-3">Generated</dt>
-          <dd className="mt-0.5 text-ink-2">{ago(item.createdAt, now)} · model v2.1</dd>
-        </div>
-        <div>
-          <dt className="text-ink-3">Reference</dt>
-          <dd className="mt-0.5 font-data text-ink-2">{item.id}</dd>
-        </div>
-      </dl>
-    </Sheet>
+    </div>
   );
 }
