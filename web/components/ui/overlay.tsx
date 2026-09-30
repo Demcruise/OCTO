@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { IconButton } from "./button";
+import { Button, IconButton, ringInset } from "./button";
 
 /** Open/close state that closes on outside pointer and Escape, returning focus to the trigger. */
 export function useDismissable<T extends HTMLElement = HTMLDivElement>() {
@@ -37,11 +37,12 @@ export function useDismissable<T extends HTMLElement = HTMLDivElement>() {
 }
 
 /** Floating panel anchored under its trigger (elevation: popover). */
-export function PopoverPanel({ className, align = "end", children, ...props }: React.HTMLAttributes<HTMLDivElement> & { align?: "start" | "end" }) {
+export function PopoverPanel({ className, align = "end", side = "bottom", children, ...props }: React.HTMLAttributes<HTMLDivElement> & { align?: "start" | "end"; side?: "bottom" | "top" }) {
   return (
     <div
       className={cn(
-        "absolute top-[calc(100%+6px)] z-50 rounded-lg border border-line bg-raised text-ink shadow-popover",
+        "absolute z-50 rounded-xl border border-line bg-raised text-ink shadow-popover motion-safe:animate-[pop-in_120ms_var(--ease-out-soft)]",
+        side === "bottom" ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]",
         align === "end" ? "right-0" : "left-0",
         className,
       )}
@@ -184,5 +185,131 @@ export function Tooltip({ label, side = "right", className, children }: { label:
         </span>
       )}
     </span>
+  );
+}
+
+/* ---------- Dropdown menu (plan §21 row actions, §8 user menu) ---------- */
+
+export type MenuItem = { label: string; icon?: React.ReactNode; onSelect: () => void; danger?: boolean; disabled?: boolean; hint?: string };
+
+/** Button + role="menu" list with arrow-key navigation. */
+export function Menu({ trigger, items, align = "end", side = "bottom", label, className }: { trigger: (p: { ref: React.Ref<HTMLButtonElement>; open: boolean; toggle: () => void }) => React.ReactNode; items: (MenuItem | "separator")[]; align?: "start" | "end"; side?: "bottom" | "top"; label: string; className?: string }) {
+  const { open, setOpen, close, rootRef, triggerRef } = useDismissable();
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open) listRef.current?.querySelector<HTMLElement>("[role=menuitem]:not([aria-disabled=true])")?.focus();
+  }, [open]);
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const els = Array.from(listRef.current?.querySelectorAll<HTMLElement>("[role=menuitem]:not([aria-disabled=true])") ?? []);
+    const i = els.indexOf(document.activeElement as HTMLElement);
+    if (e.key === "ArrowDown") (e.preventDefault(), els[(i + 1) % els.length]?.focus());
+    else if (e.key === "ArrowUp") (e.preventDefault(), els[(i - 1 + els.length) % els.length]?.focus());
+    else if (e.key === "Home") (e.preventDefault(), els[0]?.focus());
+    else if (e.key === "End") (e.preventDefault(), els[els.length - 1]?.focus());
+    else if (e.key === "Tab") setOpen(false);
+  };
+  return (
+    <div ref={rootRef} className={cn("relative", className)}>
+      {trigger({ ref: triggerRef, open, toggle: () => setOpen(!open) })}
+      {open && (
+        <PopoverPanel align={align} side={side} className="min-w-52 p-1">
+          <div ref={listRef} role="menu" aria-label={label} onKeyDown={onKeyDown}>
+            {items.map((it, i) =>
+              it === "separator" ? (
+                <div key={i} role="separator" className="my-1 h-px bg-line" />
+              ) : (
+                <div
+                  key={it.label}
+                  role="menuitem"
+                  tabIndex={-1}
+                  aria-disabled={it.disabled || undefined}
+                  onClick={() => {
+                    if (it.disabled) return;
+                    close();
+                    it.onSelect();
+                  }}
+                  onKeyDown={(e) => {
+                    if ((e.key === "Enter" || e.key === " ") && !it.disabled) {
+                      e.preventDefault();
+                      close();
+                      it.onSelect();
+                    }
+                  }}
+                  className={cn(
+                    "flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-[13px] outline-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+                    it.disabled ? "cursor-default text-ink-4" : it.danger ? "text-danger hover:bg-danger/8 focus:bg-danger/8" : "text-ink-2 hover:bg-hover hover:text-ink focus:bg-hover focus:text-ink",
+                    ringInset,
+                  )}
+                >
+                  {it.icon}
+                  <span className="flex-1">{it.label}</span>
+                  {it.hint && <span className="text-[11px] text-ink-4">{it.hint}</span>}
+                </div>
+              ),
+            )}
+          </div>
+        </PopoverPanel>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Confirm dialog (plan §21: destructive actions confirm) ---------- */
+
+export function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel,
+  danger,
+  onConfirm,
+  onCancel,
+  children,
+}: {
+  open: boolean;
+  title: string;
+  body: React.ReactNode;
+  confirmLabel: string;
+  danger?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+  children?: React.ReactNode;
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!open || !mounted) return null;
+  return createPortal(
+    <DialogBody title={title} onCancel={onCancel} footer={
+      <div className="flex justify-end gap-2">
+        <Button size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button size="sm" variant={danger ? "danger" : "primary"} onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
+      </div>
+    }>
+      <div className="text-[13px] leading-relaxed text-ink-2">{body}</div>
+      {children}
+    </DialogBody>,
+    document.querySelector(".octo-app") ?? document.body,
+  );
+}
+
+function DialogBody({ title, onCancel, footer, children }: { title: string; onCancel: () => void; footer: React.ReactNode; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useFocusTrap(ref, onCancel);
+  return (
+    <div className="fixed inset-0 z-[85] flex items-center justify-center px-4">
+      <div aria-hidden className="absolute inset-0 bg-black/40 motion-safe:animate-[fade-in_140ms_ease-out]" onClick={onCancel} />
+      <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={titleId} className="relative w-full max-w-md rounded-xl border border-line bg-raised p-5 text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
+        <h2 id={titleId} className="text-section font-semibold">
+          {title}
+        </h2>
+        <div className="mt-2">{children}</div>
+        <div className="mt-5">{footer}</div>
+      </div>
+    </div>
   );
 }

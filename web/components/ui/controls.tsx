@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useRef } from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ring, ringInset } from "./button";
 
@@ -12,12 +12,15 @@ export function Tabs<T extends string>({
   onChange,
   items,
   label,
+  variant = "underline",
   className,
 }: {
   value: T;
   onChange: (v: T) => void;
-  items: { value: T; label: string; count?: number }[];
+  items: { value: T; label: string; count?: number; disabled?: boolean }[];
   label: string;
+  /** underline = page/object tabs; pill = Vestra filter tabs inside a panel. */
+  variant?: "underline" | "pill";
   className?: string;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -31,7 +34,16 @@ export function Tabs<T extends string>({
     refs.current[n]?.focus();
   };
   return (
-    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className={cn("no-scrollbar flex h-10 items-stretch gap-4 overflow-x-auto overflow-y-hidden border-b border-line", className)}>
+    <div
+      role="tablist"
+      aria-label={label}
+      onKeyDown={onKeyDown}
+      className={cn(
+        "no-scrollbar flex overflow-x-auto overflow-y-hidden",
+        variant === "underline" ? "h-10 items-stretch gap-5 border-b border-line" : "items-center gap-1",
+        className,
+      )}
+    >
       {items.map((t, k) => (
         <button
           key={t.value}
@@ -42,10 +54,14 @@ export function Tabs<T extends string>({
           type="button"
           aria-selected={t.value === value}
           tabIndex={t.value === value ? 0 : -1}
+          disabled={t.disabled}
           onClick={() => onChange(t.value)}
           className={cn(
-            "-mb-px flex shrink-0 cursor-pointer items-center gap-1.5 border-b-2 text-[13px] transition-colors",
-            t.value === value ? "border-accent font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink",
+            "flex shrink-0 cursor-pointer items-center gap-1.5 text-[13px] font-medium transition-colors duration-150 disabled:cursor-default disabled:text-ink-4",
+            variant === "underline" && "-mb-px border-b-2",
+            variant === "underline" && (t.value === value ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink"),
+            variant === "pill" && "h-8 rounded-lg border px-3",
+            variant === "pill" && (t.value === value ? "border-line bg-accent-soft text-accent-ink" : "border-transparent text-ink-2 hover:bg-hover hover:text-ink"),
             ringInset,
           )}
         >
@@ -73,7 +89,7 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-md border border-line bg-subtle p-0.5">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-line bg-muted p-0.5">
       {items.map((t) => (
         <button
           key={t.value}
@@ -82,7 +98,7 @@ export function Segmented<T extends string>({
           aria-checked={t.value === value}
           onClick={() => onChange(t.value)}
           className={cn(
-            "cursor-pointer rounded-[3px] px-2.5 font-medium transition-colors",
+            "cursor-pointer rounded-md px-2.5 font-medium transition-colors duration-150",
             size === "sm" ? "h-6 text-[11px]" : "h-7 text-[12px]",
             t.value === value ? "bg-surface text-ink shadow-[0_0_0_1px_var(--color-line)]" : "text-ink-3 hover:text-ink",
             ring,
@@ -137,8 +153,8 @@ export function Checkbox({ checked, indeterminate, onChange, label, className }:
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={cn(
-        "flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[3px] border transition-colors",
-        checked || indeterminate ? "border-accent bg-accent text-white" : "border-line-strong bg-surface hover:border-ink-4",
+        "flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[4px] border transition-colors",
+        checked || indeterminate ? "border-accent-fill bg-accent-fill text-white" : "border-line-strong bg-surface hover:border-ink-4",
         ring,
         className,
       )}
@@ -168,5 +184,40 @@ export function Field({ id, label, hint, error, required, children }: { id: stri
         </p>
       ) : null}
     </div>
+  );
+}
+
+/** On/off setting (plan §27 settings, Vestra appearance/alerts rows). */
+export function Switch({ checked, onChange, label, disabled, className }: { checked: boolean; onChange: (v: boolean) => void; label: string; disabled?: boolean; className?: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50",
+        checked ? "bg-accent" : "bg-line-strong",
+        ring,
+        className,
+      )}
+    >
+      <span aria-hidden className={cn("size-4 rounded-full bg-white shadow-sm transition-transform duration-150", checked ? "translate-x-4.5" : "translate-x-0.5")} />
+    </button>
+  );
+}
+
+/** Removable applied-filter chip (plan §22): "Fund: Flagship II ×". */
+export function FilterChip({ label, value, onRemove }: { label: string; value: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex h-6 items-center gap-1 rounded-md border border-accent-line bg-accent-soft pl-2 pr-0.5 text-[12px] text-ink">
+      <span className="text-ink-3">{label}:</span>
+      <span className="max-w-40 truncate font-medium">{value}</span>
+      <button type="button" onClick={onRemove} aria-label={`Remove ${label} filter ${value}`} className={cn("ml-0.5 flex size-5 cursor-pointer items-center justify-center rounded-sm text-ink-3 hover:bg-hover hover:text-ink", ring)}>
+        <X aria-hidden className="size-3" />
+      </button>
+    </span>
   );
 }

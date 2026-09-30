@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AppFrame } from "@/components/layout/app-frame";
+import { AppFrame } from "@/components/shell/app-frame";
 
 export const metadata: Metadata = {
   title: { default: "Control Center · OCTO", template: "%s · OCTO" },

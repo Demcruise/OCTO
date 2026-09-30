@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type ThemePref = "light" | "dark" | "system";
-export type Density = "comfortable" | "compact" | "dense";
+export type Density = "comfortable" | "compact";
+export type Locale = "en" | "id";
 export type Period = "QTD" | "YTD" | "LTM" | "ITD";
 
 type Prefs = {
@@ -11,6 +12,7 @@ type Prefs = {
   density: Density;
   sidebarCollapsed: boolean;
   period: Period;
+  locale: Locale;
 };
 
 type PrefsContext = Prefs & {
@@ -19,20 +21,24 @@ type PrefsContext = Prefs & {
   setDensity: (d: Density) => void;
   setSidebarCollapsed: (c: boolean) => void;
   setPeriod: (p: Period) => void;
+  setLocale: (l: Locale) => void;
 };
 
-const DEFAULTS: Prefs = { theme: "system", density: "compact", sidebarCollapsed: false, period: "QTD" };
+const DEFAULTS: Prefs = { theme: "system", density: "compact", sidebarCollapsed: false, period: "QTD", locale: "en" };
 const KEY = "octo.app.prefs";
 
-/** Row heights per density (TABLE-001). */
-export const ROW_HEIGHT: Record<Density, string> = { comfortable: "h-12", compact: "h-10", dense: "h-8" };
+/** Row heights per density (plan §7): compact 44px, comfortable 52px. */
+export const ROW_HEIGHT: Record<Density, string> = { comfortable: "h-13", compact: "h-11" };
 
 const Ctx = createContext<PrefsContext | null>(null);
 
 function read(): Prefs {
   try {
     const raw = window.localStorage.getItem(KEY);
-    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Prefs>) } : DEFAULTS;
+    const stored = raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Prefs>) } : DEFAULTS;
+    // "dense" was retired when density became two modes.
+    if (!(stored.density in ROW_HEIGHT)) stored.density = "compact";
+    return stored;
   } catch {
     return DEFAULTS;
   }
@@ -75,6 +81,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setDensity: (density) => update({ density }),
       setSidebarCollapsed: (sidebarCollapsed) => update({ sidebarCollapsed }),
       setPeriod: (period) => update({ period }),
+      setLocale: (locale) => update({ locale }),
     }),
     [prefs, systemDark, update],
   );
