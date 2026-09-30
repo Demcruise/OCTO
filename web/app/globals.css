@@ -76,79 +76,151 @@
 }
 
 /*
- * OCTO application tokens (DS-001 … DS-007).
+ * OCTO application tokens — Vestra-calibrated (FE-DS, docs/ui/token-registry.md).
  *
- * The semantic layer the /app surfaces build on. Light values extend the landing
- * palette; dark values are a separate mapping, not an inversion (THEME-001):
- * layered near-blacks instead of #000, hairlines as solid colours, a brighter
- * violet so focus and selection stay visible.
+ * Values were measured from the live Vestra deployment (computed CSS, Sep 30 2026)
+ * and mapped onto OCTO's semantic names. They are scoped to `.octo-app`, so the
+ * landing keeps its own palette. Dark is a separate layered mapping, not an
+ * inversion (L0 canvas → L1 chrome → L2 surface → L3 raised).
  *
- *   background.canvas  → app        surface.default → surface     surface.raised → raised
- *   background.subtle  → subtle     background.muted → muted      hover → hover
- *   border.subtle      → line       border.strong → line-strong
- *   text.primary/secondary/tertiary/disabled → ink / ink-2 / ink-3 / ink-4
+ *   canvas → app      chrome (sidebar) → subtle   card → surface   popover → raised
+ *   table head → head  hover → hover   recessed → muted   selected → accent-soft
+ *   border → line (cards) / line-strong (controls, emphasis)
+ *   text primary/secondary/tertiary/disabled → ink / ink-2 / ink-3 / ink-4
  */
 @theme {
-    --color-app: #f6f6f3;
+    --color-app: #ffffff;
     --color-surface: #ffffff;
     --color-raised: #ffffff;
-    --color-hover: #f1f1ee;
-    --color-ink-4: #9a9ea6;
+    --color-hover: #f1f5f9;
+    --color-head: #f7f7f8;
+    --color-ink-4: #94a3b8;
+    --color-gain: #00b36a;
+    --color-loss: #f14d6e;
+    --color-ai: #7c3aed;
+    --color-accent-fill: #2563eb;
+    --color-accent-ink: #1d4ed8;
+    --color-chart-1: #2563eb;
+    --color-chart-2: #00b36a;
+    --color-chart-3: #f5b82e;
+    --color-chart-4: #e05287;
+    --color-chart-5: #7c5cff;
+    --color-chart-6: #14a3b8;
+    --color-chart-7: #f97316;
+    --color-chart-8: #94a3b8;
+    --color-chart-grid: rgb(24 24 27 / 0.06);
 
+    /* Type roles (plan §5.7; Vestra: Inter, tight tracking, 600 values). */
     --text-page: 1.375rem;
     --text-page--line-height: 1.75rem;
-    --text-page--letter-spacing: -0.015em;
+    --text-page--letter-spacing: -0.02em;
     --text-object: 1.625rem;
     --text-object--line-height: 2rem;
-    --text-object--letter-spacing: -0.02em;
+    --text-object--letter-spacing: -0.025em;
+    --text-section: 1rem;
+    --text-section--line-height: 1.5rem;
+    --text-section--letter-spacing: -0.02em;
+    --text-kpi: 1.625rem;
+    --text-kpi--line-height: 1.75rem;
+    --text-kpi--letter-spacing: -0.025em;
+    --text-kpi-xl: 2rem;
+    --text-kpi-xl--line-height: 2.25rem;
+    --text-kpi-xl--letter-spacing: -0.03em;
     --text-metric: 1.5rem;
     --text-metric--line-height: 1.875rem;
     --text-metric--letter-spacing: -0.02em;
     --text-label: 0.6875rem;
     --text-label--line-height: 1rem;
-    --text-label--letter-spacing: 0.06em;
+    --text-label--letter-spacing: 0.04em;
 
-    --shadow-popover: 0 8px 24px -8px rgb(17 19 24 / 0.16), 0 0 0 1px rgb(17 19 24 / 0.06);
-    --shadow-dialog: 0 24px 64px -16px rgb(17 19 24 / 0.28), 0 0 0 1px rgb(17 19 24 / 0.06);
+    --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.07), 0 0 0 1px rgb(24 24 27 / 0.06);
+    --shadow-dialog: 0 24px 64px -16px rgb(15 23 42 / 0.24), 0 0 0 1px rgb(24 24 27 / 0.06);
+
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.dark {
-    --color-app: #0e1014;
-    --color-subtle: #111318;
-    --color-surface: #15181e;
-    --color-raised: #1b1f26;
-    --color-muted: #1d2129;
-    --color-hover: #1f232b;
-    --color-canvas: #15181e;
-    --color-line: #242830;
-    --color-line-strong: #323741;
-    --color-ink: #eceef1;
-    --color-ink-2: #b8bcc4;
-    --color-ink-3: #8f949d;
-    --color-ink-4: #5f646e;
+.octo-app {
+    --color-subtle: #f8f8f8;
+    --color-muted: #f1f5f9;
+    --color-canvas: #ffffff;
+    --color-line: rgb(24 24 27 / 0.07);
+    --color-line-strong: rgb(24 24 27 / 0.13);
+    /* Text steps are darker than Vestra's slate so 11px text keeps 4.5:1 on tinted surfaces (axe). */
+    --color-ink: #020617;
+    --color-ink-2: #334155;
+    --color-ink-3: #526072;
+    --color-ink-4: #667085;
 
-    --color-accent: #8f73ff;
-    --color-accent-hover: #a58fff;
-    --color-accent-soft: rgb(143 115 255 / 0.14);
-    --color-accent-line: rgb(143 115 255 / 0.4);
+    /* accent = text/border/ring · accent-fill = solid fills under white text · accent-ink = text on accent-soft. */
+    --color-accent: #2563eb;
+    --color-accent-hover: #1d4ed8;
+    --color-accent-fill: #2563eb;
+    --color-accent-ink: #1d4ed8;
+    --color-accent-soft: #eff6ff;
+    --color-accent-line: rgb(37 99 235 / 0.3);
 
-    --color-ok: #4cc38a;
-    --color-warn: #e5b84b;
-    --color-danger: #f07575;
-    --color-info: #6fa8f5;
+    /* Status text meets 4.5:1 on white and on its own 10% tint; gain/loss are for marks only. */
+    --color-ok: #047857;
+    --color-warn: #92400e;
+    --color-danger: #b91c1c;
+    --color-info: #1d4ed8;
+    --color-ai: #7c3aed;
 
-    --shadow-popover: 0 8px 24px -8px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.06);
+    /* Radius family (plan §5.4): tags 4 · checkbox 6 · rows/inputs 8 · controls 10 · cards 12. */
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+
+    --duration-fast: 120ms;
+    --duration-base: 180ms;
+    --duration-slow: 240ms;
+}
+
+.octo-app.dark {
+    --color-app: #121212;
+    --color-subtle: #191919;
+    --color-surface: #141414;
+    --color-raised: #1c1c1c;
+    --color-muted: #1e1e1e;
+    --color-hover: rgb(255 255 255 / 0.05);
+    --color-head: #101010;
+    --color-canvas: #141414;
+    --color-line: rgb(255 255 255 / 0.07);
+    --color-line-strong: rgb(255 255 255 / 0.13);
+    --color-ink: #fafafa;
+    --color-ink-2: #d4d4d8;
+    --color-ink-3: #a1a1aa;
+    --color-ink-4: #8b8b94;
+
+    --color-accent: #3b82f6;
+    --color-accent-hover: #1d4ed8;
+    --color-accent-fill: #2563eb;
+    --color-accent-ink: #93c5fd;
+    --color-accent-soft: rgb(59 130 246 / 0.14);
+    --color-accent-line: rgb(59 130 246 / 0.4);
+
+    --color-ok: #34d399;
+    --color-warn: #fbbf24;
+    --color-danger: #f87171;
+    --color-info: #60a5fa;
+    --color-ai: #a78bfa;
+    --color-chart-grid: rgb(255 255 255 / 0.06);
+
+    --shadow-popover: 0 8px 30px rgb(0 0 0 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.06);
     --shadow-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.06);
     color-scheme: dark;
 }
 
-/* Tighter geometry for application controls than marketing surfaces (DS-001.4). */
-.octo-app {
-    --radius-xs: 2px;
-    --radius-sm: 3px;
-    --radius-md: 4px;
-    --radius-lg: 6px;
-    --radius-xl: 8px;
+@media (prefers-reduced-motion: reduce) {
+    .octo-app *,
+    .octo-app *::before,
+    .octo-app *::after {
+        animation-duration: 1ms !important;
+        transition-duration: 1ms !important;
+    }
 }
 
 /* Low-radius geometry for the landing only (PAL-005); /app keeps Tailwind defaults. */
@@ -196,4 +268,9 @@
 @keyframes pop-in {
     from { transform: translateY(-4px) scale(0.985); opacity: 0; }
     to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes slide-in-left {
+    from { transform: translateX(-24px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
