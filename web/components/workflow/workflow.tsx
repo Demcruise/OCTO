@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { AlertTriangle, Check, Info, Minus, OctagonAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Severity } from "@/lib/demo";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -15,9 +15,12 @@ import { Field, Textarea } from "@/components/ui/controls";
 
 export const SEVERITY_TONE: Record<Severity, Tone> = { critical: "danger", high: "warn", medium: "info", low: "neutral" };
 
+/** Severity: critical red · high amber · medium blue · low grey, each with its own icon (parity §19). */
+const SEVERITY_ICON: Record<Severity, React.ReactNode> = { critical: <OctagonAlert />, high: <AlertTriangle />, medium: <Info />, low: <Minus /> };
+
 export function SeverityBadge({ severity }: { severity: Severity }) {
   return (
-    <StatusBadge tone={SEVERITY_TONE[severity]} className="capitalize">
+    <StatusBadge tone={SEVERITY_TONE[severity]} icon={SEVERITY_ICON[severity]} className="capitalize">
       {severity}
     </StatusBadge>
   );

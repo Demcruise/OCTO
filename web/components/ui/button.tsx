@@ -6,8 +6,8 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Shared focus treatment for every interactive control (plan §29). */
-export const ring = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
-export const ringInset = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent";
+export const ring = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+export const ringInset = "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "link";
 type Size = "xs" | "sm" | "md" | "lg";
@@ -20,20 +20,20 @@ type Size = "xs" | "sm" | "md" | "lg";
 const VARIANT: Record<Variant, string> = {
   primary:
     "border border-white/20 bg-accent-fill text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.35)] hover:bg-accent-hover active:translate-y-px disabled:bg-accent-fill/50 disabled:shadow-none",
-  secondary: "border border-line-strong bg-surface text-ink hover:bg-hover active:translate-y-px disabled:text-ink-4",
+  secondary: "border border-line bg-surface text-ink hover:bg-hover active:translate-y-px disabled:text-ink-4",
   ghost: "text-ink-2 hover:bg-hover hover:text-ink disabled:text-ink-4",
   danger: "border border-danger/30 bg-surface text-danger hover:bg-danger/8 disabled:opacity-50",
   link: "h-auto px-0 text-accent underline-offset-2 hover:underline disabled:text-ink-4",
 };
 
-/* Heights 24 / 28 / 32 / 36px — compact controls 32–36px (plan §7). */
+/* CTRL-001: one size family, 6px control radius; md is the 36px default action height. */
 const SIZE: Record<Size, string> = {
-  xs: "h-6 px-2 text-[11px] gap-1 rounded-sm",
-  sm: "h-7 px-2.5 text-[12px] gap-1.5 rounded-md",
-  md: "h-8 px-3 text-[13px] gap-2 rounded-lg",
-  lg: "h-9 px-3.5 text-sm gap-2 rounded-lg",
+  xs: "h-6 px-2 text-[11px] gap-1 rounded-xs",
+  sm: "h-8 px-3 text-[12px] gap-1.5 rounded-sm",
+  md: "h-9 px-3.5 text-[13px] gap-2 rounded-sm",
+  lg: "h-10 px-4 text-sm gap-2 rounded-sm",
 };
-const ICON_SIZE: Record<Size, string> = { xs: "size-6 rounded-sm", sm: "size-7 rounded-md", md: "size-8 rounded-lg", lg: "size-9 rounded-lg" };
+const ICON_SIZE: Record<Size, string> = { xs: "size-6 rounded-xs", sm: "size-8 rounded-sm", md: "size-9 rounded-sm", lg: "size-10 rounded-sm" };
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size; loading?: boolean };
 

@@ -34,16 +34,16 @@ import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { MetricCard, MetricGrid, useMetricValue } from "@/components/metric/metric-card";
 import { LineageDrawer } from "@/components/metric/metric-lineage";
+import { KpiMetricDrawer } from "@/components/metric/kpi-drawer";
 import { ChartShell } from "@/components/chart/chart-shell";
-import { TrendChart } from "@/components/chart/line-chart";
-import { BarChart, RankingBars } from "@/components/chart/bar-chart";
+import { NavChart } from "@/components/chart/nav-chart";
+import { RankingBars } from "@/components/chart/bar-chart";
 import { DonutChart } from "@/components/chart/donut-chart";
-import { Legend } from "@/components/chart/core";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { DeltaCell, EntityCell, NumericCell, SparklineCell, StatusCell } from "@/components/data/cells";
 import { LinkButton } from "@/components/ui/button";
 import { EntityChip, Monogram, Tag, type Tone } from "@/components/ui/badge";
-import { Segmented, Select, Switch, Tabs } from "@/components/ui/controls";
+import { Segmented, Select, Tabs } from "@/components/ui/controls";
 import { FreshnessBadge } from "@/components/feedback";
 import { useBreadcrumb } from "@/components/shell/shell-context";
 
@@ -74,11 +74,8 @@ export function PortfolioView() {
   const rows = inv.data ?? [];
 
   const [lineage, setLineage] = useState<Metric | null>(null);
+  const [kpi, setKpi] = useState<Metric | null>(null);
   const [fundScope, setFundScope] = useState("all");
-  const [range, setRange] = useState<"4" | "8" | "12">("8");
-  const [benchmark, setBenchmark] = useState(true);
-  const [mode, setMode] = useState<"value" | "change">("value");
-  const [hover, setHover] = useState<number | null>(null);
   const [dim, setDim] = useState<Dim>("sector");
   const [sectorTab, setSectorTab] = useState("All");
 
@@ -102,11 +99,7 @@ export function PortfolioView() {
 
   // Value trend: portfolio or a single fund, with a benchmark and range.
   const scope = fundScope === "all" ? null : fundById(fundScope)!;
-  const base = scope ? fundNavSeries(scope).map((p, i) => ({ q: p.q, nav: p.nav, benchmark: Math.round(fundNavSeries(scope)[0].nav * Math.pow(1.021, i) * 10) / 10 })) : NAV_SERIES;
-  const series = base.slice(-Number(range));
-  const changes = series.map((p, i) => (i === 0 ? 0 : Math.round((p.nav - series[i - 1].nav) * 10) / 10));
-  const point = series[hover ?? series.length - 1];
-  const first = series[0];
+  const base = useMemo(() => (scope ? fundNavSeries(scope).map((p, i) => ({ q: p.q, nav: p.nav, benchmark: Math.round(fundNavSeries(scope)[0].nav * Math.pow(1.021, i) * 10) / 10 })) : NAV_SERIES), [scope]);
 
   const attention = [
     { title: "Covenant issues", icon: <AlertOctagon />, tone: "text-danger", items: EXCEPTIONS.filter((e) => e.kind === "Covenant"), href: "/app/alerts" },
@@ -184,65 +177,28 @@ export function PortfolioView() {
       <PageBody className="space-y-4">
         <MetricGrid cols={6}>
           {strip.map(({ m, icon }) => (
-            <MetricCard key={m.id} metric={m} icon={icon} onLineage={setLineage} state={inv.isLoading ? "loading" : "ready"} />
+            <MetricCard key={m.id} metric={m} icon={icon} onOpen={setKpi} state={inv.isLoading ? "loading" : "ready"} />
           ))}
         </MetricGrid>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-          <ChartShell
+          <NavChart
             className="xl:col-span-8"
             title={scope ? `${scope.name} NAV` : "Portfolio value"}
-            subtitle={mode === "value" ? "Quarter-end NAV, $M" : "Quarter-on-quarter NAV change, $M"}
-            headline={
-              <div className="flex flex-wrap items-baseline gap-3">
-                <span className="text-kpi-xl font-bold tabular-nums text-ink">{mode === "value" ? `$${point.nav.toFixed(1)}M` : f.delta(changes[hover ?? changes.length - 1], "", 1)}</span>
-                <span className="text-[12px] font-medium text-ink-3">
-                  {point.q} · {f.delta(((point.nav - first.nav) / first.nav) * 100)} since {first.q}
-                </span>
-              </div>
-            }
-            toolbar={
-              <div className="flex flex-wrap items-center gap-2">
-                <Select aria-label="Fund" value={fundScope} onChange={(e) => setFundScope(e.target.value)} className="w-40 [&_select]:h-7 [&_select]:text-[12px]">
-                  <option value="all">All funds</option>
-                  {FUNDS.map((x) => (
-                    <option key={x.id} value={x.id}>
-                      {x.short}
-                    </option>
-                  ))}
-                </Select>
-                <Segmented size="sm" label="Range" value={range} onChange={setRange} items={[{ value: "4", label: "1Y" }, { value: "8", label: "2Y" }, { value: "12", label: "3Y" }]} />
-                <Segmented size="sm" label="Measure" value={mode} onChange={setMode} items={[{ value: "value", label: "Value" }, { value: "change", label: "Change" }]} />
-              </div>
-            }
-            legend={
-              mode === "value" && (
-                <div className="flex flex-wrap items-center gap-4">
-                  <Legend items={[{ label: "NAV", color: "var(--color-chart-1)" }, ...(benchmark ? [{ label: "Public benchmark (rebased)", color: "var(--color-ink-4)", dashed: true }] : [])]} />
-                  <label className="ml-auto flex items-center gap-2 text-[12px] text-ink-3">
-                    <Switch checked={benchmark} onChange={setBenchmark} label="Show benchmark" /> Benchmark
-                  </label>
-                </div>
-              )
-            }
-            freshness={<FreshnessBadge state="demo" asOf={f.date(AS_OF)} />}
-            source="IBOR valuations"
+            points={base}
+            state={inv.isLoading ? "loading" : "ready"}
             onLineage={() => setLineage(nav)}
-            exportData={{ filename: "portfolio-value", head: ["Quarter", "NAV ($M)", "Benchmark ($M)"], rows: series.map((p) => [p.q, p.nav, p.benchmark]) }}
-            height={260}
-          >
-            {mode === "value" ? (
-              <TrendChart
-                x={series.map((p) => p.q)}
-                series={[{ id: "nav", label: "NAV", values: series.map((p) => p.nav) }, ...(benchmark ? [{ id: "bm", label: "Benchmark", values: series.map((p) => p.benchmark), color: "var(--color-ink-4)", dashed: true, area: false }] : [])]}
-                format={(v) => `$${Math.round(v)}M`}
-                label="NAV by quarter"
-                onHover={setHover}
-              />
-            ) : (
-              <BarChart x={series.map((p) => p.q)} series={[{ id: "chg", label: "NAV change", values: changes }]} format={(v) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(1)}M`} label="NAV change by quarter" />
-            )}
-          </ChartShell>
+            toolbar={
+              <Select aria-label="Fund" value={fundScope} onChange={(e) => setFundScope(e.target.value)} className="w-40 [&_select]:text-[12px]">
+                <option value="all">All funds</option>
+                {FUNDS.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.short}
+                  </option>
+                ))}
+              </Select>
+            }
+          />
 
           <ChartShell
             className="xl:col-span-4"
@@ -250,7 +206,7 @@ export function PortfolioView() {
             subtitle="Share of position fair value"
             toolbar={<Segmented size="sm" label="Allocation dimension" value={dim} onChange={setDim} items={DIMS.map((d) => ({ value: d.value, label: d.label.slice(0, 4) === "Geog" ? "Geo" : d.label }))} />}
             exportData={{ filename: `allocation-${dim}`, head: [DIMS.find((d) => d.value === dim)!.label, "Fair value", "Share %"], rows: ALLOCATION[dim].map((s) => [s.key, Math.round(s.value), s.share.toFixed(1)]) }}
-            height={360}
+            height="auto"
           >
             <DonutChart data={ALLOCATION[dim].map((s) => ({ key: s.key, value: s.value }))} label={`Allocation by ${dim}`} format={(v) => f.money(v)} />
           </ChartShell>
@@ -268,7 +224,7 @@ export function PortfolioView() {
                 <ul className="space-y-2">
                   {a.items.slice(0, 2).map((it) => (
                     <li key={it.id}>
-                      <button type="button" onClick={() => router.push(it.href)} className="w-full cursor-pointer rounded-md px-1 py-1 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent">
+                      <button type="button" onClick={() => router.push(it.href)} className="w-full cursor-pointer rounded-md px-1 py-1 text-left hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus">
                         <p className="truncate text-[12px] font-medium text-ink">{it.title}</p>
                         <p className="truncate text-[11px] text-ink-3">{it.entity.name}</p>
                       </button>
@@ -351,7 +307,7 @@ export function PortfolioView() {
         <section aria-label="Holdings" className="space-y-2">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h2 className="text-section font-semibold text-ink">Holdings</h2>
-            <Tabs variant="pill" label="Filter holdings by sector" value={sectorTab} onChange={setSectorTab} items={sectors.map((s) => ({ value: s, label: s }))} />
+            <Tabs variant="pill" label="Filter holdings by sector" value={sectorTab} onChange={setSectorTab} items={sectors.map((s) => ({ value: s, label: s, count: s === "All" ? rows.length : rows.filter((r) => companyById(r.companyId)!.sector === s).length }))} />
           </div>
           <DataTable
             id="holdings"
@@ -386,6 +342,7 @@ export function PortfolioView() {
         </Panel>
       </PageBody>
 
+      <KpiMetricDrawer metric={kpi} onClose={() => setKpi(null)} onLineage={(m) => (setKpi(null), setLineage(m))} primary={{ label: "View analytics", href: "/app/analytics" }} />
       <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmt(lineage) : ""} provenance={lineage?.provenance ?? null} />
     </>
   );

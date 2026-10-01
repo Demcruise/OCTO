@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
 import { useSources } from "@/lib/data/queries";
 import { DEMO_NOW, MAPPINGS, NAV_LINEAGE, PORTFOLIO_METRICS, type DataSource, type Mapping, type Metric } from "@/lib/demo";
@@ -11,6 +11,7 @@ import { MetricCard, MetricGrid } from "@/components/metric/metric-card";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { BarChart } from "@/components/chart/bar-chart";
 import { Legend } from "@/components/chart/core";
+import { LineageFlow } from "@/components/data/lineage-flow";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { NumericCell, SparklineCell, StatusCell } from "@/components/data/cells";
 import { Button } from "@/components/ui/button";
@@ -81,9 +82,9 @@ export function DataSourcesView() {
         variant="list"
         eyebrow="System"
         title="Data & Sources"
-        description="Where OCTO's numbers come from: connected sources, ingestion health, mappings into the IBOR, and lineage."
+        description="See where each OCTO number comes from — connected sources, ingestion health, mappings into the IBOR, and lineage to every metric."
         meta={<FreshnessBadge state="demo" asOf={`checked ${f.time(DEMO_NOW)}`} />}
-        tabs={<Tabs<Tab> label="Data sections" value={tab} onChange={(t) => nav(t === "sources" ? "" : `tab=${t}`)} className="border-b-0" items={[{ value: "sources", label: "Sources", count: sources.length }, { value: "health", label: "Ingestion health" }, { value: "mappings", label: "Mappings", count: MAPPINGS.length }, { value: "lineage", label: "Lineage" }]} />}
+        tabs={<Tabs<Tab> label="Data sections" value={tab} onChange={(t) => nav(t === "sources" ? "" : `tab=${t}`)} variant="pill" className="pb-3" items={[{ value: "sources", label: "Sources", count: sources.length }, { value: "health", label: "Ingestion health" }, { value: "mappings", label: "Mappings", count: MAPPINGS.length }, { value: "lineage", label: "Lineage" }]} />}
       />
       <PageBody className="space-y-4">
         {tab === "sources" && (
@@ -115,23 +116,9 @@ export function DataSourcesView() {
 
         {tab === "lineage" && (
           <Panel>
-            <PanelHead title="NAV lineage" description="Every reported NAV traces back through the IBOR to a source record" />
+            <PanelHead title="NAV lineage" description="Every reported NAV traces back through mappings and the IBOR to a source record." />
             <PanelBody>
-              <ol className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                {NAV_LINEAGE.map((layer, i) => (
-                  <li key={layer.layer} className="relative">
-                    <p className="text-label uppercase text-ink-4">{layer.layer}</p>
-                    <ul className="mt-2 space-y-1.5">
-                      {layer.nodes.map((n) => (
-                        <li key={n} className="rounded-md border border-line bg-surface px-2.5 py-2 text-[12px] font-medium text-ink-2">
-                          {n}
-                        </li>
-                      ))}
-                    </ul>
-                    {i < NAV_LINEAGE.length - 1 && <ArrowRight aria-hidden className="absolute -right-3.5 top-10 hidden size-4 text-ink-4 md:block" />}
-                  </li>
-                ))}
-              </ol>
+              <LineageFlow layers={NAV_LINEAGE} label="NAV lineage from source to metric" />
             </PanelBody>
           </Panel>
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChartTooltip, niceTicks, SrTable, useSize } from "./core";
+import { ChartTooltip, niceTicks, SrTable, useSize, yGutter } from "./core";
 
 /**
  * Value bridge (plan §20 financial family): totals in neutral, increases in
@@ -25,7 +25,7 @@ export function WaterfallChart({ data, label, format }: { data: { label: string;
   const ticks = niceTicks(Math.min(...stepVals) * 0.985, Math.max(...bars.map((b) => Math.max(b.from, b.to))) * 1.005, 4);
   const lo = ticks[0];
   const hi = ticks[ticks.length - 1];
-  const pl = 48;
+  const pl = yGutter(ticks.map(format), w);
   const pt = 18;
   const pb = 34;
   const Y = (v: number) => pt + ((hi - Math.max(v, lo)) / (hi - lo)) * (h - pt - pb);
@@ -48,7 +48,7 @@ export function WaterfallChart({ data, label, format }: { data: { label: string;
             const x = pl + band * i + (band - bw) / 2;
             const top = Y(Math.max(b.from, b.to));
             const bottom = b.kind === "total" ? h - pb : Y(Math.min(b.from, b.to));
-            const fill = b.kind === "total" ? "var(--color-ink-3)" : b.value >= 0 ? "var(--color-gain)" : "var(--color-loss)";
+            const fill = b.kind === "total" ? "var(--color-mark-neutral)" : b.value >= 0 ? "var(--color-gain)" : "var(--color-loss)";
             return (
               <g key={b.label} onPointerEnter={() => setHover(i)} opacity={hover !== null && hover !== i ? 0.5 : 1}>
                 <rect x={pl + band * i} y={pt} width={band} height={h - pt - pb} fill="transparent" />

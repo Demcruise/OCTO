@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, Copy, KeyRound, Monitor, Moon, Sun } from "lucide-react";
+import { Check, Copy, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
-import { usePreferences, type Density, type Locale, type ThemePref } from "@/lib/preferences";
+import { usePreferences, type Density, type Locale } from "@/lib/preferences";
 import { useWorkspace } from "@/lib/workspace";
 import { AUDIT, DEMO_NOW, ROLES, SOURCES, USERS } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
@@ -20,7 +20,7 @@ import { SHORTCUTS } from "@/components/shell/shortcuts";
 import { useBreadcrumb } from "@/components/shell/shell-context";
 
 const GROUPS = [
-  { label: "Personal", items: [["profile", "Profile"], ["appearance", "Appearance"], ["notifications", "Notifications"], ["shortcuts", "Shortcuts"]] },
+  { label: "Personal", items: [["profile", "Profile"], ["appearance", "Display"], ["notifications", "Notifications"], ["shortcuts", "Shortcuts"]] },
   { label: "Workspace", items: [["workspace", "Workspace"], ["users", "Users"], ["roles", "Roles & permissions"], ["approvals", "Approvals"], ["integrations", "Integrations"], ["data", "Data"], ["security", "Security"], ["api", "API"], ["audit", "Audit log"]] },
   { label: "Governance", items: [["retention", "Retention"], ["classification", "Classification"], ["models", "Model governance"], ["ai", "AI policies"], ["report-policies", "Report policies"]] },
 ] as const;
@@ -131,22 +131,8 @@ function SectionBody({ section }: { section: Section }) {
     case "appearance":
       return (
         <Panel>
-          <PanelHead title="Appearance" description="Applies across every page, on this browser" />
+          <PanelHead title="Display" description="Applies across every page, on this browser. OCTO uses a light theme." />
           <PanelBody>
-            <Row
-              title="Theme"
-              body="Dark is a separate layered palette, not an inverted light theme."
-              control={
-                <div role="radiogroup" aria-label="Theme" className="flex gap-1.5">
-                  {([["light", "Light", <Sun key="s" />], ["dark", "Dark", <Moon key="m" />], ["system", "System", <Monitor key="d" />]] as [ThemePref, string, React.ReactNode][]).map(([v, l, icon]) => (
-                    <button key={v} type="button" role="radio" aria-checked={prefs.theme === v} onClick={() => prefs.setTheme(v)} className={cn("flex h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-[12px] font-medium [&_svg]:size-3.5", prefs.theme === v ? "border-accent-line bg-accent-soft text-accent-ink" : "border-line text-ink-2 hover:bg-hover", ring)}>
-                      {icon}
-                      {l}
-                    </button>
-                  ))}
-                </div>
-              }
-            />
             <Row title="Density" body="Compact rows are 44px; comfortable rows are 52px. Every table follows this." control={<Segmented<Density> label="Density" value={prefs.density} onChange={prefs.setDensity} items={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfortable" }]} />} />
             <Row title="Number & date format" body={`Preview: ${f.money(812.4e6)} · ${f.pct(18.2)} · ${f.dateTime(DEMO_NOW)}`} control={<Segmented<Locale> label="Language" value={prefs.locale} onChange={prefs.setLocale} items={[{ value: "en", label: "English" }, { value: "id", label: "Bahasa Indonesia" }]} />} />
             <Row title="Collapsed sidebar" body="Toggle any time with [" control={<Switch checked={prefs.sidebarCollapsed} onChange={prefs.setSidebarCollapsed} label="Collapsed sidebar" />} />

@@ -41,7 +41,7 @@ export function PopoverPanel({ className, align = "end", side = "bottom", childr
   return (
     <div
       className={cn(
-        "absolute z-50 rounded-xl border border-line bg-raised text-ink shadow-popover motion-safe:animate-[pop-in_120ms_var(--ease-out-soft)]",
+        "absolute z-50 rounded-lg border border-line bg-raised text-ink shadow-popover motion-safe:animate-[pop-in_120ms_var(--ease-out-soft)]",
         side === "bottom" ? "top-[calc(100%+6px)]" : "bottom-[calc(100%+6px)]",
         align === "end" ? "right-0" : "left-0",
         className,
@@ -100,7 +100,7 @@ export function Sheet({
   onClose,
   title,
   eyebrow,
-  width = "max-w-xl",
+  width = "sm:max-w-[460px] lg:max-w-[500px]",
   footer,
   children,
 }: {
@@ -143,7 +143,7 @@ function SheetBody({ onClose, title, eyebrow, width, footer, children }: Omit<Pa
         <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="min-w-0">
             {eyebrow && <p className="text-label uppercase text-ink-3">{eyebrow}</p>}
-            <h2 id={titleId} className="mt-0.5 truncate text-[17px] font-semibold tracking-tight">
+            <h2 id={titleId} className="mt-0.5 truncate text-section font-semibold">
               {title}
             </h2>
           </div>
@@ -303,7 +303,7 @@ function DialogBody({ title, onCancel, footer, children }: { title: string; onCa
   return (
     <div className="fixed inset-0 z-[85] flex items-center justify-center px-4">
       <div aria-hidden className="absolute inset-0 bg-black/40 motion-safe:animate-[fade-in_140ms_ease-out]" onClick={onCancel} />
-      <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={titleId} className="relative w-full max-w-md rounded-xl border border-line bg-raised p-5 text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
+      <div ref={ref} role="alertdialog" aria-modal="true" aria-labelledby={titleId} className="relative w-full max-w-md rounded-lg border border-line bg-raised p-5 text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
         <h2 id={titleId} className="text-section font-semibold">
           {title}
         </h2>

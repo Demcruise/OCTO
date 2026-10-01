@@ -18,7 +18,7 @@ export function LineageDrawer({ open, onClose, title, value, provenance, demo = 
   if (!provenance) return null;
   const p = provenance;
   return (
-    <Sheet open={open} onClose={onClose} eyebrow="Lineage" title={`${title} · ${value}`} width="max-w-lg">
+    <Sheet open={open} onClose={onClose} eyebrow="Lineage" title={`${title} · ${value}`}>
       <div className="flex flex-wrap gap-2">
         {demo && <StatusBadge tone="info">Demo data — illustrative calculation</StatusBadge>}
         {p.ai ? <VerificationBadge state="ai-suggested" /> : <VerificationBadge state="source-derived" />}

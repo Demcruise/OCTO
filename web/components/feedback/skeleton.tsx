@@ -8,7 +8,7 @@ export function Skeleton({ className }: { className?: string }) {
 /** KPI-card-shaped skeleton. */
 export function MetricSkeleton() {
   return (
-    <div aria-hidden className="flex h-[132px] flex-col justify-between rounded-xl border border-line bg-surface p-4">
+    <div aria-hidden className="flex h-[132px] flex-col justify-between rounded-lg border border-line bg-surface p-4">
       <Skeleton className="h-3 w-24" />
       <div className="space-y-2">
         <Skeleton className="h-7 w-28" />

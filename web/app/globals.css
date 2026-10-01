@@ -95,8 +95,17 @@
     --color-hover: #f1f5f9;
     --color-head: #f7f7f8;
     --color-ink-4: #94a3b8;
-    --color-gain: #00b36a;
-    --color-loss: #f14d6e;
+    /* Semantic marks (DS-007) — dots, bars, fills. Text uses the darker ok/warn/danger/info tokens. */
+    --color-gain: #0f9d74;
+    --color-loss: #dc2626;
+    --color-mark-ok: #0f9d74;
+    --color-mark-info: #2563eb;
+    --color-mark-warn: #d97706;
+    --color-mark-danger: #dc2626;
+    --color-mark-neutral: #64748b;
+    --color-focus: #6d45ff;
+    --color-sunken: #eef2f6;
+    --color-line-subtle: #eef1f4;
     --color-ai: #7c3aed;
     --color-accent-fill: #2563eb;
     --color-accent-ink: #1d4ed8;
@@ -111,14 +120,18 @@
     --color-chart-grid: rgb(24 24 27 / 0.06);
 
     /* Type roles (plan §5.7; Vestra: Inter, tight tracking, 600 values). */
-    --text-page: 1.375rem;
-    --text-page--line-height: 1.75rem;
-    --text-page--letter-spacing: -0.02em;
+    /* DS-005 type roles: page 32 / section 20 / card 15 / KPI 26, all 600. */
+    --text-page: 2rem;
+    --text-page--line-height: 2.5rem;
+    --text-page--letter-spacing: -0.025em;
+    --text-card: 0.9375rem;
+    --text-card--line-height: 1.375rem;
+    --text-card--letter-spacing: -0.01em;
     --text-object: 1.625rem;
     --text-object--line-height: 2rem;
     --text-object--letter-spacing: -0.025em;
-    --text-section: 1rem;
-    --text-section--line-height: 1.5rem;
+    --text-section: 1.25rem;
+    --text-section--line-height: 1.75rem;
     --text-section--letter-spacing: -0.02em;
     --text-kpi: 1.625rem;
     --text-kpi--line-height: 1.75rem;
@@ -141,11 +154,18 @@
 }
 
 .octo-app {
-    --color-subtle: #f8f8f8;
-    --color-muted: #f1f5f9;
+    /* DS-002 surfaces: primary #fff · secondary #f9fafb / #f5f7fa · tertiary #eef2f6. */
+    --color-app: #ffffff;
+    --color-subtle: #f9fafb;
+    --color-muted: #f5f7fa;
+    --color-hover: #f5f7fa;
+    --color-head: #f9fafb;
     --color-canvas: #ffffff;
-    --color-line: rgb(24 24 27 / 0.07);
-    --color-line-strong: rgb(24 24 27 / 0.13);
+    /* DS-003 borders: primary #e5e7eb · subtle #eef1f4 · controls one step stronger. */
+    --color-line: #e5e7eb;
+    --color-line-subtle: #eef1f4;
+    --color-line-strong: #d1d5db;
+    --color-chart-grid: #eef1f4;
     /* Text steps are darker than Vestra's slate so 11px text keeps 4.5:1 on tinted surfaces (axe). */
     --color-ink: #020617;
     --color-ink-2: #334155;
@@ -167,52 +187,20 @@
     --color-info: #1d4ed8;
     --color-ai: #7c3aed;
 
-    /* Radius family (plan §5.4): tags 4 · checkbox 6 · rows/inputs 8 · controls 10 · cards 12. */
+    /* DS-004 radius: control 6 · global 8 · panel 10 · large panel 12 · pill 999. */
     --radius-xs: 4px;
     --radius-sm: 6px;
     --radius-md: 8px;
     --radius-lg: 10px;
     --radius-xl: 12px;
+    color-scheme: light;
 
     --duration-fast: 120ms;
     --duration-base: 180ms;
     --duration-slow: 240ms;
 }
 
-.octo-app.dark {
-    --color-app: #121212;
-    --color-subtle: #191919;
-    --color-surface: #141414;
-    --color-raised: #1c1c1c;
-    --color-muted: #1e1e1e;
-    --color-hover: rgb(255 255 255 / 0.05);
-    --color-head: #101010;
-    --color-canvas: #141414;
-    --color-line: rgb(255 255 255 / 0.07);
-    --color-line-strong: rgb(255 255 255 / 0.13);
-    --color-ink: #fafafa;
-    --color-ink-2: #d4d4d8;
-    --color-ink-3: #a1a1aa;
-    --color-ink-4: #8b8b94;
-
-    --color-accent: #3b82f6;
-    --color-accent-hover: #1d4ed8;
-    --color-accent-fill: #2563eb;
-    --color-accent-ink: #93c5fd;
-    --color-accent-soft: rgb(59 130 246 / 0.14);
-    --color-accent-line: rgb(59 130 246 / 0.4);
-
-    --color-ok: #34d399;
-    --color-warn: #fbbf24;
-    --color-danger: #f87171;
-    --color-info: #60a5fa;
-    --color-ai: #a78bfa;
-    --color-chart-grid: rgb(255 255 255 / 0.06);
-
-    --shadow-popover: 0 8px 30px rgb(0 0 0 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.06);
-    --shadow-dialog: 0 24px 64px -16px rgb(0 0 0 / 0.7), 0 0 0 1px rgb(255 255 255 / 0.06);
-    color-scheme: dark;
-}
+/* DS-002: the dashboard is light-only; there is no dark mapping. */
 
 @media (prefers-reduced-motion: reduce) {
     .octo-app *,

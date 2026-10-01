@@ -10,6 +10,7 @@ import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { TrendChart } from "@/components/chart/line-chart";
+import { NavChart } from "@/components/chart/nav-chart";
 import { WaterfallChart } from "@/components/chart/waterfall-chart";
 import { ScatterChart } from "@/components/chart/scatter-chart";
 import { Heatmap } from "@/components/chart/heatmap";
@@ -65,6 +66,16 @@ export function AnalyticsView() {
   const i = hover ?? values.length - 1;
   const change = values[i] - values[0];
 
+  const metricSelect = (
+    <Select aria-label="Metric" value={metric} onChange={(e) => setMetric(e.target.value as MetricKey)} className="w-36 [&_select]:text-[12px]">
+      <option value="nav">NAV</option>
+      <option value="irr">Net IRR</option>
+      <option value="tvpi">TVPI</option>
+      <option value="dpi">DPI</option>
+      <option value="moic">Gross MOIC</option>
+    </Select>
+  );
+
   const points = RISK_RETURN.map((p) => ({ ...p, label: p.label }));
   const focus = compare.length ? INVESTMENTS.filter((inv) => compare.includes(inv.id)) : [];
 
@@ -84,6 +95,9 @@ export function AnalyticsView() {
       />
       <PageBody className="space-y-4">
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+          {metric === "nav" ? (
+            <NavChart className="xl:col-span-9" height={320} toolbar={metricSelect} onLineage={() => setLineage(PORTFOLIO_METRICS[0])} />
+          ) : (
           <ChartShell
             className="xl:col-span-9"
             title={s.label}
@@ -92,19 +106,13 @@ export function AnalyticsView() {
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className="text-kpi-xl font-bold tabular-nums text-ink">{s.format(values[i], f)}</span>
                 <span className="text-[12px] font-medium text-ink-3">
-                  {x[i]} · {metric === "nav" ? f.delta((change / values[0]) * 100) : f.delta(change, metric === "irr" ? "pts" : "×", metric === "irr" ? 1 : 2)} since {x[0]}
+                  {x[i]} · {f.delta(change, metric === "irr" ? "pts" : "×", metric === "irr" ? 1 : 2)} since {x[0]}
                 </span>
               </div>
             }
             toolbar={
               <div className="flex flex-wrap items-center gap-2">
-                <Select aria-label="Metric" value={metric} onChange={(e) => setMetric(e.target.value as MetricKey)} className="w-36 [&_select]:h-7 [&_select]:text-[12px]">
-                  <option value="nav">NAV</option>
-                  <option value="irr">Net IRR</option>
-                  <option value="tvpi">TVPI</option>
-                  <option value="dpi">DPI</option>
-                  <option value="moic">Gross MOIC</option>
-                </Select>
+                {metricSelect}
                 <Segmented size="sm" label="Aggregation" value={agg} onChange={setAgg} items={[{ value: "quarter", label: "Quarterly" }, { value: "year", label: "Yearly" }]} />
               </div>
             }
@@ -117,6 +125,7 @@ export function AnalyticsView() {
           >
             <TrendChart key={`${metric}-${agg}`} x={x} series={[{ id: "p", label: "Portfolio", values }, ...(bench ? [{ id: "b", label: metric === "irr" ? "Hurdle" : "Benchmark", values: bench, color: "var(--color-ink-4)", dashed: true, area: false }] : [])]} format={(v) => s.format(v, f)} label={s.label} onHover={setHover} />
           </ChartShell>
+          )}
 
           <aside className="grid grid-cols-1 content-start gap-4 xl:col-span-3" aria-label="Analysis rail">
             <Panel>

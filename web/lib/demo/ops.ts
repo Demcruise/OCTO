@@ -173,9 +173,15 @@ export type AiDraft = {
   confidence: "High" | "Medium" | "Low";
   verification: Verification;
   body: string;
-  citations: { label: string; locator: string }[];
+  citations: { label: string; locator: string; asOf: string }[];
   model: string;
   createdAt: string;
+  /** What a reviewer can inspect: inputs, deterministic checks and the action log. Never model reasoning. */
+  trace: {
+    inputs: { label: string; detail: string }[];
+    checks: { label: string; result: "pass" | "warn" | "fail"; detail: string }[];
+    actions: { at: string; actor: string; text: string }[];
+  };
 };
 
 export const AI_DRAFTS: AiDraft[] = [
@@ -188,13 +194,32 @@ export const AI_DRAFTS: AiDraft[] = [
     verification: "pending-review",
     body: "Meridian Health EBITDA fell 6.1% quarter on quarter to $14.2M, driven by a one-off $1.1M ward refurbishment expensed in August and a 2.4-point rise in nurse agency costs. Revenue grew 3.8% on higher outpatient volumes. Management expects agency costs to normalise by Q1 2027 as 42 permanent hires start.",
     citations: [
-      { label: "Q3 management accounts", locator: "p. 4, table 2" },
-      { label: "August board pack", locator: "p. 14" },
-      { label: "Payroll extract Sep", locator: "rows 1–212" },
-      { label: "IBOR valuation Q3", locator: "VAL-2291" },
+      { label: "Q3 management accounts", locator: "p. 4, table 2", asOf: at(30) },
+      { label: "August board pack", locator: "p. 14", asOf: at(310) },
+      { label: "Payroll extract Sep", locator: "rows 1–212", asOf: at(26) },
+      { label: "IBOR valuation Q3", locator: "VAL-2291", asOf: at(11) },
     ],
     model: "octo-analyst v2.1 (self-hosted)",
     createdAt: at(9),
+    trace: {
+      inputs: [
+        { label: "Meridian Health · Q3 management accounts", detail: "PDF, 18 pages, uploaded by fund accounting" },
+        { label: "IBOR valuation VAL-2291", detail: "Q3 2026 mark, approved" },
+        { label: "Prior-quarter financials", detail: "Q2 2026, reconciled" },
+        { label: "Template", detail: "Variance explanation v3 (house style)" },
+      ],
+      checks: [
+        { label: "Figures reconcile to IBOR", result: "pass", detail: "EBITDA $14.2M and revenue match VAL-2291 within $0.05M." },
+        { label: "Every claim has a citation", result: "pass", detail: "4 of 4 numeric claims cite a source page or record." },
+        { label: "Forward-looking statement", result: "warn", detail: "“normalise by Q1 2027” is a management expectation; keep the attribution." },
+        { label: "No personal data", result: "pass", detail: "Payroll rows aggregated; no names in the draft." },
+      ],
+      actions: [
+        { at: at(9), actor: "octo-analyst v2.1", text: "Generated draft from 4 inputs" },
+        { at: at(9), actor: "OCTO checks", text: "Ran 4 checks · 1 warning" },
+        { at: at(9), actor: "Workflow", text: "Routed to you for review" },
+      ],
+    },
   },
   {
     id: "AID-0311",
@@ -205,23 +230,44 @@ export const AI_DRAFTS: AiDraft[] = [
     verification: "pending-review",
     body: "DSCR was 1.14× for the twelve months to August against a 1.20× covenant. Interest cost rose 22% after the July refinancing while revenue was flat at $8.0M a month. A 50 bp margin step-down applies from Q1 2027 if DSCR recovers above 1.25×. Recommend requesting a one-quarter waiver.",
     citations: [
-      { label: "Q3 compliance certificate", locator: "§3.1" },
-      { label: "Facility agreement", locator: "cl. 21.2" },
+      { label: "Q3 compliance certificate", locator: "§3.1", asOf: at(20) },
+      { label: "Facility agreement", locator: "cl. 21.2", asOf: at(2200) },
     ],
     model: "octo-analyst v2.1 (self-hosted)",
     createdAt: at(3),
+    trace: {
+      inputs: [
+        { label: "Helios · Q3 compliance certificate", detail: "PDF, 6 pages, from the lender portal" },
+        { label: "Facility agreement", detail: "Executed 2024, clause 21 covenants" },
+        { label: "Alert ALR-1841", detail: "DSCR below covenant, opened 2h ago" },
+      ],
+      checks: [
+        { label: "Covenant figures match the certificate", result: "pass", detail: "DSCR 1.14× and threshold 1.20× read from §3.1." },
+        { label: "Every claim has a citation", result: "pass", detail: "3 of 3 claims cite the certificate or facility agreement." },
+        { label: "Recommendation flagged for human decision", result: "pass", detail: "Waiver request is marked as a recommendation, not an action." },
+      ],
+      actions: [
+        { at: at(3), actor: "octo-analyst v2.1", text: "Generated briefing from 3 inputs" },
+        { at: at(3), actor: "OCTO checks", text: "Ran 3 checks · all passed" },
+        { at: at(3), actor: "Workflow", text: "Routed to you for review" },
+      ],
+    },
   },
 ];
 
 /* ---------- Activity, notifications, intelligence ---------- */
 
-export const ACTIVITY = [
-  { id: "ACT-1", actor: "Q3 NAV model", verb: "completed a run for", object: "5 funds", at: at(0.3) },
-  { id: "ACT-2", actor: "M. Sari", verb: "approved the IC memo for", object: "Garuda Fibre follow-on", at: at(5) },
-  { id: "ACT-3", actor: "Fund accounting", verb: "resolved a cash break on", object: "Flagship Fund I", at: at(7) },
-  { id: "ACT-4", actor: "OCTO", verb: "ingested the administrator file for", object: "Flagship Fund II", at: at(11) },
-  { id: "ACT-5", actor: "R. Tan", verb: "raised a covenant alert on", object: "Helios Data Centers", at: at(26) },
-  { id: "ACT-6", actor: "D. Lim", verb: "moved to Due Diligence:", object: "Aruna Payments (Series D)", at: at(30) },
+/** Activity state drives the timeline marker: complete blue · pending grey · attention amber · critical red (ACT-001). */
+export type ActivityState = "complete" | "pending" | "attention" | "critical";
+
+export const ACTIVITY: { id: string; actor: string; verb: string; object: string; at: string; state: ActivityState }[] = [
+  { id: "ACT-1", actor: "Q3 NAV model", verb: "completed a run for", object: "5 funds", at: at(0.3), state: "complete" },
+  { id: "ACT-2", actor: "M. Sari", verb: "approved the IC memo for", object: "Garuda Fibre follow-on", at: at(5), state: "complete" },
+  { id: "ACT-3", actor: "Fund accounting", verb: "resolved a cash break on", object: "Flagship Fund I", at: at(7), state: "complete" },
+  { id: "ACT-4", actor: "OCTO", verb: "is waiting on the administrator file for", object: "Flagship Fund II", at: at(11), state: "pending" },
+  { id: "ACT-7", actor: "OCTO", verb: "flagged a stale valuation on", object: "Kirana Consumer", at: at(14), state: "attention" },
+  { id: "ACT-5", actor: "R. Tan", verb: "raised a covenant alert on", object: "Helios Data Centers", at: at(26), state: "critical" },
+  { id: "ACT-6", actor: "D. Lim", verb: "moved to Due Diligence:", object: "Aruna Payments (Series D)", at: at(30), state: "complete" },
 ];
 
 export const NOTIFICATIONS = [

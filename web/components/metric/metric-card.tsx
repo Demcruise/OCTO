@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { GitBranch } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 import type { Metric } from "@/lib/demo";
@@ -19,9 +19,10 @@ export function useMetricValue() {
 }
 
 /**
- * KPI card (plan §2.5, Vestra anatomy): small icon + label, sparkline top
- * right, large tabular value, delta pill + comparison, and a lineage
- * affordance. Supports compact / standard / emphasized and every data state.
+ * KPI card (KPI-001, Vestra anatomy): small icon + label, sparkline top right,
+ * large tabular value, delta pill + comparison. With `onOpen` the whole card is
+ * one button (hover tint, stronger border, arrow) that opens the KPI drawer —
+ * there is no separate Lineage link in the footer any more.
  */
 export function MetricCard({
   metric,
@@ -29,7 +30,7 @@ export function MetricCard({
   variant = "standard",
   state = "ready",
   asOf,
-  onLineage,
+  onOpen,
   className,
 }: {
   metric: Metric;
@@ -37,7 +38,7 @@ export function MetricCard({
   variant?: "compact" | "standard" | "emphasized";
   state?: MetricState;
   asOf?: string;
-  onLineage?: (m: Metric) => void;
+  onOpen?: (m: Metric) => void;
   className?: string;
 }) {
   const fmt = useMetricValue();
@@ -51,31 +52,38 @@ export function MetricCard({
     state === "stale" && "text-ink-2",
   );
 
+  const clickable = !!onOpen && state !== "no-data";
+  const Root = clickable ? "button" : "div";
   return (
-    <div
+    <Root
+      {...(clickable ? { type: "button" as const, onClick: () => onOpen(metric), "aria-label": `${metric.label}: ${value}. Open metric details` } : {})}
       className={cn(
-        "group flex min-w-0 flex-col justify-between rounded-xl border border-line bg-surface p-4 transition-colors duration-150",
-        variant === "compact" ? "min-h-[108px] gap-3" : "min-h-[132px] gap-4",
+        "group relative flex min-w-0 flex-col justify-between rounded-lg border border-line bg-surface p-4 text-left transition-colors duration-150 sm:p-5",
+        variant === "compact" ? "min-h-[108px] gap-3" : "min-h-[136px] gap-4",
+        clickable && "cursor-pointer hover:border-line-strong hover:bg-subtle",
+        clickable && ring,
         className,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {icon && <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-line bg-subtle text-ink-2 [&_svg]:size-3.5">{icon}</span>}
-          <p className="truncate text-[12px] font-medium tracking-[-0.01em] text-ink">{metric.label}</p>
+          <span className="block truncate text-[13px] font-medium tracking-[-0.01em] text-ink">{metric.label}</span>
         </div>
-        {metric.spark && state === "ready" && variant !== "compact" && (
-          <Sparkline values={metric.spark} tone={good === undefined ? "muted" : good ? "gain" : "loss"} className="-mt-0.5 h-7 w-20" />
+        {clickable ? (
+          <ArrowUpRight aria-hidden className="size-4 shrink-0 text-ink-4 transition-colors group-hover:text-accent-ink" />
+        ) : (
+          metric.spark && state === "ready" && variant !== "compact" && <Sparkline values={metric.spark} tone={good === undefined ? "muted" : good ? "gain" : "loss"} className="-mt-0.5 h-7 w-20" />
         )}
       </div>
 
       <div className="min-w-0">
-        {metric.href && state !== "error" ? (
+        {metric.href && state !== "error" && !clickable ? (
           <Link href={metric.href} className={cn("rounded-sm hover:text-accent", valueCls, ring)}>
             {value}
           </Link>
         ) : (
-          <p className={valueCls}>{value}</p>
+          <span className={cn("block", valueCls)}>{value}</span>
         )}
 
         <div className="mt-2 flex min-h-5 flex-wrap items-center gap-x-2 gap-y-1">
@@ -95,33 +103,25 @@ export function MetricCard({
               )}
             </>
           )}
-          {onLineage && state !== "no-data" && (
-            <button
-              type="button"
-              onClick={() => onLineage(metric)}
-              className={cn("ml-auto inline-flex cursor-pointer items-center gap-1 rounded-sm text-[11px] font-medium text-ink-4 transition-colors hover:text-accent", ring)}
-              aria-label={`View lineage for ${metric.label}`}
-            >
-              <GitBranch aria-hidden className="size-3" />
-              Lineage
-            </button>
+          {clickable && metric.spark && state === "ready" && variant !== "compact" && (
+            <Sparkline values={metric.spark} tone={good === undefined ? "muted" : good ? "gain" : "loss"} className="ml-auto h-6 w-16" />
           )}
         </div>
-        {asOf && <p className="sr-only">As of {asOf}</p>}
+        {asOf && <span className="sr-only">As of {asOf}</span>}
       </div>
-    </div>
+    </Root>
   );
 }
 
-/** Responsive KPI grid: 1 → 2 → 3/4/6 columns (plan §28). */
+/** Responsive KPI grid (KPI-003): 6 cols desktop → 3×2 tablet → 2×3 mobile. */
 export function MetricGrid({ children, cols = 4, className }: { children: React.ReactNode; cols?: 3 | 4 | 6; className?: string }) {
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-3 min-[480px]:grid-cols-2",
+        "grid grid-cols-2 gap-3",
         cols === 3 && "lg:grid-cols-3",
         cols === 4 && "lg:grid-cols-4",
-        cols === 6 && "lg:grid-cols-3 2xl:grid-cols-6",
+        cols === 6 && "md:grid-cols-3 xl:grid-cols-6",
         className,
       )}
     >

@@ -3,29 +3,50 @@ import { cn } from "@/lib/utils";
 
 export type Tone = "neutral" | "accent" | "ok" | "warn" | "danger" | "info" | "ai";
 
-const TONE: Record<Tone, string> = {
-  neutral: "border-line bg-muted text-ink-2",
+/*
+ * Badge system (parity BADGE-001/002, DS-007). One geometry for every status
+ * pill: 22px tall, 11px text, 12px icon, never wraps. Text uses the AA-safe ink
+ * tokens; the dot/icon uses the brighter semantic mark colour.
+ */
+const PILL: Record<Tone, string> = {
+  neutral: "border-line bg-subtle text-ink-2",
   accent: "border-accent-line bg-accent-soft text-accent-ink",
-  ok: "border-ok/20 bg-ok/10 text-ok",
-  warn: "border-warn/25 bg-warn/10 text-warn",
-  danger: "border-danger/20 bg-danger/10 text-danger",
-  info: "border-info/20 bg-info/10 text-info",
-  ai: "border-ai/25 bg-ai/10 text-ai",
+  ok: "border-mark-ok/25 bg-mark-ok/8 text-ok",
+  warn: "border-mark-warn/30 bg-mark-warn/8 text-warn",
+  danger: "border-mark-danger/25 bg-mark-danger/8 text-danger",
+  info: "border-mark-info/25 bg-mark-info/8 text-info",
+  ai: "border-ai/25 bg-ai/8 text-ai",
 };
 
-/** Status text never relies on colour alone: the label is always present (plan §29). */
-export function StatusBadge({ tone = "neutral", dot = true, className, children }: { tone?: Tone; dot?: boolean; className?: string; children: React.ReactNode }) {
+const MARK: Record<Tone, string> = {
+  neutral: "bg-mark-neutral text-mark-neutral",
+  accent: "bg-accent text-accent",
+  ok: "bg-mark-ok text-mark-ok",
+  warn: "bg-mark-warn text-mark-warn",
+  danger: "bg-mark-danger text-mark-danger",
+  info: "bg-mark-info text-mark-info",
+  ai: "bg-ai text-ai",
+};
+
+/** Status text never relies on colour alone: the label is always present (DS-007). */
+export function StatusBadge({ tone = "neutral", dot = true, icon, className, children }: { tone?: Tone; dot?: boolean; icon?: React.ReactNode; className?: string; children: React.ReactNode }) {
   return (
-    <span className={cn("inline-flex h-5 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xs border px-1.5 text-[11px] font-medium leading-none", TONE[tone], className)}>
-      {dot && <span aria-hidden className="size-1.5 rounded-full bg-current" />}
+    <span className={cn("inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-[11px] font-medium leading-none tabular-nums", PILL[tone], className)}>
+      {icon ? (
+        <span aria-hidden className={cn("flex !bg-transparent [&>svg]:size-3", MARK[tone])}>
+          {icon}
+        </span>
+      ) : (
+        dot && <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", MARK[tone])} />
+      )}
       {children}
     </span>
   );
 }
 
-/** Uppercase category tag (Vestra news tag, sized up for legibility). */
+/** Uppercase category tag. */
 export function Tag({ tone = "neutral", className, children }: { tone?: Tone; className?: string; children: React.ReactNode }) {
-  return <span className={cn("inline-flex h-4.5 items-center rounded-xs px-1.5 text-[10px] font-semibold uppercase tracking-[0.06em]", TONE[tone], "border-0", className)}>{children}</span>;
+  return <span className={cn("inline-flex h-5 shrink-0 items-center whitespace-nowrap rounded-xs px-1.5 text-[10px] font-semibold uppercase leading-none tracking-[0.06em]", PILL[tone], "border-0", className)}>{children}</span>;
 }
 
 /** Count badge — reserved for actionable counts. */
@@ -33,10 +54,10 @@ export function CountBadge({ children, tone = "neutral", className }: { children
   return (
     <span
       className={cn(
-        "inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-xs px-1 text-[10px] font-semibold tabular-nums leading-none",
-        tone === "neutral" && "bg-muted text-ink-2",
+        "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums leading-none",
+        tone === "neutral" && "bg-sunken text-ink-2",
         tone === "accent" && "bg-accent-fill text-white",
-        tone === "danger" && "bg-danger/12 text-danger",
+        tone === "danger" && "bg-mark-danger/12 text-danger",
         className,
       )}
     >
@@ -45,7 +66,7 @@ export function CountBadge({ children, tone = "neutral", className }: { children
   );
 }
 
-/** A typed reference to an ontology object: type label + name. Links drill down (plan §23). */
+/** A typed reference to an ontology object: type label + name. Links drill down. */
 export function EntityChip({ type, name, href, className }: { type: string; name: string; href?: string; className?: string }) {
   const body = (
     <>
@@ -53,9 +74,9 @@ export function EntityChip({ type, name, href, className }: { type: string; name
       <span className="truncate text-ink">{name}</span>
     </>
   );
-  const cls = cn("inline-flex h-5 max-w-full items-center gap-1.5 rounded-xs border border-line bg-surface px-1.5 text-[12px]", className);
+  const cls = cn("inline-flex h-[22px] max-w-full items-center gap-1.5 whitespace-nowrap rounded-sm border border-line bg-surface px-1.5 text-[12px] leading-none", className);
   return href ? (
-    <Link href={href} className={cn(cls, "hover:border-accent-line hover:text-accent focus-visible:outline-2 focus-visible:outline-accent")}>
+    <Link href={href} className={cn(cls, "hover:border-accent-line hover:text-accent focus-visible:outline-2 focus-visible:outline-focus")}>
       {body}
     </Link>
   ) : (
@@ -64,7 +85,7 @@ export function EntityChip({ type, name, href, className }: { type: string; name
 }
 
 export function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <kbd className={cn("inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-xs border border-line bg-subtle px-1 font-data text-[10px] text-ink-3", className)}>{children}</kbd>;
+  return <kbd className={cn("inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-xs border border-line bg-subtle px-1 font-data text-[10px] text-ink-3", className)}>{children}</kbd>;
 }
 
 /** Square monogram used where a logo would sit (entity cells, object headers). */

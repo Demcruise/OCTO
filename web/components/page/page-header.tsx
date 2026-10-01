@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
  * eyebrow/context → title + description → freshness/meta → actions → tabs.
  *
  * Variants change density, not structure:
- *   dashboard/list/workflow/settings — 22px title
+ *   dashboard/list/workflow/settings — 32px/600 page title (parity TYPE-001)
  *   object — 26px title, identity slot (monogram/logo) and status row
  *   builder — compact, sticky-friendly
  */
@@ -38,7 +38,7 @@ export function PageHeader({
           <div className="min-w-0">
             {eyebrow && <div className="text-[12px] font-medium text-ink-3">{eyebrow}</div>}
             <h1 className={cn("mt-0.5 font-semibold text-ink", variant === "object" ? "text-object" : "text-page")}>{title}</h1>
-            {description && <p className="mt-1 max-w-2xl text-[13px] text-ink-3">{description}</p>}
+            {description && <p className="mt-1.5 max-w-2xl text-[14px] text-ink-3">{description}</p>}
             {meta && <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">{meta}</div>}
           </div>
         </div>

@@ -56,7 +56,7 @@ export function FundsView() {
             : (funds.data ?? []).map((x) => {
                 const called = x.called / x.committed;
                 return (
-                  <Link key={x.id} href={`/app/funds/${x.slug}`} className={cn("group flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-line-strong hover:bg-hover/40", ring)}>
+                  <Link key={x.id} href={`/app/funds/${x.slug}`} className={cn("group flex flex-col gap-3 rounded-lg border border-line bg-surface p-4 transition-colors hover:border-line-strong hover:bg-hover/40", ring)}>
                     <div className="flex items-start gap-2.5">
                       <Monogram name={x.name} size="sm" />
                       <div className="min-w-0 flex-1">
@@ -107,11 +107,11 @@ export function FundsView() {
             title="Vintage comparison"
             subtitle={measure === "irr" ? "Net IRR by fund, %" : "TVPI by fund, ×"}
             toolbar={<Segmented size="sm" label="Measure" value={measure} onChange={setMeasure} items={[{ value: "irr", label: "IRR" }, { value: "tvpi", label: "TVPI" }]} />}
-            legend={<Legend items={[{ label: measure === "irr" ? "Net IRR" : "TVPI", color: "var(--color-chart-1)" }]} />}
+            legend={<Legend items={[{ label: measure === "irr" ? "Net IRR" : "TVPI", color: "var(--color-chart-1)" }, ...(measure === "irr" && VINTAGE.some((v) => v.irr < 0) ? [{ label: "Negative", color: "var(--color-loss)" }] : [])]} />}
             exportData={{ filename: "vintage-comparison", head: ["Fund", "Vintage", "Net IRR %", "TVPI"], rows: VINTAGE.map((v) => [v.fund, v.vintage, v.irr, v.tvpi.toFixed(2)]) }}
             height={260}
           >
-            <BarChart x={VINTAGE.map((v) => `${v.vintage}`)} series={[{ id: "m", label: measure === "irr" ? "Net IRR" : "TVPI", values: VINTAGE.map((v) => (measure === "irr" ? v.irr : Math.round(v.tvpi * 100) / 100)) }]} format={(v) => (measure === "irr" ? f.pct(v) : f.multiple(v))} label="Vintage comparison" />
+            <BarChart x={VINTAGE.map((v) => `${v.vintage}`)} series={[{ id: "m", label: measure === "irr" ? "Net IRR" : "TVPI", values: VINTAGE.map((v) => (measure === "irr" ? v.irr : Math.round(v.tvpi * 100) / 100)) }]} format={(v) => (measure === "irr" ? f.pct(v) : f.multiple(v))} label="Vintage comparison" signed />
           </ChartShell>
         </div>
       </PageBody>

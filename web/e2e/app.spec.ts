@@ -2,8 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 /*
  * Primary workflows (plan §35): navigation, search, object drill-down,
- * filter persistence, table interactions, approval flow, theme, density,
- * responsive shell.
+ * filter persistence, table interactions, approval flow, density, KPI
+ * drawer, NAV range, AI trace, report flow with publish gate, responsive shell.
+ * The dashboard is light-only (DS-002).
  */
 
 async function ready(page: Page, path: string) {
@@ -115,24 +116,84 @@ test("reconciliation break cannot be resolved without a reason", async ({ page }
   await expect(page.getByRole("status").filter({ hasText: "REC-2207" })).toBeVisible();
 });
 
-test("theme and density preferences apply globally", async ({ page }) => {
+test("density preference applies globally and the app stays light", async ({ page }) => {
   await ready(page, "/app/settings?tab=appearance");
-  await page.getByRole("radio", { name: "Dark" }).first().click();
-  await expect(page.locator(".octo-app")).toHaveClass(/\bdark\b/);
-  await page.getByRole("radio", { name: "Comfortable" }).click();
+  await expect(page.getByRole("radio", { name: "Dark" })).toHaveCount(0);
+  await page.getByRole("radio", { name: "Comfortable" }).first().click();
   await ready(page, "/app/companies");
-  await expect(page.locator("tbody tr[data-row-id]").first()).toHaveClass(/h-13/);
-  await expect(page.locator(".octo-app")).toHaveClass(/\bdark\b/);
+  await expect(page.locator("tbody tr[data-row-id]").first()).toHaveClass(/h-16/);
+  await expect(page.locator(".octo-app")).not.toHaveClass(/\bdark\b/);
 });
 
-test("lineage drawer explains a KPI", async ({ page }) => {
+test("KPI card opens the metric drawer, which hands over to lineage", async ({ page }) => {
   await ready(page, "/app");
-  await page.getByRole("button", { name: "View lineage for Total NAV" }).click();
+  await page.getByRole("button", { name: /^Total NAV: .* Open metric details$/ }).click();
   const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("Definition");
+  await expect(drawer).toContainText("Drivers");
   await expect(drawer).toContainText("Σ fund NAV");
-  await expect(drawer).toContainText("NAV definition v2.1");
+  await drawer.getByRole("button", { name: "View lineage" }).click();
+  await expect(page.getByRole("dialog")).toContainText("NAV definition v2.1");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("NAV chart range switches series and keeps the reconciled endpoint", async ({ page }) => {
+  await ready(page, "/app");
+  const chart = page.getByRole("region", { name: "Portfolio NAV" });
+  await expect(chart).toContainText("$812.4M");
+  await chart.getByRole("button", { name: "Range: Quarterly" }).click();
+  await page.getByRole("menuitem", { name: "Daily" }).click();
+  await expect(chart.getByRole("button", { name: "Range: Daily" })).toBeVisible();
+  await expect(chart).toContainText("$812.4M");
+  await expect(chart).toContainText("30 Sep 2026");
+});
+
+test("AI draft trace shows inputs, evidence and checks", async ({ page }) => {
+  await ready(page, "/app/workflows?tab=ai");
+  const card = page.getByRole("article", { name: /AI draft: Q3 variance explanation/ });
+  await expect(card.getByRole("list", { name: "Evidence" })).toContainText("Q3 management accounts");
+  await card.getByRole("button", { name: "View trace" }).click();
+  const trace = page.getByRole("dialog");
+  await expect(trace.getByRole("tab", { name: /Inputs/ })).toHaveAttribute("aria-selected", "true");
+  await trace.getByRole("tab", { name: /Checks/ }).click();
+  await expect(trace).toContainText("Figures reconcile to IBOR");
+  await expect(trace).toContainText("Model reasoning is not shown");
+});
+
+test("report flow blocks publishing until issues are resolved", async ({ page }) => {
+  await ready(page, "/app/reports?new=1");
+  const next = page.getByRole("button", { name: "Continue" });
+  await next.click(); // template
+  await next.click(); // period
+  await next.click(); // scope
+  await next.click(); // source metrics
+  await page.getByRole("button", { name: "Generate draft" }).click();
+  await expect(page.getByText("Draft generated")).toBeVisible();
+  await next.click(); // generate → review
+  await next.click(); // review → issues
+  await expect(next).toBeDisabled();
+  while (await page.getByRole("button", { name: "Mark resolved" }).count()) await page.getByRole("button", { name: "Mark resolved" }).first().click();
+  await expect(page.getByText("All issues resolved")).toBeVisible();
+  await next.click(); // issues → approve
+  await page.getByLabel(/Approval comment/).fill("Numbers tie to IBOR; disclosures complete.");
+  await page.getByRole("button", { name: "Approve report" }).click();
+  await next.click(); // approve → publish
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(page.getByText("Published", { exact: true }).first()).toBeVisible();
+});
+
+test("report generation failure offers recovery", async ({ page }) => {
+  await ready(page, "/app/reports?new=1");
+  const next = page.getByRole("button", { name: "Continue" });
+  for (let i = 0; i < 4; i++) await next.click();
+  await page.getByRole("switch", { name: /Simulate a generation failure/ }).click();
+  await page.getByRole("button", { name: "Generate draft" }).click();
+  await expect(page.getByText("We couldn't generate the draft.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "View last successful draft" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open source issues" })).toBeVisible();
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(page.getByText("Draft generated")).toBeVisible();
 });
 
 test("mobile drawer navigation @mobile", async ({ page }) => {

@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Activity, Bell, CircleHelp, Monitor, Moon, Sun, X } from "lucide-react";
+import { Activity, Bell, CircleHelp, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 import { DEMO_NOW, NOTIFICATIONS, type Severity } from "@/lib/demo";
-import { usePreferences, type Density, type Locale, type ThemePref } from "@/lib/preferences";
+import { usePreferences, type Density, type Locale } from "@/lib/preferences";
 import { useWorkspace } from "@/lib/workspace";
 import { IconButton, ring, ringInset } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/badge";
@@ -161,7 +161,7 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-center justify-center px-4">
       <div aria-hidden className="absolute inset-0 bg-black/40 motion-safe:animate-[fade-in_140ms_ease-out]" onClick={onClose} />
-      <div ref={ref} role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-line bg-raised p-5 text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
+      <div ref={ref} role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-line bg-raised p-5 text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
         <div className="flex items-center justify-between">
           <h2 className="text-section font-semibold">Keyboard shortcuts</h2>
           <IconButton size="sm" label="Close" icon={<X />} onClick={onClose} />
@@ -191,39 +191,17 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
   );
 }
 
-/* ---------- Appearance: theme · density · language ---------- */
+/* ---------- Display: density · number format ---------- */
 
-const THEMES: { value: ThemePref; label: string; icon: React.ReactNode }[] = [
-  { value: "light", label: "Light", icon: <Sun /> },
-  { value: "dark", label: "Dark", icon: <Moon /> },
-  { value: "system", label: "System", icon: <Monitor /> },
-];
-
-export function ThemeMenu() {
-  const { theme, setTheme, resolvedTheme, density, setDensity, locale, setLocale } = usePreferences();
+export function DisplayMenu() {
+  const { density, setDensity, locale, setLocale } = usePreferences();
   const { open, setOpen, rootRef, triggerRef } = useDismissable();
   return (
     <div ref={rootRef} className="relative">
-      <IconButton ref={triggerRef} className={chrome} label="Appearance" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)} icon={resolvedTheme === "dark" ? <Moon /> : <Sun />} />
+      <IconButton ref={triggerRef} className={chrome} label="Display settings" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)} icon={<SlidersHorizontal />} />
       {open && (
-        <PopoverPanel role="dialog" aria-label="Appearance" className="w-72 pb-3">
-          <MenuHeading>Theme</MenuHeading>
-          <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1.5 px-3">
-            {THEMES.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                role="radio"
-                aria-checked={theme === t.value}
-                onClick={() => setTheme(t.value)}
-                className={cn("flex h-14 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border text-[12px] [&_svg]:size-4", theme === t.value ? "border-accent-line bg-accent-soft text-accent-ink" : "border-line text-ink-3 hover:bg-hover hover:text-ink", ring)}
-              >
-                {t.icon}
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <MenuHeading>Density</MenuHeading>
+        <PopoverPanel role="dialog" aria-label="Display settings" className="w-72 pb-3">
+          <MenuHeading>Row density</MenuHeading>
           <div className="px-3">
             <Segmented<Density> size="sm" label="Table density" value={density} onChange={setDensity} items={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfortable" }]} />
           </div>

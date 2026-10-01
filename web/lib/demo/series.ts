@@ -15,6 +15,64 @@ export const NAV_SERIES = [612.0, 629.5, 648.1, 671.4, 698.0, 716.2, 731.0, 742.
   called: [410, 438, 462, 489, 512, 531, 548, 560, 581, 598, 603, 644.8][i],
 }));
 
+export type NavRange = "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+export type NavPoint = { date: string; label: string; title: string; nav: number; benchmark: number };
+
+const QUARTER_END = ["2023-12-31", "2024-03-31", "2024-06-30", "2024-09-30", "2024-12-31", "2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31", "2026-03-31", "2026-06-30", "2026-09-30"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAY = 86_400_000;
+
+/**
+ * Daily NAV path ($M) interpolated between the reconciled quarter-end marks with
+ * a small deterministic wobble that is pinned to zero at every quarter end, so
+ * every range ends exactly at $812.4M on 30 Sep 2026 (demo data).
+ */
+function dailyNav(points: { nav: number; benchmark: number }[]) {
+  const out: { t: number; nav: number; benchmark: number }[] = [];
+  for (let k = 0; k < points.length - 1; k++) {
+    const a = Date.parse(QUARTER_END[k]);
+    const b = Date.parse(QUARTER_END[k + 1]);
+    const n = Math.round((b - a) / DAY);
+    for (let d = 0; d < n; d++) {
+      const u = d / n;
+      const wobble = Math.sin(u * Math.PI) * (Math.sin(d * 0.9 + k * 2.1) * 0.006 + Math.sin(d * 0.23 + k) * 0.009);
+      const nav = points[k].nav + (points[k + 1].nav - points[k].nav) * u;
+      const bm = points[k].benchmark + (points[k + 1].benchmark - points[k].benchmark) * u;
+      out.push({ t: a + d * DAY, nav: Math.round(nav * (1 + wobble) * 10) / 10, benchmark: Math.round(bm * (1 + wobble * 1.4) * 10) / 10 });
+    }
+  }
+  const last = points[points.length - 1];
+  out.push({ t: Date.parse(QUARTER_END[QUARTER_END.length - 1]), nav: last.nav, benchmark: last.benchmark });
+  return out;
+}
+
+/** NAV series for a chart range. Daily = last 90 days, weekly = 52 weeks, monthly = 24 months, quarterly = 12 quarters, yearly = year ends + YTD. */
+export function navSeries(range: NavRange, points: { q: string; nav: number; benchmark: number }[] = NAV_SERIES): NavPoint[] {
+  const day = dailyNav(points);
+  const fmt = (t: number) => {
+    const d = new Date(t);
+    return { day: d.getUTCDate(), mon: MON[d.getUTCMonth()], year: d.getUTCFullYear() };
+  };
+  const pt = (p: { t: number; nav: number; benchmark: number }, label: string): NavPoint => {
+    const d = fmt(p.t);
+    return { date: new Date(p.t).toISOString().slice(0, 10), label, title: `${d.day} ${d.mon} ${d.year}`, nav: p.nav, benchmark: p.benchmark };
+  };
+  const end = day.length - 1;
+  if (range === "daily") return day.slice(end - 90).map((p) => pt(p, `${fmt(p.t).day} ${fmt(p.t).mon}`));
+  if (range === "weekly") return Array.from({ length: 53 }, (_, i) => day[end - (52 - i) * 7]).map((p) => pt(p, `${fmt(p.t).day} ${fmt(p.t).mon}`));
+  if (range === "monthly") {
+    const ends = day.filter((p, i) => i === end || new Date(p.t + DAY).getUTCDate() === 1);
+    return ends.slice(-24).map((p) => pt(p, `${fmt(p.t).mon} ${String(fmt(p.t).year).slice(2)}`));
+  }
+  if (range === "yearly") {
+    const ends = day.filter((p, i) => i === end || (new Date(p.t).getUTCMonth() === 11 && new Date(p.t).getUTCDate() === 31));
+    return ends.map((p, i) => ({ ...pt(p, i === ends.length - 1 ? `${fmt(p.t).year} YTD` : `${fmt(p.t).year}`) }));
+  }
+  return points.map((p, i) => ({ ...pt({ t: Date.parse(QUARTER_END[i]), nav: p.nav, benchmark: p.benchmark }, p.q), title: p.q }));
+}
+
+export const RANGE_DELTA: Record<NavRange, string> = { daily: "DoD", weekly: "WoW", monthly: "MoM", quarterly: "QoQ", yearly: "YoY" };
+
 /** Per-fund NAV path ($M) ending at each fund's current NAV. */
 export function fundNavSeries(f: Fund) {
   const growth = f.netIrr / 100 / 4;

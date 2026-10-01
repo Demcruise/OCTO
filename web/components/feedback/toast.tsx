@@ -19,7 +19,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       <div aria-live="polite" className="pointer-events-none fixed bottom-4 right-4 z-[90] flex w-[min(20rem,calc(100vw-2rem))] flex-col gap-2">
         {items.map((t) => (
-          <div key={t.id} role="status" className="pointer-events-auto flex items-start gap-3 rounded-xl border border-line bg-raised p-3 text-ink shadow-popover motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
+          <div key={t.id} role="status" className="pointer-events-auto flex items-start gap-3 rounded-lg border border-line bg-raised p-3 text-ink shadow-popover motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
             {t.tone === "ok" && <CheckCircle2 aria-hidden className="mt-0.5 size-4 shrink-0 text-ok" />}
             {t.tone === "info" && <Info aria-hidden className="mt-0.5 size-4 shrink-0 text-info" />}
             {t.tone === "danger" && <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-danger" />}

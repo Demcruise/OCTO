@@ -35,9 +35,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
 }
 
 function Themed({ children }: { children: React.ReactNode }) {
-  const { resolvedTheme, locale } = usePreferences();
+  const { locale } = usePreferences();
+  // DS-002: light enterprise theme only.
   return (
-    <div lang={locale === "id" ? "id" : "en"} className={cn("octo-app min-h-dvh bg-app font-landing text-ink antialiased [font-feature-settings:'cv11','ss01']", resolvedTheme === "dark" && "dark")} style={{ colorScheme: resolvedTheme }}>
+    <div lang={locale === "id" ? "id" : "en"} className={cn("octo-app min-h-dvh bg-app font-landing text-ink antialiased [font-feature-settings:'cv11','ss01']")} style={{ colorScheme: "light" }}>
       {children}
     </div>
   );

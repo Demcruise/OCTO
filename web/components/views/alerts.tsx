@@ -221,11 +221,11 @@ function AlertDetail({ alert, rule, onUpdate, onOpenRule }: { alert: Alert; rule
         <EntityChip type={alert.entity.type} name={alert.entity.name} href={hrefFor(alert.entity)} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-line p-3">
+        <div className="rounded-lg border border-line p-3">
           <p className="text-[12px] text-ink-3">Observed</p>
           <p className="mt-1 text-metric font-semibold tabular-nums text-danger">{alert.observed}</p>
         </div>
-        <div className="rounded-xl border border-line p-3">
+        <div className="rounded-lg border border-line p-3">
           <p className="text-[12px] text-ink-3">Threshold</p>
           <p className="mt-1 text-metric font-semibold tabular-nums text-ink">{alert.threshold}</p>
         </div>
@@ -239,7 +239,7 @@ function AlertDetail({ alert, rule, onUpdate, onOpenRule }: { alert: Alert; rule
         ]}
       />
       {!closed && (
-        <div className="space-y-4 rounded-xl border border-line p-4">
+        <div className="space-y-4 rounded-lg border border-line p-4">
           <div className="flex flex-wrap gap-2">
             {alert.state === "Open" && <Button size="sm" onClick={() => onUpdate({ state: "Acknowledged" }, "acknowledged")}>Acknowledge</Button>}
             {alert.owner !== "You" && <Button size="sm" onClick={() => onUpdate({ owner: "You" }, "assigned to you")}>Assign to me</Button>}
