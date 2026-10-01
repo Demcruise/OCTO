@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Bell, BookOpen, Briefcase, Building2, Clock, CornerDownLeft, FilePlus2, FileText, Layers, ListPlus, ListTodo, Moon, PanelLeft, RefreshCw, Rows3, Search, Settings, Sparkles, Sun, Users } from "lucide-react";
+import { ArrowRight, Bell, BookOpen, Briefcase, Building2, Clock, CornerDownLeft, FilePlus2, FileText, Layers, ListPlus, ListTodo, PanelLeft, RefreshCw, Rows3, Search, Settings, Sparkles, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ALERTS, APPROVALS, COMPANIES, DEALS, FUNDS, INVESTMENTS, REPORTS, TASKS, companyById, fundById } from "@/lib/demo";
 import { usePreferences } from "@/lib/preferences";
@@ -36,7 +36,7 @@ function Palette({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
   const { recent } = useShell();
-  const { resolvedTheme, setTheme, density, setDensity, sidebarCollapsed, setSidebarCollapsed } = usePreferences();
+  const { density, setDensity, sidebarCollapsed, setSidebarCollapsed } = usePreferences();
   const { workspaces, current, setCurrent } = useWorkspace();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -86,7 +86,6 @@ function Palette({ onClose }: { onClose: () => void }) {
           toast({ tone: "ok", title: "Refreshing data", body: "Every panel reloads from its source." });
         },
       },
-      { id: "act-theme", group: "Actions", label: resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme", keywords: "theme appearance", icon: resolvedTheme === "dark" ? <Sun /> : <Moon />, run: () => setTheme(resolvedTheme === "dark" ? "light" : "dark") },
       { id: "act-density", group: "Actions", label: density === "compact" ? "Switch to comfortable density" : "Switch to compact density", keywords: "rows table", icon: <Rows3 />, run: () => setDensity(density === "compact" ? "comfortable" : "compact") },
       { id: "act-sidebar", group: "Actions", label: sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar", icon: <PanelLeft />, run: () => setSidebarCollapsed(!sidebarCollapsed) },
       { id: "act-settings", group: "Actions", label: "Open settings", icon: <Settings />, run: go("/app/settings") },
@@ -94,7 +93,7 @@ function Palette({ onClose }: { onClose: () => void }) {
       ...workspaces.map((w) => ({ id: `ws-${w.slug}`, group: "Workspaces" as const, label: `Switch to ${w.name}`, hint: w.slug === current.slug ? "Current" : w.role, icon: <Users />, disabled: w.slug === current.slug, run: () => setCurrent(w.slug) })),
       { id: "ask", group: "Ask OCTO", label: "Ask OCTO a question about your portfolio", hint: "Planned", icon: <Sparkles />, disabled: true },
     ];
-  }, [router, qc, toast, recent, resolvedTheme, setTheme, density, setDensity, sidebarCollapsed, setSidebarCollapsed, workspaces, current.slug, setCurrent]);
+  }, [router, qc, toast, recent, density, setDensity, sidebarCollapsed, setSidebarCollapsed, workspaces, current.slug, setCurrent]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -133,7 +132,7 @@ function Palette({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center px-3 pt-[12vh]">
       <div aria-hidden className="absolute inset-0 bg-black/40 motion-safe:animate-[fade-in_140ms_ease-out]" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-label="Search and commands" className="relative flex max-h-[min(34rem,76vh)] w-full max-w-xl flex-col overflow-hidden rounded-xl border border-line bg-raised text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
+      <div role="dialog" aria-modal="true" aria-label="Search and commands" className="relative flex max-h-[min(34rem,76vh)] w-full max-w-xl flex-col overflow-hidden rounded-lg border border-line bg-raised text-ink shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]">
         <div className="flex items-center gap-2.5 border-b border-line px-4">
           <Search aria-hidden className="size-4 shrink-0 text-ink-3" />
           <input

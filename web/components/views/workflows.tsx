@@ -2,20 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Plus, ShieldCheck } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
 import { useAiDrafts, useApprovals, useExceptions, useTasks } from "@/lib/data/queries";
-import { DEMO_NOW, SEVERITY_ORDER, hrefFor, type Approval, type Severity, type Task } from "@/lib/demo";
+import { DEMO_NOW, SEVERITY_ORDER, hrefFor, type Approval, type ExceptionItem, type Severity, type Task } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel } from "@/components/page/panel";
 import { DataTable, type Column } from "@/components/data/data-table";
-import { Button } from "@/components/ui/button";
-import { EntityChip, StatusBadge } from "@/components/ui/badge";
+import { Button, LinkButton } from "@/components/ui/button";
+import { EntityChip, StatusBadge, Tag } from "@/components/ui/badge";
 import { Field, Input, Select, Tabs } from "@/components/ui/controls";
 import { ConfirmDialog, Sheet } from "@/components/ui/overlay";
 import { EmptyState, FreshnessBadge, useToast } from "@/components/feedback";
 import { AiDraftCard } from "@/components/ai/ai-draft";
-import { DecisionPanel, SeverityBadge, WorkItem, WorkflowStatus, WorkflowStepper } from "@/components/workflow/workflow";
+import { DecisionPanel, SeverityBadge, WorkflowStatus, WorkflowStepper } from "@/components/workflow/workflow";
 import { useBreadcrumb } from "@/components/shell/shell-context";
 
 type Tab = "tasks" | "approvals" | "exceptions" | "ai";
@@ -59,6 +59,24 @@ export function WorkflowsView() {
     { id: "due", header: "Due", value: (t) => t.due, align: "right" },
   ];
 
+  const approvalCols: Column<Approval>[] = [
+    { id: "title", header: "Approval", width: "30%", hideable: false, value: (a) => a.title, cell: (a) => <TitleCell title={a.title} sub={`${a.kind} · ${a.id}`} /> },
+    { id: "entity", kind: "entity", header: "Linked to", width: "20%", value: (a) => a.entity.name, cell: (a) => <EntityChip type={a.entity.type} name={a.entity.name} href={hrefFor(a.entity)} /> },
+    { id: "progress", kind: "status", header: "Progress", width: "16%", value: (a) => a.progress, cell: (a) => <StatusBadge tone="info">{a.progress}</StatusBadge> },
+    { id: "requested", kind: "date", header: "Requested", width: "12%", value: (a) => a.requestedAt, cell: (a) => <span className="text-ink-3">{f.ago(a.requestedAt, now)}</span> },
+    { id: "due", kind: "date", header: "Due", width: "10%", value: (a) => a.due, cell: (a) => <StatusBadge tone={a.due === "Today" ? "warn" : "neutral"} dot={a.due === "Today"}>{a.due}</StatusBadge> },
+    { id: "action", kind: "action", header: "Action", width: "12%", sortable: false, value: () => "", cell: (a) => <Button size="sm" variant="primary" onClick={(e) => (e.stopPropagation(), go("approvals", `&id=${a.id}`))}>Review</Button> },
+  ];
+
+  const exceptionCols: Column<ExceptionItem>[] = [
+    { id: "category", kind: "status", header: "Category", width: "14%", value: (e) => e.kind, facet: true, groupable: true, cell: (e) => <Tag tone={e.kind === "Covenant" ? "danger" : e.kind === "Recon break" ? "warn" : "neutral"}>{e.kind}</Tag> },
+    { id: "severity", kind: "status", header: "Severity", width: "12%", value: (e) => e.severity, sortValue: (e) => SEVERITY_ORDER[e.severity], facet: true, cell: (e) => <SeverityBadge severity={e.severity} /> },
+    { id: "headline", header: "Headline", width: "28%", hideable: false, value: (e) => e.title, cell: (e) => <span className="font-medium text-ink">{e.title}</span> },
+    { id: "entity", kind: "entity", header: "Entity", width: "22%", value: (e) => e.entity.name, cell: (e) => <EntityChip type={e.entity.type} name={e.entity.name} href={hrefFor(e.entity)} /> },
+    { id: "age", kind: "date", header: "Age", width: "9%", value: (e) => e.age, sortValue: (e) => ageHours(e.age), cell: (e) => <span className="tabular-nums text-ink-3">{e.age}</span> },
+    { id: "action", kind: "action", header: "Action", width: "15%", sortable: false, value: () => "", cell: (e) => <LinkButton size="sm" href={e.href} onClick={(ev) => ev.stopPropagation()}>{e.action}</LinkButton> },
+  ];
+
   const setStatus = (ids: string[], status: Task["status"]) => {
     setTasks((xs) => xs.map((t) => (ids.includes(t.id) ? { ...t, status } : t)));
     toast({ tone: "ok", title: `${ids.length} task${ids.length > 1 ? "s" : ""} → ${status}`, body: "Recorded in this session only (demo)." });
@@ -82,7 +100,8 @@ export function WorkflowsView() {
             label="Workflow queues"
             value={tab}
             onChange={(t) => go(t)}
-            className="border-b-0"
+            variant="pill"
+            className="pb-3"
             items={[
               { value: "tasks", label: "My tasks", count: tasks.filter((t) => t.assignee === "You" && t.status !== "Done").length },
               { value: "approvals", label: "Approvals", count: approvals.length },
@@ -130,51 +149,34 @@ export function WorkflowsView() {
           />
         )}
 
-        {tab === "approvals" &&
-          (approvals.length === 0 ? (
-            <Panel>
-              <EmptyState icon={<ShieldCheck />} title="No approvals waiting" body="Investment memos, LP reports, capital calls and data overrides that need your sign-off appear here." />
-            </Panel>
-          ) : (
-            <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-              {approvals.map((a) => (
-                <li key={a.id} className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-medium text-ink-3">{a.kind}</p>
-                      <p className="mt-0.5 text-[14px] font-semibold text-ink">{a.title}</p>
-                    </div>
-                    <StatusBadge tone={a.due === "Today" ? "warn" : "neutral"}>Due {a.due}</StatusBadge>
-                  </div>
-                  <WorkflowStepper steps={a.steps} />
-                  <p className="text-[13px] leading-relaxed text-ink-2">{a.summary}</p>
-                  <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-3">
-                    <EntityChip type={a.entity.type} name={a.entity.name} href={hrefFor(a.entity)} />
-                    <span>
-                      from {a.requestedBy} · {f.ago(a.requestedAt, now)}
-                    </span>
-                    <Button size="sm" variant="primary" className="ml-auto" onClick={() => go("approvals", `&id=${a.id}`)}>
-                      Review <ArrowRight />
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ))}
+        {tab === "approvals" && (
+          <DataTable
+            id="approvals"
+            label="Approvals"
+            data={approvals}
+            status={approvalsQ.isLoading ? "loading" : "ready"}
+            columns={approvalCols}
+            rowId={(a) => a.id}
+            demo
+            onRowOpen={(a) => go("approvals", `&id=${a.id}`)}
+            activeRowId={openApproval?.id ?? null}
+            empty={{ title: "No approvals waiting", body: "Investment memos, LP reports, capital calls and data overrides that need your sign-off appear here." }}
+          />
+        )}
 
         {tab === "exceptions" && (
-          <Panel>
-            <ul className="divide-y divide-line">
-              {(exceptionsQ.data ?? [])
-                .slice()
-                .sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity])
-                .map((e) => (
-                  <li key={e.id}>
-                    <WorkItem kind={e.kind} title={e.title} severity={e.severity} entity={{ type: e.entity.type, name: e.entity.name, href: hrefFor(e.entity) }} meta={<span>{e.age} open</span>} action={e.action} href={e.href} />
-                  </li>
-                ))}
-            </ul>
-          </Panel>
+          <DataTable
+            id="exceptions"
+            label="Exceptions"
+            data={exceptionsQ.data ?? []}
+            status={exceptionsQ.isLoading ? "loading" : "ready"}
+            columns={exceptionCols}
+            rowId={(e) => e.id}
+            demo
+            initial={{ sort: [{ id: "severity", desc: false }] }}
+            onRowOpen={(e) => router.push(e.href)}
+            empty={{ title: "No exceptions", body: "Covenant issues, stale valuations, recon breaks and overdue approvals appear here." }}
+          />
         )}
 
         {tab === "ai" && (
@@ -185,9 +187,9 @@ export function WorkflowsView() {
               </Panel>
             )}
             {drafts.map((d) => (
-              <div key={d.id} className="space-y-2">
-                <EntityChip type={d.entity.type} name={d.entity.name} href={hrefFor(d.entity)} />
+              <div key={d.id}>
                 <AiDraftCard
+                  className="h-full"
                   draft={d}
                   onResolve={(o) => {
                     setDraftDone((s) => new Set(s).add(d.id));
@@ -242,6 +244,21 @@ export function WorkflowsView() {
         }}
       />
     </>
+  );
+}
+
+/** "2h" → 2, "3d" → 72; used to sort exception age. */
+function ageHours(age: string) {
+  const n = parseFloat(age);
+  return age.endsWith("d") ? n * 24 : age.endsWith("m") ? n / 60 : n;
+}
+
+function TitleCell({ title, sub }: { title: string; sub: string }) {
+  return (
+    <span className="block min-w-0">
+      <span className="block truncate font-medium text-ink">{title}</span>
+      <span className="block truncate text-[12px] text-ink-3">{sub}</span>
+    </span>
   );
 }
 

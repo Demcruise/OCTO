@@ -2,24 +2,25 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChartTooltip, niceTicks, SERIES, SrTable, useSize } from "./core";
+import { ChartTooltip, niceTicks, SERIES, SrTable, useSize, yGutter } from "./core";
 
 type BarSeries = { id: string; label: string; values: number[]; color?: string };
 
 /**
  * Vertical bars — grouped (side by side) or stacked. Supports negative values
- * with a zero baseline. Hover shows every series for the category.
+ * with an explicit zero line. `signed` colours negative bars red (CHART-005:
+ * vintage IRR below zero must read as a loss, not as another blue bar).
  */
-export function BarChart({ x, series, format, label, stacked = false }: { x: string[]; series: BarSeries[]; format: (v: number) => string; label: string; stacked?: boolean }) {
+export function BarChart({ x, series, format, label, stacked = false, signed = false }: { x: string[]; series: BarSeries[]; format: (v: number) => string; label: string; stacked?: boolean; signed?: boolean }) {
   const [ref, { w, h }] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
-  const pl = 44;
   const pb = 22;
   const pt = 8;
   const totals = x.map((_, i) => series.reduce((n, s) => n + Math.max(0, s.values[i]), 0));
   const negs = x.map((_, i) => series.reduce((n, s) => n + Math.min(0, s.values[i]), 0));
   const all = stacked ? [...totals, ...negs, 0] : [...series.flatMap((s) => s.values), 0];
   const ticks = niceTicks(Math.min(...all), Math.max(...all), 4);
+  const pl = yGutter(ticks.map(format), w);
   const lo = ticks[0];
   const hi = ticks[ticks.length - 1];
   const Y = (v: number) => pt + ((hi - v) / (hi - lo || 1)) * (h - pt - pb);
@@ -33,7 +34,7 @@ export function BarChart({ x, series, format, label, stacked = false }: { x: str
         <svg width={w} height={h} role="img" aria-label={`${label}, ${x.length} categories`} onPointerLeave={() => setHover(null)} className="block">
           {ticks.map((t) => (
             <g key={t}>
-              <line x1={pl} x2={w} y1={Y(t)} y2={Y(t)} stroke={t === 0 ? "var(--color-line-strong)" : "var(--color-chart-grid)"} />
+              <line x1={pl} x2={w} y1={Y(t)} y2={Y(t)} stroke="var(--color-chart-grid)" />
               <text x={pl - 8} y={Y(t) + 3.5} textAnchor="end" className="fill-ink-4 text-[11px] tabular-nums">
                 {format(t)}
               </text>
@@ -57,7 +58,7 @@ export function BarChart({ x, series, format, label, stacked = false }: { x: str
                     return <rect key={s.id} x={cx - groupW / 2} y={Y(Math.max(base, top))} width={groupW} height={Math.max(1, Math.abs(Y(base) - Y(top)))} fill={color} rx="2" />;
                   }
                   const bx = cx - groupW / 2 + si * (barW + 3);
-                  return <rect key={s.id} x={bx} y={Y(Math.max(0, v))} width={barW} height={Math.max(1, Math.abs(Y(0) - Y(v)))} fill={color} rx="2" />;
+                  return <rect key={s.id} x={bx} y={Y(Math.max(0, v))} width={barW} height={Math.max(1, Math.abs(Y(0) - Y(v)))} fill={signed && v < 0 ? "var(--color-loss)" : color} rx="2" />;
                 })}
                 <text x={cx} y={h - 6} textAnchor="middle" className="fill-ink-4 text-[11px]">
                   {cat}
@@ -65,6 +66,7 @@ export function BarChart({ x, series, format, label, stacked = false }: { x: str
               </g>
             );
           })}
+          {lo < 0 && <line x1={pl} x2={w} y1={Y(0)} y2={Y(0)} stroke="var(--color-ink-3)" strokeWidth="1.25" />}
         </svg>
       )}
       {hover !== null && w > 0 && (
@@ -73,7 +75,7 @@ export function BarChart({ x, series, format, label, stacked = false }: { x: str
           y={Y(stacked ? totals[hover] : Math.max(...series.map((s) => s.values[hover])))}
           width={w}
           title={x[hover]}
-          rows={series.map((s, si) => ({ label: s.label, value: format(s.values[hover]), color: s.color ?? SERIES[si] }))}
+          rows={series.map((s, si) => ({ label: s.label, value: format(s.values[hover]), color: signed && s.values[hover] < 0 ? "var(--color-loss)" : (s.color ?? SERIES[si]) }))}
         />
       )}
       <SrTable caption={label} head={["Category", ...series.map((s) => s.label)]} rows={x.map((c, i) => [c, ...series.map((s) => format(s.values[i]))])} />

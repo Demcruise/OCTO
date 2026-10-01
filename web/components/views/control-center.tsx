@@ -2,19 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertOctagon, ArrowRight, Banknote, Bell, Briefcase, CircleDollarSign, GitCompareArrows, Hourglass, Landmark, Percent, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
+import { AlertOctagon, ArrowRight, Banknote, Bell, Briefcase, CircleDollarSign, GitCompareArrows, History, Hourglass, Landmark, Percent, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
 import { useWorkspace } from "@/lib/workspace";
 import { useAiDrafts, useAlerts, useApprovals, useExceptions, useFunds, usePortfolioMetrics, useRecon, useSignals, useTasks } from "@/lib/data/queries";
-import { ACTIVITY, AS_OF, DEMO_NOW, NAV_SERIES, SEVERITY_ORDER, fundDpi, fundTvpi, hrefFor, type Fund, type Metric, type Severity } from "@/lib/demo";
+import { ACTIVITY, AS_OF, DEMO_NOW, SEVERITY_ORDER, fundDpi, fundTvpi, hrefFor, type Fund, type Metric, type Severity } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { MetricCard, MetricGrid } from "@/components/metric/metric-card";
 import { LineageDrawer } from "@/components/metric/metric-lineage";
+import { KpiMetricDrawer } from "@/components/metric/kpi-drawer";
 import { useMetricValue } from "@/components/metric/metric-card";
-import { ChartShell } from "@/components/chart/chart-shell";
-import { TrendChart } from "@/components/chart/line-chart";
-import { Timeline } from "@/components/chart/timeline";
+import { NavChart } from "@/components/chart/nav-chart";
+import { ActivityTimeline } from "@/components/chart/timeline";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { EntityCell, NumericCell, StatusCell } from "@/components/data/cells";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -71,10 +71,10 @@ export function ControlCenter() {
   const signals = useSignals();
 
   const [lineage, setLineage] = useState<Metric | null>(null);
+  const [kpi, setKpi] = useState<Metric | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<FeedItem | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
-  const [hover, setHover] = useState<number | null>(null);
 
   const feed = useMemo<FeedItem[]>(() => {
     const items: FeedItem[] = [
@@ -101,18 +101,16 @@ export function ControlCenter() {
   ];
 
   const fundCols: Column<Fund>[] = [
-    { id: "name", header: "Fund", value: (x) => x.name, width: 240, cell: (x) => <EntityCell name={x.name} sub={`${x.strategy} · ${x.vintage}`} href={`/app/funds/${x.slug}`} /> },
-    { id: "committed", header: "Committed", value: (x) => x.committed, align: "right", cell: (x) => <NumericCell value={x.committed} muted /> },
-    { id: "called", header: "Called", value: (x) => x.called, align: "right", cell: (x) => <NumericCell value={x.called} muted /> },
-    { id: "nav", header: "NAV", value: (x) => x.nav, align: "right", cell: (x) => <NumericCell value={x.nav} /> },
-    { id: "tvpi", header: "TVPI", value: (x) => fundTvpi(x), align: "right", cell: (x) => <NumericCell value={fundTvpi(x)} kind="multiple" /> },
-    { id: "dpi", header: "DPI", value: (x) => fundDpi(x), align: "right", cell: (x) => <NumericCell value={fundDpi(x)} kind="multiple" /> },
-    { id: "irr", header: "Net IRR", value: (x) => x.netIrr, align: "right", cell: (x) => <NumericCell value={x.netIrr} kind="pct" /> },
-    { id: "status", header: "Status", value: (x) => x.status, cell: (x) => <StatusCell tone={STATUS_TONE[x.status]}>{x.status}</StatusCell> },
+    { id: "name", header: "Fund", value: (x) => x.name, width: "26%", cell: (x) => <EntityCell name={x.name} sub={`${x.strategy} · ${x.vintage}`} href={`/app/funds/${x.slug}`} /> },
+    { id: "committed", width: "12%", header: "Committed", value: (x) => x.committed, align: "right", cell: (x) => <NumericCell value={x.committed} muted /> },
+    { id: "called", width: "12%", header: "Called", value: (x) => x.called, align: "right", cell: (x) => <NumericCell value={x.called} muted /> },
+    { id: "nav", width: "12%", header: "NAV", value: (x) => x.nav, align: "right", cell: (x) => <NumericCell value={x.nav} /> },
+    { id: "tvpi", width: "8%", header: "TVPI", value: (x) => fundTvpi(x), align: "right", cell: (x) => <NumericCell value={fundTvpi(x)} kind="multiple" /> },
+    { id: "dpi", width: "8%", header: "DPI", value: (x) => fundDpi(x), align: "right", cell: (x) => <NumericCell value={fundDpi(x)} kind="multiple" /> },
+    { id: "irr", width: "10%", header: "Net IRR", value: (x) => x.netIrr, align: "right", cell: (x) => <NumericCell value={x.netIrr} kind="pct" /> },
+    { id: "status", width: "12%", header: "Status", value: (x) => x.status, cell: (x) => <StatusCell tone={STATUS_TONE[x.status]}>{x.status}</StatusCell> },
   ];
 
-  const navPoint = hover === null ? NAV_SERIES[NAV_SERIES.length - 1] : NAV_SERIES[hover];
-  const navPrev = hover === null || hover === 0 ? NAV_SERIES[NAV_SERIES.length - 2] : NAV_SERIES[hover - 1];
 
   const resolve = (item: FeedItem, title: string, body = "Recorded in this session only (demo).") => {
     setDone((d) => new Set(d).add(item.id));
@@ -124,14 +122,14 @@ export function ControlCenter() {
     <>
       <PageHeader
         variant="dashboard"
-        eyebrow={current.name}
-        title="Control Center"
-        description="What needs a decision today, and how the portfolio moved this quarter."
+        eyebrow={`Control Center · ${current.name}`}
+        title="What needs a decision today."
+        description="Open work ranked by severity, and how the portfolio moved this quarter."
         meta={
           <>
             <FreshnessBadge state="demo" asOf={`as of ${f.date(AS_OF)}`} />
-            <span className="text-[12px] text-ink-3">
-              {feed.length} open items · {count("approval")} approvals waiting on you
+            <span className="text-[12px] font-medium text-ink-2">
+              <span className="tabular-nums">{feed.length}</span> open items · <span className="tabular-nums">{count("approval")}</span> approvals waiting on you
             </span>
           </>
         }
@@ -152,7 +150,7 @@ export function ControlCenter() {
 
         <MetricGrid cols={6}>
           {(metrics.data ?? Array.from({ length: 6 }, () => null)).map((m, i) =>
-            m ? <MetricCard key={m.id} metric={m} icon={ICONS[m.id]} onLineage={setLineage} asOf={f.date(AS_OF)} /> : <MetricCard key={i} metric={{} as Metric} state="loading" />,
+            m ? <MetricCard key={m.id} metric={m} icon={ICONS[m.id]} onOpen={setKpi} asOf={f.date(AS_OF)} /> : <MetricCard key={i} metric={{} as Metric} state="loading" />,
           )}
         </MetricGrid>
 
@@ -168,7 +166,7 @@ export function ControlCenter() {
                 </LinkButton>
               }
             />
-            <div className="px-4 pb-2">
+            <div className="px-5 pb-3">
               <Tabs<Filter> variant="pill" label="Filter priority queue" value={filter} onChange={setFilter} items={FILTERS.map((x) => ({ ...x, count: x.value === "all" ? feed.length : count(x.value) }))} />
             </div>
             <PanelBody flush className="border-t border-line">
@@ -212,7 +210,7 @@ export function ControlCenter() {
                 <ul className="grid grid-cols-2 gap-2">
                   {attention.map((a) => (
                     <li key={a.label}>
-                      <button type="button" onClick={() => router.push(a.href)} className="flex w-full cursor-pointer flex-col items-start gap-1.5 rounded-lg border border-line p-3 text-left transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent">
+                      <button type="button" onClick={() => router.push(a.href)} className="flex w-full cursor-pointer flex-col items-start gap-1.5 rounded-lg border border-line p-3 text-left transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus">
                         <span className={`[&_svg]:size-4 ${a.tone}`}>{a.icon}</span>
                         <span className="text-kpi font-semibold tabular-nums text-ink">{a.value}</span>
                         <span className="text-[12px] text-ink-3">{a.label}</span>
@@ -244,43 +242,12 @@ export function ControlCenter() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-          <ChartShell
-            className="xl:col-span-8"
-            title="Portfolio NAV"
-            subtitle="Quarter-end, $M — hover or use arrow keys to inspect a quarter"
-            headline={
-              <div className="flex flex-wrap items-baseline gap-3">
-                <span className="text-kpi-xl font-bold tabular-nums text-ink">${navPoint.nav.toFixed(1)}M</span>
-                <span className="text-[12px] font-medium text-ink-3">
-                  {navPoint.q} · {f.delta(((navPoint.nav - navPrev.nav) / navPrev.nav) * 100)} QoQ
-                </span>
-              </div>
-            }
-            freshness={<FreshnessBadge state="demo" asOf={f.date(AS_OF)} />}
-            source="IBOR valuations"
-            onLineage={() => setLineage(metrics.data?.[0] ?? null)}
-            exportData={{ filename: "portfolio-nav", head: ["Quarter", "NAV ($M)", "Benchmark ($M)"], rows: NAV_SERIES.map((p) => [p.q, p.nav, p.benchmark]) }}
-            state={metrics.isLoading ? "loading" : "ready"}
-            height={240}
-          >
-            <TrendChart
-              x={NAV_SERIES.map((p) => p.q)}
-              series={[
-                { id: "nav", label: "NAV", values: NAV_SERIES.map((p) => p.nav) },
-                { id: "bm", label: "Public benchmark", values: NAV_SERIES.map((p) => p.benchmark), color: "var(--color-ink-4)", dashed: true, area: false },
-              ]}
-              format={(v) => `$${Math.round(v)}M`}
-              label="Portfolio NAV by quarter"
-              onHover={setHover}
-            />
-          </ChartShell>
+          <NavChart className="xl:col-span-8" state={metrics.isLoading ? "loading" : "ready"} onLineage={() => setLineage(metrics.data?.[0] ?? null)} />
 
           <Panel className="xl:col-span-4">
-            <PanelHead title="Recent activity" />
+            <PanelHead title="Recent activity" icon={<History />} />
             <PanelBody>
-              <Timeline
-                events={ACTIVITY.map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, tone: a.actor === "OCTO" || a.actor.includes("model") ? "accent" : "neutral" }))}
-              />
+              <ActivityTimeline items={ACTIVITY.map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, state: a.state }))} />
             </PanelBody>
           </Panel>
         </div>
@@ -302,9 +269,10 @@ export function ControlCenter() {
         </Panel>
       </PageBody>
 
+      <KpiMetricDrawer metric={kpi} onClose={() => setKpi(null)} onLineage={(m) => (setKpi(null), setLineage(m))} primary={{ label: "View portfolio", href: "/app/portfolio" }} />
       <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmtMetric(lineage) : ""} provenance={lineage?.provenance ?? null} />
 
-      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open?.label} title={open?.title ?? ""} width="max-w-xl">
+      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open?.label} title={open?.title ?? ""}>
         {open && <FeedDetail item={open} onResolve={resolve} />}
       </Sheet>
     </>
@@ -320,7 +288,7 @@ function FeedDetail({ item, onResolve }: { item: FeedItem; onResolve: (item: Fee
 
   if (item.kind === "ai") {
     const d = drafts.data?.find((x) => x.id === item.id);
-    return d ? <AiDraftCard draft={d} onResolve={(o) => onResolve(item, o === "rejected" ? "Draft rejected" : o === "evidence-requested" ? "Evidence requested" : "Draft accepted")} /> : null;
+    return d ? <AiDraftCard draft={d} inlineTrace onResolve={(o) => onResolve(item, o === "rejected" ? "Draft rejected" : o === "evidence-requested" ? "Evidence requested" : "Draft accepted")} /> : null;
   }
   if (item.kind === "approval") {
     const a = approvals.data?.find((x) => x.id === item.id);

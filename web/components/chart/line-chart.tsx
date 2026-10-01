@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { niceTicks, SERIES, SrTable, ChartTooltip, useSize } from "./core";
+import { niceTicks, SERIES, SrTable, ChartTooltip, useSize, yGutter } from "./core";
 
 export type Series = { id: string; label: string; values: number[]; color?: string; dashed?: boolean; area?: boolean };
 
@@ -20,6 +20,9 @@ export function TrendChart({
   onHover,
   zeroBased = false,
   referenceLine,
+  titles,
+  note,
+  axisFormat,
 }: {
   x: string[];
   series: Series[];
@@ -28,16 +31,23 @@ export function TrendChart({
   onHover?: (index: number | null) => void;
   zeroBased?: boolean;
   referenceLine?: { value: number; label: string };
+  /** Long tooltip titles per point (e.g. "30 Sep 2026") when axis labels are abbreviated. */
+  titles?: string[];
+  /** Extra tooltip line per point, e.g. "+3.2% QoQ". */
+  note?: (index: number) => React.ReactNode;
+  /** Tick format when it should be coarser than the tooltip format. */
+  axisFormat?: (v: number) => string;
 }) {
   const [ref, { w, h }] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
   const gid = useId();
-  const pl = 44;
   const pr = 8;
   const pt = 8;
   const pb = 22;
   const all = series.flatMap((s) => s.values).concat(referenceLine ? [referenceLine.value] : []);
   const ticks = niceTicks(zeroBased ? Math.min(0, ...all) : Math.min(...all), Math.max(...all), 4);
+  const tick = axisFormat ?? format;
+  const pl = yGutter(ticks.map(tick), w);
   const lo = ticks[0];
   const hi = ticks[ticks.length - 1];
   const X = (i: number) => pl + (i / Math.max(1, x.length - 1)) * (w - pl - pr);
@@ -80,7 +90,7 @@ export function TrendChart({
           onPointerLeave={() => set(null)}
           onKeyDown={onKey}
           onBlur={() => set(null)}
-          className="block touch-none rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="block touch-none rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           <defs>
             {series.map((s, si) => (
@@ -94,7 +104,7 @@ export function TrendChart({
             <g key={t}>
               <line x1={pl} x2={w - pr} y1={Y(t)} y2={Y(t)} stroke="var(--color-chart-grid)" />
               <text x={pl - 8} y={Y(t) + 3.5} textAnchor="end" className="fill-ink-4 text-[11px] tabular-nums">
-                {format(t)}
+                {tick(t)}
               </text>
             </g>
           ))}
@@ -107,8 +117,8 @@ export function TrendChart({
             </g>
           )}
           {x.map((l, i) =>
-            i % labelEvery === 0 || i === x.length - 1 ? (
-              <text key={l} x={X(i)} y={h - 6} textAnchor={i === 0 ? "start" : i === x.length - 1 ? "end" : "middle"} className="fill-ink-4 text-[11px]">
+            (i % labelEvery === 0 && x.length - 1 - i >= labelEvery * 0.6) || i === x.length - 1 ? (
+              <text key={i} x={X(i)} y={h - 6} textAnchor={i === 0 ? "start" : i === x.length - 1 ? "end" : "middle"} className="fill-ink-4 text-[11px]">
                 {l}
               </text>
             ) : null,
@@ -145,8 +155,9 @@ export function TrendChart({
           x={X(hover)}
           y={Math.min(...series.map((s) => Y(s.values[hover])))}
           width={w}
-          title={x[hover]}
+          title={titles?.[hover] ?? x[hover]}
           rows={series.map((s, si) => ({ label: s.label, value: format(s.values[hover]), color: s.color ?? SERIES[si] }))}
+          note={note?.(hover)}
         />
       )}
       <SrTable caption={label} head={["Period", ...series.map((s) => s.label)]} rows={x.map((l, i) => [l, ...series.map((s) => format(s.values[i]))])} />

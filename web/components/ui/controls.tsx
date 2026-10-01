@@ -19,7 +19,7 @@ export function Tabs<T extends string>({
   onChange: (v: T) => void;
   items: { value: T; label: string; count?: number; disabled?: boolean }[];
   label: string;
-  /** underline = page/object tabs; pill = Vestra filter tabs inside a panel. */
+  /** underline = page/object tabs; pill = the one filter-pill style (TABS-001) used by every in-panel filter. */
   variant?: "underline" | "pill";
   className?: string;
 }) {
@@ -40,7 +40,7 @@ export function Tabs<T extends string>({
       onKeyDown={onKeyDown}
       className={cn(
         "no-scrollbar flex overflow-x-auto overflow-y-hidden",
-        variant === "underline" ? "h-10 items-stretch gap-5 border-b border-line" : "items-center gap-1",
+        variant === "underline" ? "h-10 items-stretch gap-5 border-b border-line" : "items-center gap-2 py-px",
         className,
       )}
     >
@@ -60,13 +60,15 @@ export function Tabs<T extends string>({
             "flex shrink-0 cursor-pointer items-center gap-1.5 text-[13px] font-medium transition-colors duration-150 disabled:cursor-default disabled:text-ink-4",
             variant === "underline" && "-mb-px border-b-2",
             variant === "underline" && (t.value === value ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink"),
-            variant === "pill" && "h-8 rounded-lg border px-3",
-            variant === "pill" && (t.value === value ? "border-line bg-accent-soft text-accent-ink" : "border-transparent text-ink-2 hover:bg-hover hover:text-ink"),
-            ringInset,
+            variant === "pill" && "h-8 whitespace-nowrap rounded-full border px-3",
+            variant === "pill" && (t.value === value ? "border-accent-line bg-accent-soft font-semibold text-accent-ink" : "border-line bg-surface text-ink-2 hover:bg-hover hover:text-ink"),
+            variant === "pill" ? ring : ringInset,
           )}
         >
           {t.label}
-          {t.count !== undefined && <span className="font-data text-[11px] tabular-nums text-ink-3">{t.count}</span>}
+          {t.count !== undefined && (
+            <span className={cn("min-w-4 text-center font-data text-[11px] tabular-nums", variant === "pill" && t.value === value ? "text-accent-ink" : "text-ink-3")}>{t.count}</span>
+          )}
         </button>
       ))}
     </div>
@@ -89,7 +91,7 @@ export function Segmented<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-line bg-muted p-0.5">
+    <div role="radiogroup" aria-label={label} className="inline-flex shrink-0 rounded-sm border border-line bg-muted p-0.5">
       {items.map((t) => (
         <button
           key={t.value}
@@ -98,8 +100,8 @@ export function Segmented<T extends string>({
           aria-checked={t.value === value}
           onClick={() => onChange(t.value)}
           className={cn(
-            "cursor-pointer rounded-md px-2.5 font-medium transition-colors duration-150",
-            size === "sm" ? "h-6 text-[11px]" : "h-7 text-[12px]",
+            "cursor-pointer whitespace-nowrap rounded-xs px-2.5 font-medium transition-colors duration-150",
+            size === "sm" ? "h-6 text-[11px]" : "h-[30px] text-[12px]",
             t.value === value ? "bg-surface text-ink shadow-[0_0_0_1px_var(--color-line)]" : "text-ink-3 hover:text-ink",
             ring,
           )}
@@ -114,7 +116,7 @@ export function Segmented<T extends string>({
 /* ---------- Inputs ---------- */
 
 const field =
-  "h-8 w-full rounded-md border border-line-strong bg-surface px-2.5 text-[13px] text-ink placeholder:text-ink-4 transition-colors hover:border-ink-4 focus:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 disabled:cursor-not-allowed disabled:text-ink-4";
+  "h-8 w-full rounded-sm border border-line-strong bg-surface px-2.5 text-[13px] text-ink placeholder:text-ink-4 transition-colors hover:border-ink-4 focus:outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus/25 disabled:cursor-not-allowed disabled:text-ink-4";
 
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...props }, ref) {
   return <input ref={ref} className={cn(field, className)} {...props} />;
@@ -212,10 +214,10 @@ export function Switch({ checked, onChange, label, disabled, className }: { chec
 /** Removable applied-filter chip (plan §22): "Fund: Flagship II ×". */
 export function FilterChip({ label, value, onRemove }: { label: string; value: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex h-6 items-center gap-1 rounded-md border border-accent-line bg-accent-soft pl-2 pr-0.5 text-[12px] text-ink">
+    <span className="inline-flex h-7 items-center gap-1 rounded-full border border-accent-line bg-accent-soft pl-2.5 pr-1 text-[12px] text-ink">
       <span className="text-ink-3">{label}:</span>
       <span className="max-w-40 truncate font-medium">{value}</span>
-      <button type="button" onClick={onRemove} aria-label={`Remove ${label} filter ${value}`} className={cn("ml-0.5 flex size-5 cursor-pointer items-center justify-center rounded-sm text-ink-3 hover:bg-hover hover:text-ink", ring)}>
+      <button type="button" onClick={onRemove} aria-label={`Remove ${label} filter ${value}`} className={cn("ml-0.5 flex size-5 cursor-pointer items-center justify-center rounded-full text-ink-3 hover:bg-hover hover:text-ink", ring)}>
         <X aria-hidden className="size-3" />
       </button>
     </span>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, ChevronRight, Download, Layers, MoreHorizontal, WifiOff, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROW_HEIGHT, usePreferences } from "@/lib/preferences";
+import { ROW_HEIGHT, ROW_PX, usePreferences } from "@/lib/preferences";
 import { Button, IconButton, ringInset } from "@/components/ui/button";
 import { Checkbox, FilterChip, SearchInput, Select } from "@/components/ui/controls";
 import { Menu, type MenuItem } from "@/components/ui/overlay";
@@ -12,11 +12,37 @@ import { EmptyState, ErrorState, InlineAlert, Skeleton, useToast } from "@/compo
 import { ColumnManager, DensityToggle, FacetFilter, Pagination, SavedViewPicker } from "./table-controls";
 import { decodeView, encodeView, facetOptions, filterRows, groupRows, nextSort, orderColumns, sortRows, toCsv, type ColumnLogic, type SavedView, type ViewState } from "./table-state";
 
+/**
+ * Column kinds drive the global alignment matrix (TABLE-001): names, entities,
+ * descriptions and statuses read left; currency, percent, multiple, date, count
+ * and actions align right; inline trends centre. `align` still overrides.
+ */
+export type ColumnKind = "name" | "entity" | "text" | "status" | "currency" | "percent" | "multiple" | "date" | "count" | "action" | "trend";
+
+const KIND_ALIGN: Record<ColumnKind, "left" | "right" | "center"> = {
+  name: "left",
+  entity: "left",
+  text: "left",
+  status: "left",
+  currency: "right",
+  percent: "right",
+  multiple: "right",
+  date: "right",
+  count: "right",
+  action: "right",
+  trend: "center",
+};
+
+export function alignOf(c: { align?: "left" | "right" | "center"; kind?: ColumnKind }) {
+  return c.align ?? (c.kind ? KIND_ALIGN[c.kind] : "left");
+}
+
 export type Column<T> = ColumnLogic<T> & {
   cell?: (row: T) => React.ReactNode;
+  kind?: ColumnKind;
   align?: "left" | "right" | "center";
-  /** Pixel width. Used for sticky offsets of pinned columns. */
-  width?: number;
+  /** Pixel or percent width. Pixel widths also set sticky offsets of pinned columns; when every visible column declares a width the table uses a fixed layout so columns never shift. */
+  width?: number | `${number}%`;
   hideable?: boolean;
   defaultHidden?: boolean;
   groupable?: boolean;
@@ -65,7 +91,7 @@ export type DataTableProps<T> = {
 
 type Item<T> = { kind: "group"; key: string; rows: T[] } | { kind: "row"; row: T } | { kind: "expanded"; row: T };
 
-const ROW_PX = { compact: 44, comfortable: 52 } as const;
+
 
 function readSavedViews(id: string): SavedView[] {
   try {
@@ -218,7 +244,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
     for (const c of visible) {
       if (!view.pinned.includes(c.id)) break;
       lefts.set(c.id, acc);
-      acc += c.width ?? 220;
+      acc += typeof c.width === "number" ? c.width : 220;
     }
   }
   const lastPinned = [...lefts.keys()].pop();
@@ -314,7 +340,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
   const cellContent = (c: Column<T>, r: T, ci: number) => {
     const rid = rowId(r);
     return (
-      <span className={cn("flex min-w-0 items-center gap-2", c.align === "right" && "justify-end", c.align === "center" && "justify-center")}>
+      <span className={cn("flex min-w-0 items-center gap-2", alignOf(c) === "right" && "justify-end", alignOf(c) === "center" && "justify-center")}>
         {ci === 0 && selectable && <Checkbox label={`Select ${rid}`} checked={selected.has(rid)} onChange={() => setSelected((s) => toggleIn(s, rid))} />}
         {ci === 0 && renderExpanded && (
           <button
@@ -328,13 +354,13 @@ export function DataTable<T>(props: DataTableProps<T>) {
             <ChevronRight aria-hidden className={cn("size-3.5 transition-transform duration-150", expanded.has(rid) && "rotate-90")} />
           </button>
         )}
-        <span className={cn("min-w-0", c.align === "right" ? "tabular-nums" : "truncate")}>{c.cell ? c.cell(r) : (c.value(r) ?? "—")}</span>
+        <span className={cn("min-w-0", alignOf(c) === "right" ? "tabular-nums" : "truncate")}>{c.cell ? c.cell(r) : (c.value(r) ?? "—")}</span>
       </span>
     );
   };
 
   return (
-    <div className={cn("relative flex min-w-0 flex-col bg-surface", chrome === "full" ? "rounded-xl border border-line" : "", className)}>
+    <div className={cn("relative flex min-w-0 flex-col bg-surface", chrome === "full" ? "rounded-lg border border-line" : "", className)}>
       {/* Toolbar: search · filters · group · views · columns · density · export */}
       {chrome === "full" && (
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2.5">
@@ -424,7 +450,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
         <EmptyState title={empty.title} body={empty.body} action={empty.action} />
       ) : (
         <div ref={scrollRef} className="relative min-h-0 overflow-auto overscroll-x-contain" style={virtual ? { maxHeight } : undefined}>
-          <table className="w-full border-separate border-spacing-0 text-[13px]" aria-label={label} aria-busy={status === "loading" || status === "partial"} aria-rowcount={rows.length + 1}>
+          <table className={cn("w-full border-separate border-spacing-0 text-[13px]", visible.every((c) => c.width !== undefined) && "min-w-[720px] table-fixed")} aria-label={label} aria-busy={status === "loading" || status === "partial"} aria-rowcount={rows.length + 1}>
             <thead className="sticky top-0 z-20">
               <tr>
                 {visible.map((c, ci) => {
@@ -439,11 +465,11 @@ export function DataTable<T>(props: DataTableProps<T>) {
                       title={c.headerTitle}
                       className={cn(
                         "h-10 whitespace-nowrap border-b border-line bg-head px-3 text-[11px] font-semibold uppercase tracking-[0.04em] text-ink-3",
-                        c.align === "right" ? "text-right" : c.align === "center" ? "text-center" : "text-left",
+                        alignOf(c) === "right" ? "text-right" : alignOf(c) === "center" ? "text-center" : "text-left",
                         pinCls(c.id),
                       )}
                     >
-                      <span className={cn("inline-flex items-center gap-2", c.align === "right" && "flex-row-reverse")}>
+                      <span className={cn("inline-flex items-center gap-2", alignOf(c) === "right" && "flex-row-reverse")}>
                         {ci === 0 && selectable && <Checkbox label="Select all rows" checked={allSelected} indeterminate={!allSelected && someSelected} onChange={(v) => setSelected(v ? new Set(rows.map(rowId)) : new Set())} />}
                         {ci === 0 && renderExpanded && <span aria-hidden className="w-5" />}
                         {sortable ? (
@@ -477,7 +503,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                   <tr key={i} className={rowH}>
                     {visible.map((c) => (
                       <td key={c.id} className="border-b border-line px-3">
-                        <Skeleton className={cn("h-3", c.align === "right" ? "ml-auto w-14" : "w-3/4")} />
+                        <Skeleton className={cn("h-3", alignOf(c) === "right" ? "ml-auto w-14" : "w-3/4")} />
                       </td>
                     ))}
                     {rowActions && <td className="border-b border-line" />}
@@ -513,7 +539,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                     return (
                       <tr key={`g-${item.key}`} data-index={index}>
                         {visible.map((c, ci) => (
-                          <td key={c.id} style={pinStyle(c.id)} className={cn("h-9 border-b border-line bg-subtle px-3 text-[12px]", c.align === "right" && "text-right tabular-nums", pinCls(c.id))}>
+                          <td key={c.id} style={pinStyle(c.id)} className={cn("h-9 border-b border-line bg-subtle px-3 text-[12px]", alignOf(c) === "right" && "text-right tabular-nums", pinCls(c.id))}>
                             {ci === 0 ? (
                               <button type="button" aria-expanded={!isCollapsed} onClick={() => setCollapsed((s) => toggleIn(s, item.key))} className={cn("inline-flex cursor-pointer items-center gap-1.5 rounded-sm font-semibold text-ink", ringInset)}>
                                 <ChevronRight aria-hidden className={cn("size-3.5 text-ink-3 transition-transform duration-150", !isCollapsed && "rotate-90")} />
@@ -566,7 +592,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
                           className={cn(
                             "whitespace-nowrap border-b border-line px-3 text-ink-2 transition-colors duration-100",
                             rowBg,
-                            c.align === "right" && "text-right",
+                            alignOf(c) === "right" && "text-right",
                             ci === 0 && "text-ink group-focus-visible/row:shadow-[inset_2px_0_0_var(--color-accent)]",
                             pinCls(c.id),
                           )}
@@ -597,7 +623,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
               <tfoot className="sticky bottom-0 z-20">
                 <tr>
                   {visible.map((c, ci) => (
-                    <td key={c.id} style={pinStyle(c.id)} className={cn("h-10 border-t border-line-strong bg-head px-3 text-[12px] font-semibold text-ink", c.align === "right" && "text-right tabular-nums", pinCls(c.id))}>
+                    <td key={c.id} style={pinStyle(c.id)} className={cn("h-10 border-t border-line-strong bg-head px-3 text-[12px] font-semibold text-ink", alignOf(c) === "right" && "text-right tabular-nums", pinCls(c.id))}>
                       {ci === 0 ? `Total · ${rows.length}` : c.aggregate?.(rows)}
                     </td>
                   ))}

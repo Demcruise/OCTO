@@ -114,7 +114,7 @@ export function ReconciliationView() {
         />
       </PageBody>
 
-      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open ? `Reconciliation · ${open.id}` : ""} title={open?.field ?? ""} width="max-w-2xl">
+      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open ? `Reconciliation · ${open.id}` : ""} title={open?.field ?? ""} width="sm:max-w-[460px] lg:max-w-[520px]">
         {open && (
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-2">
@@ -125,7 +125,7 @@ export function ReconciliationView() {
             </div>
 
             <section aria-label="Source versus IBOR" className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-              <div className="rounded-xl border border-line p-4">
+              <div className="rounded-lg border border-line p-4">
                 <p className="text-[12px] text-ink-3">{open.source}</p>
                 <p className="mt-1 text-metric font-semibold tabular-nums text-ink">{open.sourceValue}</p>
                 <p className="mt-1 text-[11px] text-ink-4">Received {f.dateTime(open.sourceTimestamp)} UTC</p>
@@ -134,7 +134,7 @@ export function ReconciliationView() {
                 <GitCompareArrows aria-hidden className="size-4 text-ink-4" />
                 <span className="text-[12px] font-semibold tabular-nums text-danger">{open.variance}</span>
               </div>
-              <div className="rounded-xl border border-line p-4">
+              <div className="rounded-lg border border-line p-4">
                 <p className="text-[12px] text-ink-3">IBOR (derived from ledger)</p>
                 <p className="mt-1 text-metric font-semibold tabular-nums text-ink">{open.iborValue}</p>
                 <p className="mt-1 text-[11px] text-ink-4">As of last ledger post</p>
@@ -201,7 +201,7 @@ function ResolutionForm({ item, onResolve }: { item: ReconBreak; onResolve: (b: 
   const [choice, setChoice] = useState<(typeof RESOLUTIONS)[number]["id"] | null>(null);
   const picked = RESOLUTIONS.find((r) => r.id === choice);
   return (
-    <section aria-label="Resolve break" className="space-y-4 rounded-xl border border-line p-4">
+    <section aria-label="Resolve break" className="space-y-4 rounded-lg border border-line p-4">
       <fieldset>
         <legend className="text-[12px] font-medium text-ink-2">
           Resolution <span className="text-danger">*</span>

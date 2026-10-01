@@ -12,6 +12,7 @@ import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { ObjectHeader, ObjectLinks, ObjectMetadata } from "@/components/object/object";
 import { MetricCard, MetricGrid, useMetricValue } from "@/components/metric/metric-card";
 import { LineageDrawer } from "@/components/metric/metric-lineage";
+import { KpiMetricDrawer } from "@/components/metric/kpi-drawer";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { BarChart } from "@/components/chart/bar-chart";
 import { TrendChart } from "@/components/chart/line-chart";
@@ -48,6 +49,7 @@ export function CompanyDetail({ id }: { id: string }) {
   const fromFund = params.get("fund") ? fundById(params.get("fund")!) : undefined;
   const tab = (TABS.includes(params.get("tab") as Tab) ? params.get("tab") : "overview") as Tab;
   const [lineage, setLineage] = useState<Metric | null>(null);
+  const [kpi, setKpi] = useState<Metric | null>(null);
 
   useBreadcrumb(
     c ? (fromFund ? [{ label: "Invest" }, { label: "Funds", href: "/app/funds" }, { label: fromFund.short, href: `/app/funds/${fromFund.slug}` }, { label: c.name }] : [{ label: "Invest" }, { label: "Companies", href: "/app/companies" }, { label: c.name }]) : null,
@@ -185,7 +187,7 @@ export function CompanyDetail({ id }: { id: string }) {
               {kpis.length > 0 ? (
                 <MetricGrid cols={4}>
                   {kpis.map((m) => (
-                    <MetricCard key={m.id} metric={m} variant="compact" onLineage={setLineage} />
+                    <MetricCard key={m.id} metric={m} variant="compact" onOpen={setKpi} />
                   ))}
                 </MetricGrid>
               ) : (
@@ -381,7 +383,7 @@ export function CompanyDetail({ id }: { id: string }) {
         {tab === "news" && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(news.length ? news : SIGNALS.filter((s) => s.kind === "Macro signal" || s.kind === "Market signal")).map((s) => (
-              <article key={s.id} className="rounded-xl border border-line bg-surface p-4">
+              <article key={s.id} className="rounded-lg border border-line bg-surface p-4">
                 <div className="flex items-center justify-between gap-2">
                   <Tag tone="accent">{s.kind}</Tag>
                   <span className="text-[11px] text-ink-4">{f.ago(s.at, now)}</span>
@@ -443,6 +445,7 @@ export function CompanyDetail({ id }: { id: string }) {
         )}
       </PageBody>
 
+      <KpiMetricDrawer metric={kpi} onClose={() => setKpi(null)} onLineage={(m) => (setKpi(null), setLineage(m))} />
       <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmt(lineage) : ""} provenance={lineage?.provenance ?? null} />
     </>
   );

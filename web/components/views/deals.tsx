@@ -126,7 +126,7 @@ export function DealsView() {
               {DEAL_STAGES.map((stage) => {
                 const items = deals.filter((d) => d.stage === stage);
                 return (
-                  <section key={stage} role="listitem" aria-label={`${stage}, ${items.length} deals`} className="flex w-[272px] shrink-0 flex-col rounded-xl border border-line bg-subtle">
+                  <section key={stage} role="listitem" aria-label={`${stage}, ${items.length} deals`} className="flex w-[272px] shrink-0 flex-col rounded-lg border border-line bg-subtle">
                     <header className="flex items-center justify-between px-3 py-2.5">
                       <span className="flex items-center gap-2 text-[13px] font-semibold text-ink">
                         <span aria-hidden className={cn("size-2 rounded-full", STAGE_TONE[stage])} />

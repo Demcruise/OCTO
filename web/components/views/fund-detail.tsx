@@ -11,6 +11,7 @@ import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { ObjectHeader, ObjectLinks, ObjectMetadata } from "@/components/object/object";
 import { MetricCard, MetricGrid, useMetricValue } from "@/components/metric/metric-card";
 import { LineageDrawer } from "@/components/metric/metric-lineage";
+import { KpiMetricDrawer } from "@/components/metric/kpi-drawer";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { TrendChart } from "@/components/chart/line-chart";
 import { BarChart, RankingBars } from "@/components/chart/bar-chart";
@@ -44,6 +45,7 @@ export function FundDetail({ id }: { id: string }) {
   const fund = useFund(id);
   const inv = useInvestments(fund.data?.id);
   const [lineage, setLineage] = useState<Metric | null>(null);
+  const [kpi, setKpi] = useState<Metric | null>(null);
   const tab = (params.get("tab") as Tab) ?? "overview";
   const x = fund.data;
 
@@ -155,7 +157,7 @@ export function FundDetail({ id }: { id: string }) {
           <>
             <MetricGrid cols={4}>
               {metrics.map((m) => (
-                <MetricCard key={m.id} metric={m} variant="compact" onLineage={setLineage} />
+                <MetricCard key={m.id} metric={m} variant="compact" onOpen={setKpi} />
               ))}
             </MetricGrid>
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
@@ -256,6 +258,7 @@ export function FundDetail({ id }: { id: string }) {
         )}
       </PageBody>
 
+      <KpiMetricDrawer metric={kpi} onClose={() => setKpi(null)} onLineage={(m) => (setKpi(null), setLineage(m))} />
       <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmt(lineage) : ""} provenance={lineage?.provenance ?? null} />
     </>
   );

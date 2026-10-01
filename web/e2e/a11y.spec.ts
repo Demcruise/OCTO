@@ -2,8 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 /**
- * Accessibility gate (plan §29, §35): axe on every major route, light and
- * dark. Serious and critical violations fail the run.
+ * Accessibility gate (plan §29, §35): axe on every major route. The
+ * dashboard is light-only (DS-002). Serious and critical violations fail.
  */
 const ROUTES = [
   "/app",
@@ -21,13 +21,17 @@ const ROUTES = [
   "/app/analytics",
   "/app/reports",
   "/app/reports/rpt-0231",
+  "/app/reports?new=1",
+  "/app/workflows?tab=ai",
+  "/app/workflows?tab=exceptions",
+  "/app/data?tab=lineage",
   "/app/data",
   "/app/settings",
 ];
 
-for (const scheme of ["light", "dark"] as const) {
-  test.describe(`axe · ${scheme}`, () => {
-    test.use({ colorScheme: scheme });
+{
+  test.describe("axe · light", () => {
+    test.use({ colorScheme: "light" });
     for (const route of ROUTES) {
       test(`${route} has no serious violations`, async ({ page }) => {
         await page.goto(route);

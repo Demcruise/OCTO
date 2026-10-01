@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChartTooltip, niceTicks, SERIES, SrTable, useSize } from "./core";
+import { ChartTooltip, niceTicks, SERIES, SrTable, useSize, yGutter } from "./core";
 
 type Point = { id: string; label: string; x: number; y: number; r?: number; group: string };
 
@@ -12,12 +12,12 @@ type Point = { id: string; label: string; x: number; y: number; r?: number; grou
 export function ScatterChart({ points, xLabel, yLabel, formatX, formatY, formatR, label, refX, refY, onSelect }: { points: Point[]; xLabel: string; yLabel: string; formatX: (v: number) => string; formatY: (v: number) => string; formatR?: (v: number) => string; label: string; refX?: number; refY?: number; onSelect?: (p: Point) => void }) {
   const [ref, { w, h }] = useSize<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
-  const pl = 44;
   const pb = 34;
   const pt = 10;
   const pr = 12;
   const xt = niceTicks(Math.min(...points.map((p) => p.x), refX ?? Infinity), Math.max(...points.map((p) => p.x), refX ?? -Infinity), 5);
   const yt = niceTicks(Math.min(...points.map((p) => p.y), refY ?? Infinity), Math.max(...points.map((p) => p.y), refY ?? -Infinity), 4);
+  const pl = yGutter(yt.map(formatY), w);
   const X = (v: number) => pl + ((v - xt[0]) / (xt[xt.length - 1] - xt[0] || 1)) * (w - pl - pr);
   const Y = (v: number) => pt + ((yt[yt.length - 1] - v) / (yt[yt.length - 1] - yt[0] || 1)) * (h - pt - pb);
   const rMax = Math.max(...points.map((p) => p.r ?? 1));

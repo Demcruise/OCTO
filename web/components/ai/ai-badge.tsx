@@ -8,18 +8,18 @@ import type { Verification } from "@/lib/demo";
  * verified values use neutral/ok styling.
  */
 const V: Record<Verification, { label: string; cls: string; icon: React.ReactNode }> = {
-  verified: { label: "Verified", cls: "border-ok/20 bg-ok/10 text-ok", icon: <BadgeCheck /> },
-  "source-derived": { label: "Source-derived", cls: "border-line bg-muted text-ink-2", icon: <FileSearch /> },
-  "ai-suggested": { label: "AI-suggested", cls: "border-ai/25 bg-ai/10 text-ai", icon: <Sparkles /> },
-  "human-reviewed": { label: "Human-reviewed", cls: "border-ok/20 bg-ok/10 text-ok", icon: <UserCheck /> },
-  "pending-review": { label: "AI · pending review", cls: "border-ai/25 bg-ai/10 text-ai", icon: <Clock /> },
-  unsupported: { label: "Evidence required", cls: "border-warn/25 bg-warn/10 text-warn", icon: <HelpCircle /> },
+  verified: { label: "Verified", cls: "border-mark-ok/25 bg-mark-ok/8 text-ok", icon: <BadgeCheck /> },
+  "source-derived": { label: "Source-derived", cls: "border-line bg-subtle text-ink-2", icon: <FileSearch /> },
+  "ai-suggested": { label: "AI-suggested", cls: "border-ai/25 bg-ai/8 text-ai", icon: <Sparkles /> },
+  "human-reviewed": { label: "Human-reviewed", cls: "border-mark-ok/25 bg-mark-ok/8 text-ok", icon: <UserCheck /> },
+  "pending-review": { label: "Pending review", cls: "border-ai/25 bg-ai/8 text-ai", icon: <Clock /> },
+  unsupported: { label: "Evidence required", cls: "border-mark-warn/30 bg-mark-warn/8 text-warn", icon: <HelpCircle /> },
 };
 
 export function VerificationBadge({ state, className }: { state: Verification; className?: string }) {
   const v = V[state];
   return (
-    <span className={cn("inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-xs border px-1.5 text-[11px] font-medium [&_svg]:size-3", v.cls, className)}>
+    <span className={cn("inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-2 text-[11px] font-medium leading-none [&_svg]:size-3", v.cls, className)}>
       {v.icon}
       {v.label}
     </span>

@@ -9,6 +9,7 @@ import { AS_OF, PORTFOLIO_METRICS, companyById, fundById, investmentMoic, type I
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { MetricCard, MetricGrid, useMetricValue } from "@/components/metric/metric-card";
 import { LineageDrawer } from "@/components/metric/metric-lineage";
+import { KpiMetricDrawer } from "@/components/metric/kpi-drawer";
 import { TrendChart } from "@/components/chart/line-chart";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { DeltaCell, EntityCell, FreshnessCell, NumericCell, ProvenanceCell, SparklineCell, StatusCell } from "@/components/data/cells";
@@ -39,6 +40,7 @@ export function InvestmentsView() {
   const inv = useInvestments();
   const rows = inv.data ?? [];
   const [lineage, setLineage] = useState<Metric | null>(null);
+  const [kpi, setKpi] = useState<Metric | null>(null);
   const focus = params.get("focus");
   const open = rows.find((r) => r.id === focus) ?? null;
   const setOpen = (id: string | null) => {
@@ -88,7 +90,7 @@ export function InvestmentsView() {
       <PageBody className="space-y-4">
         <MetricGrid cols={4}>
           {summary.map((m) => (
-            <MetricCard key={m.id} metric={m} variant="compact" onLineage={setLineage} state={inv.isLoading ? "loading" : "ready"} />
+            <MetricCard key={m.id} metric={m} variant="compact" onOpen={setKpi} state={inv.isLoading ? "loading" : "ready"} />
           ))}
         </MetricGrid>
         {stale > 0 && <InlineAlert tone="warn">{stale} positions have no approved mark in the last 30 days. Their fair values are shown but flagged in the Mark age column.</InlineAlert>}
@@ -133,9 +135,10 @@ export function InvestmentsView() {
         />
       </PageBody>
 
-      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open ? `Investment · ${open.id}` : ""} title={open ? `${companyById(open.companyId)!.name}` : ""} width="max-w-xl">
+      <Sheet open={!!open} onClose={() => setOpen(null)} eyebrow={open ? `Investment · ${open.id}` : ""} title={open ? `${companyById(open.companyId)!.name}` : ""}>
         {open && <InvestmentDetail i={open} />}
       </Sheet>
+      <KpiMetricDrawer metric={kpi} onClose={() => setKpi(null)} onLineage={(m) => (setKpi(null), setLineage(m))} />
       <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmt(lineage) : ""} provenance={lineage?.provenance ?? null} />
     </>
   );

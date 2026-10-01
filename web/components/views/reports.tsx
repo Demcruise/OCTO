@@ -11,10 +11,10 @@ import { DataTable, type Column } from "@/components/data/data-table";
 import { EntityCell, StatusCell } from "@/components/data/cells";
 import { Button } from "@/components/ui/button";
 import { type Tone } from "@/components/ui/badge";
-import { Field, Input, Select, Tabs } from "@/components/ui/controls";
-import { ConfirmDialog } from "@/components/ui/overlay";
+import { Tabs } from "@/components/ui/controls";
 import { FreshnessBadge, useToast } from "@/components/feedback";
 import { useBreadcrumb } from "@/components/shell/shell-context";
+import { ReportWizard } from "./report-wizard";
 
 const STATUSES: ReportStatus[] = ["Draft", "Template", "Scheduled", "Pending approval", "Published", "Archived"];
 export const REPORT_TONE: Record<ReportStatus, Tone> = { Draft: "neutral", Template: "info", Scheduled: "accent", "Pending approval": "warn", Published: "ok", Archived: "neutral" };
@@ -32,8 +32,6 @@ export function ReportsView() {
   useEffect(() => void (q.data && setReports(q.data)), [q.data]);
   const status = (STATUSES.find((s) => s.toLowerCase().replace(" ", "-") === params.get("status")) ?? "Draft") as ReportStatus;
   const creating = params.get("new") === "1";
-  const [name, setName] = useState("");
-  const [template, setTemplate] = useState("RPT-0188");
 
   const cols: Column<Report>[] = [
     { id: "name", header: "Report", width: 320, hideable: false, value: (r) => r.name, cell: (r) => <EntityCell name={r.name} sub={`${r.type} · ${r.version}`} href={`/app/reports/${r.id.toLowerCase()}`} /> },
@@ -62,9 +60,20 @@ export function ReportsView() {
             <Plus /> New report
           </Button>
         }
-        tabs={<Tabs<ReportStatus> label="Report status" value={status} onChange={setStatus} className="border-b-0" items={STATUSES.map((s) => ({ value: s, label: s, count: reports.filter((r) => r.status === s).length }))} />}
+        tabs={creating ? undefined : <Tabs<ReportStatus> label="Report status" value={status} onChange={setStatus} variant="pill" className="pb-3" items={STATUSES.map((s) => ({ value: s, label: s, count: reports.filter((r) => r.status === s).length }))} />}
       />
       <PageBody>
+        {creating ? (
+          <ReportWizard
+            templates={reports.filter((r) => r.status === "Template")}
+            onCancel={() => router.replace("/app/reports", { scroll: false })}
+            onDone={({ name, template }) => {
+              const r: Report = { ...template, id: `RPT-${240 + reports.length}`, name, status: "Published", version: "v1", owner: "You", updatedAt: DEMO_NOW, history: [{ version: "v1", by: "You", at: DEMO_NOW, note: `Published from ${template.name}` }] };
+              setReports((xs) => [r, ...xs]);
+              toast({ tone: "ok", title: "Report published", body: `${r.name} (demo — lives in this session).` });
+            }}
+          />
+        ) : (
         <DataTable
           key={status}
           id={`reports-${status}`}
@@ -78,37 +87,8 @@ export function ReportsView() {
           initial={{ sort: [{ id: "updated", desc: true }] }}
           empty={{ title: `No ${status.toLowerCase()} reports`, body: status === "Draft" ? "Start a report from a template; sections bind to live IBOR data." : "Reports move here as they progress through review." }}
         />
+        )}
       </PageBody>
-      <ConfirmDialog
-        open={creating}
-        title="New report"
-        body="Start from a template. Every number is bound to IBOR data and cited."
-        confirmLabel="Create draft"
-        onCancel={() => router.replace("/app/reports", { scroll: false })}
-        onConfirm={() => {
-          const t = reports.find((r) => r.id === template)!;
-          const r: Report = { ...t, id: `RPT-${240 + reports.length}`, name: name.trim() || `Untitled ${t.type}`, status: "Draft", version: "v1", owner: "You", updatedAt: DEMO_NOW, history: [{ version: "v1", by: "You", at: DEMO_NOW, note: `Created from ${t.name}` }] };
-          setReports((xs) => [r, ...xs]);
-          setName("");
-          router.replace("/app/reports?status=draft", { scroll: false });
-          toast({ tone: "ok", title: "Draft created", body: `${r.name} (demo — lives in this session).` });
-        }}
-      >
-        <div className="mt-4 space-y-3">
-          <Field id="rep-name" label="Name">
-            <Input id="rep-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Q3 2026 LP report · Flagship II" data-autofocus />
-          </Field>
-          <Field id="rep-template" label="Template">
-            <Select id="rep-template" value={template} onChange={(e) => setTemplate(e.target.value)}>
-              {reports.filter((r) => r.status === "Template").map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        </div>
-      </ConfirmDialog>
     </>
   );
 }

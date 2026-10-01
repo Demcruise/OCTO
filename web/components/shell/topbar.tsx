@@ -12,7 +12,7 @@ import { Kbd } from "@/components/ui/badge";
 import { Segmented } from "@/components/ui/controls";
 import { breadcrumb, type Crumb } from "./nav-config";
 import { useShell } from "./shell-context";
-import { HelpButton, NotificationCenter, StatusMenu, ThemeMenu } from "./topbar-menus";
+import { DisplayMenu, HelpButton, NotificationCenter, StatusMenu } from "./topbar-menus";
 
 const PERIODS: { value: Period; label: string }[] = (["QTD", "YTD", "LTM", "ITD"] as Period[]).map((p) => ({ value: p, label: p }));
 
@@ -83,7 +83,7 @@ export function Topbar({ onOpenDrawer, onShortcuts }: { onOpenDrawer: () => void
           <span className="hidden sm:contents">
             <HelpButton onShortcuts={onShortcuts} />
           </span>
-          <ThemeMenu />
+          <DisplayMenu />
         </div>
       </div>
     </header>

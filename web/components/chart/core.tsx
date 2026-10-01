@@ -63,7 +63,7 @@ export function SrTable({ caption, head, rows }: { caption: string; head: string
 }
 
 /** Floating tooltip: label on top, then series rows with swatches (Vestra hierarchy). */
-export function ChartTooltip({ x, y, width, title, rows, className }: { x: number; y: number; width: number; title: string; rows: { label: string; value: string; color?: string; sub?: string }[]; className?: string }) {
+export function ChartTooltip({ x, y, width, title, rows, note, className }: { x: number; y: number; width: number; title: string; rows: { label: string; value: string; color?: string; sub?: string }[]; note?: React.ReactNode; className?: string }) {
   const left = Math.min(Math.max(x + 12, 4), width - 180);
   return (
     <div
@@ -84,6 +84,7 @@ export function ChartTooltip({ x, y, width, title, rows, className }: { x: numbe
         ))}
       </ul>
       {rows.some((r) => r.sub) && <p className="mt-1 text-ink-4">{rows.find((r) => r.sub)?.sub}</p>}
+      {note && <p className="mt-1 border-t border-line-subtle pt-1 font-medium tabular-nums text-ink-2">{note}</p>}
     </div>
   );
 }
@@ -106,4 +107,13 @@ export function Legend({ items, className }: { items: { label: string; color: st
       ))}
     </ul>
   );
+}
+
+/**
+ * Y-axis gutter (CHART-002): sized from the widest formatted tick so labels such
+ * as "$812.4M" never clip — 56–72px on desktop, 48–56px under 480px wide.
+ */
+export function yGutter(labels: string[], width: number) {
+  const widest = Math.max(0, ...labels.map((l) => l.length)) * 6.6 + 14;
+  return width > 0 && width < 480 ? Math.min(56, Math.max(48, widest)) : Math.min(72, Math.max(56, widest));
 }

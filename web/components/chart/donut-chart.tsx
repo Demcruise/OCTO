@@ -9,7 +9,7 @@ import { SERIES, SrTable } from "./core";
  * centre, legend below). Category colour is data encoding, not decoration.
  * Hovering or focusing a legend row highlights its segment.
  */
-export function DonutChart({ data, label, format, centerLabel, size = 196 }: { data: { key: string; value: number }[]; label: string; format: (v: number) => string; centerLabel?: string; size?: number }) {
+export function DonutChart({ data, label, format, centerLabel, size = 184 }: { data: { key: string; value: number }[]; label: string; format: (v: number) => string; centerLabel?: string; size?: number }) {
   const [active, setActive] = useState<number | null>(null);
   const total = data.reduce((n, d) => n + d.value, 0) || 1;
   const r = size / 2 - 14;
@@ -53,7 +53,7 @@ export function DonutChart({ data, label, format, centerLabel, size = 196 }: { d
           <span className="mt-0.5 max-w-[60%] truncate text-[12px] text-ink-3">{data[shown]?.key ?? centerLabel}</span>
         </div>
       </div>
-      <ul className="mt-4 grid w-full grid-cols-1 gap-x-4 gap-y-1 min-[420px]:grid-cols-2">
+      <ul className="mt-4 grid w-full grid-cols-2 gap-x-3 gap-y-0.5">
         {data.map((d, i) => (
           <li key={d.key}>
             <button
@@ -62,11 +62,13 @@ export function DonutChart({ data, label, format, centerLabel, size = 196 }: { d
               onPointerLeave={() => setActive(null)}
               onFocus={() => setActive(i)}
               onBlur={() => setActive(null)}
-              className={cn("flex w-full cursor-default items-center gap-2 rounded-md px-1.5 py-1 text-left text-[12px] hover:bg-hover focus-visible:outline-2 focus-visible:outline-accent", active === i && "bg-hover")}
+              className={cn("flex w-full cursor-default items-center gap-2 rounded-md px-1.5 py-1 text-left text-[12px] hover:bg-hover focus-visible:outline-2 focus-visible:outline-focus", active === i && "bg-hover")}
             >
               <span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: SERIES[i % SERIES.length] }} />
-              <span className="min-w-0 flex-1 truncate text-ink-2">{d.key}</span>
-              <span className="tabular-nums text-ink-3">{pct(d.value)}</span>
+              <span className="min-w-0 flex-1 truncate text-ink-2" title={d.key}>
+                {d.key}
+              </span>
+              <span className="shrink-0 tabular-nums text-ink-3">{pct(d.value)}</span>
             </button>
           </li>
         ))}
