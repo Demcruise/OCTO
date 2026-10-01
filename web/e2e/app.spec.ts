@@ -196,6 +196,109 @@ test("report generation failure offers recovery", async ({ page }) => {
   await expect(page.getByText("Draft generated")).toBeVisible();
 });
 
+test("V2 top bar keeps only search, notifications and help", async ({ page }) => {
+  await ready(page, "/app");
+  const header = page.locator("header").filter({ has: page.getByRole("button", { name: "Search and commands" }) });
+  await expect(header.getByRole("radiogroup", { name: "Reporting period" })).toHaveCount(0);
+  await expect(header.getByRole("button", { name: /System status/ })).toHaveCount(0);
+  await expect(header.getByRole("button", { name: "Search and commands" })).toBeVisible();
+  await expect(header.getByRole("button", { name: /^Notifications/ })).toBeVisible();
+});
+
+test("KPI cards carry no mini charts and use explicit trend semantics", async ({ page }) => {
+  await ready(page, "/app");
+  const dry = page.getByRole("button", { name: /^Dry powder: .* Open metric details$/ });
+  await expect(dry.locator("svg[role=img]")).toHaveCount(0);
+  await expect(dry).toContainText("(unfavourable)");
+  await expect(page.getByRole("button", { name: /^Invested capital: .* Open metric details$/ })).toContainText("(favourable)");
+  await dry.click();
+  await expect(page.getByRole("dialog")).toContainText("Capacity left");
+});
+
+test("expanded NAV chart shows full history and returns focus", async ({ page }) => {
+  await ready(page, "/app");
+  const expand = page.getByRole("button", { name: "Expand Portfolio NAV" });
+  await expand.click();
+  const dialog = page.getByRole("dialog", { name: /Portfolio NAV/ });
+  await expect(dialog).toContainText("full history");
+  await expect(dialog.getByRole("img", { name: /full history/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(expand).toBeFocused();
+});
+
+test("fund page shows trajectory, balanced bridge and chronological activity", async ({ page }) => {
+  await ready(page, "/app/funds/fnd-002");
+  await expect(page.getByRole("region", { name: "NAV trajectory" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Q3 value bridge" })).toContainText("= closing");
+  await page.getByRole("tab", { name: "Activity" }).click();
+  await expect(page.getByRole("region", { name: "Today" })).toContainText("Q3 NAV struck");
+  await expect(page.getByRole("region", { name: "Earlier" })).toBeVisible();
+});
+
+test("deals calendar and timeline share one schedule", async ({ page }) => {
+  await ready(page, "/app/deals?view=calendar");
+  await expect(page.getByRole("group", { name: /October 2026 deal calendar/ })).toBeVisible();
+  await page.getByRole("button", { name: "Previous month" }).click();
+  await expect(page.getByRole("group", { name: /September 2026 deal calendar/ })).toBeVisible();
+  const coming = page.locator("section").filter({ has: page.getByRole("heading", { name: "Coming up" }) });
+  await coming.getByRole("button").first().click();
+  await expect(page.getByRole("link", { name: /Open deal/ })).toBeVisible();
+  await ready(page, "/app/deals?view=timeline");
+  await expect(page.getByRole("region", { name: "Blocked" })).toContainText("Diligence blocked");
+  await expect(page.getByRole("region", { name: "What happens next" })).toBeVisible();
+});
+
+test("risk vs return filters and opens an entity drawer", async ({ page }) => {
+  await ready(page, "/app/analytics");
+  const chart = page.getByRole("region", { name: "Risk vs return" });
+  await chart.getByRole("combobox", { name: "Fund" }).selectOption("Flagship II");
+  await expect(chart).toContainText("8 of 20 positions");
+  const plot = chart.getByRole("img", { name: /Risk vs return by position/ });
+  await plot.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("Return (gross IRR)");
+  await expect(drawer.getByRole("link", { name: /Open company/ })).toBeVisible();
+});
+
+test("report rows open real detail; publish is gated on approval", async ({ page }) => {
+  await ready(page, "/app/reports?status=pending-approval");
+  await page.getByRole("link", { name: "Q3 2026 LP report · Flagship II" }).click();
+  await expect(page.locator("main h1").first()).toHaveText("Q3 2026 LP report · Flagship II");
+  for (const t of ["Executive summary", "Performance", "Attribution", "Exceptions", "Lineage and sources", "Notes", "Approval history"]) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
+  const publish = page.getByRole("button", { name: "Publish", exact: true });
+  await expect(publish).toBeDisabled();
+  await page.getByRole("button", { name: "Review", exact: true }).click();
+  await page.getByRole("button", { name: /Refresh binding/ }).click();
+  await page.getByLabel(/Approval comment/).fill("Ties to IBOR; disclosures complete.");
+  await page.getByRole("button", { name: "Approve", exact: true }).last().click();
+  await expect(publish).toBeEnabled();
+  await publish.click();
+  await expect(page.getByText("Published").first()).toBeVisible();
+});
+
+test("templates, scheduled and unknown reports never render blank", async ({ page }) => {
+  await ready(page, "/app/reports/rpt-0188");
+  await expect(page.getByText("This is a template")).toBeVisible();
+  await ready(page, "/app/reports/rpt-0219");
+  await expect(page.getByText(/Scheduled · Monthly/)).toBeVisible();
+  await page.goto("/app/reports/rpt-9999");
+  await expect(page.getByText("This report isn’t available")).toBeVisible();
+});
+
+test("every page body supports designed states", async ({ page }) => {
+  await ready(page, "/app/portfolio?state=error");
+  await expect(page.getByText("We couldn’t load this page.")).toBeVisible();
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page).not.toHaveURL(/state=/);
+  for (const [state, text] of [["empty", "Nothing to show for this workspace yet"], ["permission", "You don’t have access to this page"], ["stale", "Showing data from the last successful refresh"], ["partial", "Some data didn’t load"]]) {
+    await ready(page, `/app/funds?state=${state}`);
+    await expect(page.getByText(text)).toBeVisible();
+  }
+});
+
 test("mobile drawer navigation @mobile", async ({ page }) => {
   await ready(page, "/app");
   await page.getByRole("button", { name: "Open navigation" }).click();

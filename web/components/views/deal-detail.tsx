@@ -1,18 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { Check, FileText, Minus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 import { useDeal } from "@/lib/data/queries";
-import { DEAL_STAGES, DEMO_NOW, REPORTS, at, fundById } from "@/lib/demo";
+import { DEAL_STAGES, DEMO_NOW, REPORTS, at, dealEvents, fundById } from "@/lib/demo";
 import { PageBody } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { ObjectHeader, ObjectMetadata } from "@/components/object/object";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { BarChart, RankingBars } from "@/components/chart/bar-chart";
-import { Timeline } from "@/components/chart/timeline";
 import { Legend } from "@/components/chart/core";
 import { Button, LinkButton } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
@@ -21,11 +19,12 @@ import { FreshnessBadge, InlineAlert, MetricSkeleton, PermissionState, useToast 
 import { VerificationBadge } from "@/components/ai/ai-badge";
 import { WorkflowStepper } from "@/components/workflow/workflow";
 import { useBreadcrumb } from "@/components/shell/shell-context";
+import { DealTimeline } from "./deal-schedule";
 import { EVIDENCE_TONE, ScoreMeter } from "./deals";
 
 const TABS = ["summary", "screening", "ddq", "documents", "valuation", "risks", "ic", "history"] as const;
 type Tab = (typeof TABS)[number];
-const LABEL: Record<Tab, string> = { summary: "Summary", screening: "Screening", ddq: "DDQ", documents: "Documents", valuation: "Valuation & returns", risks: "Risks", ic: "IC report", history: "Decision history" };
+const LABEL: Record<Tab, string> = { summary: "Summary", screening: "Screening", ddq: "DDQ", documents: "Documents", valuation: "Valuation & returns", risks: "Risks", ic: "IC report", history: "Timeline" };
 const now = new Date(DEMO_NOW);
 
 /**
@@ -256,18 +255,17 @@ export function DealDetail({ id }: { id: string }) {
 
         {tab === "history" && (
           <Panel>
-            <PanelHead title="Decision history" />
+            <PanelHead title="Timeline and decisions" description="Same events as the pipeline calendar: what happened, what is active, what is blocked and what happens next" />
             <PanelBody>
-              <Timeline
-                events={[
-                  { id: "h1", at: d.lastActivity.at, label: f.ago(d.lastActivity.at, now), title: d.lastActivity.title, tone: "accent" },
-                  ...steps.filter((s) => s.state === "done").reverse().map((s, i) => ({ id: `s${i}`, at: at(24 * (i + 1) * 9), label: f.date(at(24 * (i + 1) * 9)), title: `Moved past ${s.label}`, detail: `Approved by ${d.owner}`, tone: "ok" as const })),
-                  { id: "h0", at: at(24 * d.ageDays), label: f.date(at(24 * d.ageDays)), title: "Deal sourced", detail: "From the deal CRM", tone: "neutral" },
-                ]}
-              />
-              <Link href="/app/deals" className="mt-4 inline-block text-[12px] font-medium text-accent hover:underline">
-                Back to pipeline
-              </Link>
+              <DealTimeline events={dealEvents(d.id)} showDeal={false} />
+              <div className="mt-4 flex flex-wrap gap-2">
+                <LinkButton size="sm" href="/app/deals?view=calendar">
+                  Open pipeline calendar
+                </LinkButton>
+                <LinkButton size="sm" variant="ghost" href="/app/deals">
+                  Back to pipeline
+                </LinkButton>
+              </div>
             </PanelBody>
           </Panel>
         )}

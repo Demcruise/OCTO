@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, CalendarDays, GanttChart, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 import { useDeals } from "@/lib/data/queries";
-import { DEAL_STAGES, DEMO_NOW, fundById, type Deal, type DealStage } from "@/lib/demo";
+import { DEAL_STAGES, DEMO_NOW, buildDealEvents, fundById, type Deal, type DealStage } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { Funnel } from "@/components/chart/funnel";
@@ -19,6 +19,7 @@ import { Tabs } from "@/components/ui/controls";
 import { Menu } from "@/components/ui/overlay";
 import { FreshnessBadge, Skeleton, useToast } from "@/components/feedback";
 import { useBreadcrumb } from "@/components/shell/shell-context";
+import { DealCalendar, DealTimeline } from "./deal-schedule";
 
 type View = "board" | "table" | "timeline" | "calendar";
 export const EVIDENCE_TONE: Record<Deal["evidence"], Tone> = { Complete: "ok", Partial: "warn", Missing: "danger" };
@@ -69,6 +70,7 @@ export function DealsView() {
     toast({ tone: "ok", title: `${d.company} → ${stage}`, body: "Stage change recorded in this session (demo)." });
   };
 
+  const events = useMemo(() => buildDealEvents(deals), [deals]);
   const open = deals.filter((d) => d.stage !== "Passed" && d.stage !== "Invested");
   const funnel = DEAL_STAGES.filter((s) => s !== "Passed").map((s, i, arr) => {
     const reached = deals.filter((d) => arr.indexOf(d.stage as (typeof arr)[number]) >= i || (d.stage === "Passed" && i <= 1));
@@ -114,7 +116,7 @@ export function DealsView() {
               { value: "board", label: "Board" },
               { value: "table", label: "Table", count: deals.length },
               { value: "timeline", label: "Timeline" },
-              { value: "calendar", label: "Calendar · planned", disabled: true },
+              { value: "calendar", label: "Calendar", count: events.filter((e) => e.status !== "done").length },
             ]}
           />
         }
@@ -180,32 +182,14 @@ export function DealsView() {
 
         {view === "timeline" && (
           <Panel>
-            <PanelHead title="Pipeline timeline" description="Days in pipeline, coloured by current stage" icon={<GanttChart />} />
+            <PanelHead title="Pipeline timeline" description="What happened, what is active, what is blocked and what happens next — across every deal" icon={<GanttChart />} />
             <PanelBody>
-              <div className="space-y-2" role="list" aria-label="Deals by time in pipeline">
-                {[...deals].sort((a, b) => b.ageDays - a.ageDays).map((d) => {
-                  const max = Math.max(...deals.map((x) => x.ageDays));
-                  return (
-                    <div key={d.id} role="listitem" className="grid grid-cols-[minmax(0,12rem)_1fr_4rem] items-center gap-3 text-[12px]">
-                      <Link href={`/app/deals/${d.id.toLowerCase()}`} className={cn("truncate rounded-sm font-medium text-ink hover:text-accent", ring)}>
-                        {d.company}
-                      </Link>
-                      <div className="relative h-6 rounded-md bg-muted">
-                        <div className={cn("absolute inset-y-0 right-0 flex items-center justify-end rounded-md px-2 text-[11px] font-medium text-white", STAGE_TONE[d.stage])} style={{ width: `${Math.max(6, (d.ageDays / max) * 100)}%` }}>
-                          <span className="truncate">{d.stage}</span>
-                        </div>
-                      </div>
-                      <span className="text-right tabular-nums text-ink-3">{d.ageDays}d</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="mt-3 text-[11px] text-ink-4">Bars end today; the left edge is when the deal was sourced.</p>
+              <DealTimeline events={events} />
             </PanelBody>
           </Panel>
         )}
 
-        {view === "calendar" && <p className="text-[13px] text-ink-3">Calendar view is planned.</p>}
+        {view === "calendar" && <DealCalendar events={events} />}
       </PageBody>
     </>
   );

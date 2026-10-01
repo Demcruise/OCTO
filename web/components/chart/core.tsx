@@ -31,9 +31,12 @@ export function niceTicks(lo: number, hi: number, count = 4): number[] {
   const step0 = span / count;
   const mag = Math.pow(10, Math.floor(Math.log10(step0)));
   const step = [1, 2, 2.5, 5, 10].map((s) => s * mag).find((s) => span / s <= count) ?? step0;
+  // Ticks always enclose the data: floor below the minimum, ceil above the maximum,
+  // so no line or bar ever runs past the top or bottom gridline (V2 NAV-006).
   const start = Math.floor(lo / step) * step;
+  const end = Math.ceil(hi / step - 1e-9) * step;
   const out: number[] = [];
-  for (let v = start; v <= hi + step * 0.001; v += step) out.push(Math.round(v * 1e6) / 1e6);
+  for (let v = start; v <= end + step * 0.001; v += step) out.push(Math.round(v * 1e6) / 1e6);
   return out;
 }
 
@@ -110,10 +113,12 @@ export function Legend({ items, className }: { items: { label: string; color: st
 }
 
 /**
- * Y-axis gutter (CHART-002): sized from the widest formatted tick so labels such
- * as "$812.4M" never clip — 56–72px on desktop, 48–56px under 480px wide.
+ * Y-axis gutter (V2 NAV-006): at least 64px on desktop, 56px on tablet and
+ * 48px on phones, growing with the widest formatted tick (up to 88px) so
+ * "$812.4M", "−12.5%" or "1,250.0×" never clip.
  */
 export function yGutter(labels: string[], width: number) {
   const widest = Math.max(0, ...labels.map((l) => l.length)) * 6.6 + 14;
-  return width > 0 && width < 480 ? Math.min(56, Math.max(48, widest)) : Math.min(72, Math.max(56, widest));
+  const min = width > 0 && width < 480 ? 48 : width > 0 && width < 768 ? 56 : 64;
+  return Math.min(88, Math.max(min, widest));
 }

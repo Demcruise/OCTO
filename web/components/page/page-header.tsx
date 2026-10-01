@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { cn } from "@/lib/utils";
+import { PageStateGate } from "./page-state";
 
 /**
  * Page header (plan §9). Every page uses the same order:
@@ -49,9 +51,15 @@ export function PageHeader({
   );
 }
 
-/** Page body: gutters 16 → 24 → 28px (Vestra), bounded at 1600px for analytical pages. */
+/** Page body: gutters 16 → 24 → 28px (Vestra), bounded at 1600px; renders through the page state gate (V2 §30). */
 export function PageBody({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={cn("mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7 lg:pb-12", className)}>{children}</div>;
+  return (
+    <div className={cn("mx-auto w-full max-w-[1600px] px-4 py-5 sm:px-6 lg:px-7 lg:pb-12", className)}>
+      <Suspense fallback={children}>
+        <PageStateGate>{children}</PageStateGate>
+      </Suspense>
+    </div>
+  );
 }
 
 export const PageContainer = PageBody;

@@ -56,7 +56,7 @@ export function PopoverPanel({ className, align = "end", side = "bottom", childr
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** Traps Tab inside `ref` while mounted and restores focus to the previously focused element on unmount. */
-function useFocusTrap(ref: React.RefObject<HTMLElement | null>, onEscape: () => void) {
+export function useFocusTrap(ref: React.RefObject<HTMLElement | null>, onEscape: () => void) {
   // Keep the latest handler without re-running the trap (which would steal focus on every render).
   const escape = useRef(onEscape);
   escape.current = onEscape;

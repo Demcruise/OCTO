@@ -46,8 +46,9 @@ test("workflow states swap inside a fixed-height preview", async ({ page }) => {
   await page.getByRole("tab", { name: /Report/ }).click();
   await expect(page.getByText("21.84%")).toBeVisible();
   await expect.poll(() => preview.locator("[data-wf-panel]").evaluateAll((els) => els.map((e) => Math.round(Number(getComputedStyle(e).opacity))))).toEqual([0, 0, 0, 1]);
-  expect((await preview.boundingBox())?.height).toBe(before?.height);
-  expect((await page.locator("#from-data-to-decision").boundingBox())?.height).toBe(sectionBefore?.height);
+  // Sub-pixel layout can differ by <0.01px between frames; compare to the nearest pixel.
+  expect((await preview.boundingBox())?.height).toBeCloseTo(before?.height ?? 0, 0);
+  expect((await page.locator("#from-data-to-decision").boundingBox())?.height).toBeCloseTo(sectionBefore?.height ?? 0, 0);
 });
 
 test("fragmented truth network has icon-bearing nodes around OCTO", async ({ page }) => {

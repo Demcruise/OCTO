@@ -3,77 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Activity, Bell, CircleHelp, SlidersHorizontal, X } from "lucide-react";
+import { Bell, CircleHelp, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 import { DEMO_NOW, NOTIFICATIONS, type Severity } from "@/lib/demo";
-import { usePreferences, type Density, type Locale } from "@/lib/preferences";
-import { useWorkspace } from "@/lib/workspace";
 import { IconButton, ring, ringInset } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/badge";
 import { PopoverPanel, useDismissable } from "@/components/ui/overlay";
-import { Segmented } from "@/components/ui/controls";
 import { SHORTCUTS } from "./shortcuts";
 
 const SEV_DOT: Record<Severity, string> = { critical: "bg-danger", high: "bg-warn", medium: "bg-info", low: "bg-ink-4" };
 const chrome = "border border-line-strong bg-surface text-ink-2 hover:bg-hover hover:text-ink";
-
-function MenuHeading({ children }: { children: React.ReactNode }) {
-  return <p className="px-3 pb-1.5 pt-3 text-label uppercase text-ink-4">{children}</p>;
-}
-
-/* ---------- System status ---------- */
-
-export function StatusMenu() {
-  const { apiStatus, environment, source } = useWorkspace();
-  const { open, setOpen, rootRef, triggerRef } = useDismissable();
-  const ok = apiStatus === "connected";
-  const rows = [
-    { label: "OCTO API", value: apiStatus === "checking" ? "Checking" : ok ? "Connected" : "Unreachable", tone: apiStatus === "checking" ? "bg-ink-4" : ok ? "bg-ok" : "bg-warn" },
-    { label: "Environment", value: environment, tone: "bg-info" },
-    { label: "Workspaces", value: source === "api" ? "Live tenants" : "Demo list", tone: source === "api" ? "bg-ok" : "bg-info" },
-    { label: "Portfolio data", value: "Demo data", tone: "bg-info" },
-    { label: "Last NAV run", value: "13:24 UTC", tone: "bg-ok" },
-  ];
-  return (
-    <div ref={rootRef} className="relative">
-      <IconButton
-        ref={triggerRef}
-        className={chrome}
-        label={ok ? "System status: API connected" : "System status: API offline"}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        icon={
-          <span className="relative">
-            <Activity />
-            <span aria-hidden className={cn("absolute -right-1 -top-1 size-2 rounded-full ring-2 ring-surface", ok ? "bg-ok" : apiStatus === "checking" ? "bg-ink-4" : "bg-warn")} />
-          </span>
-        }
-      />
-      {open && (
-        <PopoverPanel role="dialog" aria-label="System status" className="w-72 pb-2">
-          <MenuHeading>System status</MenuHeading>
-          <dl className="px-3">
-            {rows.map((r) => (
-              <div key={r.label} className="flex items-center justify-between gap-3 border-t border-line py-2 text-[13px] first:border-t-0">
-                <dt className="text-ink-3">{r.label}</dt>
-                <dd className="flex items-center gap-1.5 text-ink">
-                  <span aria-hidden className={cn("size-1.5 rounded-full", r.tone)} />
-                  {r.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-          {!ok && apiStatus !== "checking" && <p className="mx-3 mt-1 rounded-md bg-warn/10 px-2.5 py-2 text-[12px] text-ink-2">Start the API on :8080 to load real tenants. Everything else stays labelled as demo data.</p>}
-          <Link href="/app/data" className={cn("mx-3 mt-2 block rounded-sm text-[12px] font-medium text-accent hover:underline", ring)}>
-            Open data & sources →
-          </Link>
-        </PopoverPanel>
-      )}
-    </div>
-  );
-}
 
 /* ---------- Notification center ---------- */
 
@@ -192,25 +132,3 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
 }
 
 /* ---------- Display: density · number format ---------- */
-
-export function DisplayMenu() {
-  const { density, setDensity, locale, setLocale } = usePreferences();
-  const { open, setOpen, rootRef, triggerRef } = useDismissable();
-  return (
-    <div ref={rootRef} className="relative">
-      <IconButton ref={triggerRef} className={chrome} label="Display settings" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)} icon={<SlidersHorizontal />} />
-      {open && (
-        <PopoverPanel role="dialog" aria-label="Display settings" className="w-72 pb-3">
-          <MenuHeading>Row density</MenuHeading>
-          <div className="px-3">
-            <Segmented<Density> size="sm" label="Table density" value={density} onChange={setDensity} items={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfortable" }]} />
-          </div>
-          <MenuHeading>Number & date format</MenuHeading>
-          <div className="px-3">
-            <Segmented<Locale> size="sm" label="Language for numbers and dates" value={locale} onChange={setLocale} items={[{ value: "en", label: "English" }, { value: "id", label: "Bahasa Indonesia" }]} />
-          </div>
-        </PopoverPanel>
-      )}
-    </div>
-  );
-}

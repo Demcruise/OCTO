@@ -64,6 +64,18 @@ function Palette({ onClose }: { onClose: () => void }) {
         run: go(`/app/investments?focus=${i.id}`),
       })),
       ...DEALS.map((d) => ({ id: d.id, group: "Records" as const, label: d.company, hint: `Deal · ${d.stage}`, keywords: `${d.sector} ${d.owner}`, icon: <BookOpen />, run: go(`/app/deals/${d.id.toLowerCase()}`) })),
+      // Documents (V2 TOP-003): the vault documents each company dossier exposes.
+      ...COMPANIES.filter((c) => c.status !== "Exited").flatMap((c) =>
+        ["Q3 management accounts", "Q3 compliance certificate", "Board pack — September"].map((d, k) => ({
+          id: `${c.id}-DOC-${k + 1}`,
+          group: "Records" as const,
+          label: `${d} · ${c.name}`,
+          hint: "Document",
+          keywords: "document file pdf vault",
+          icon: <FileText />,
+          run: go(`/app/companies/${c.id.toLowerCase()}?tab=documents`),
+        })),
+      ),
       ...REPORTS.map((r) => ({ id: r.id, group: "Records" as const, label: r.name, hint: `Report · ${r.status}`, icon: <FileText />, run: go(`/app/reports/${r.id.toLowerCase()}`) })),
       ...TASKS.map((t) => ({ id: t.id, group: "Records" as const, label: t.title, hint: `Task · ${t.status}`, icon: <ListTodo />, run: go(`/app/workflows?tab=tasks`) })),
       ...APPROVALS.map((a) => ({ id: a.id, group: "Records" as const, label: a.title, hint: `Approval · due ${a.due}`, icon: <ListTodo />, run: go(`/app/workflows?tab=approvals&id=${a.id}`) })),
@@ -145,7 +157,7 @@ function Palette({ onClose }: { onClose: () => void }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search funds, companies, deals, reports, actions…"
+            placeholder="Search entities, pages, reports, workflows, documents…"
             className="h-12 flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-4 focus:outline-none"
           />
           <Kbd>Esc</Kbd>

@@ -247,7 +247,7 @@ export function ControlCenter() {
           <Panel className="xl:col-span-4">
             <PanelHead title="Recent activity" icon={<History />} />
             <PanelBody>
-              <ActivityTimeline items={ACTIVITY.map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, state: a.state }))} />
+              <ActivityTimeline now={now} items={ACTIVITY.map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, state: a.state }))} />
             </PanelBody>
           </Panel>
         </div>

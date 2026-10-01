@@ -29,6 +29,8 @@ export type Metric = {
   comparison: string;
   /** Whether an increase is good. Undefined = neutral (e.g. counts of work). */
   upIsGood?: boolean;
+  /** Explicit business meaning of this period's change; wins over sign inference (V2 CC-003). */
+  trend?: "positive" | "negative" | "neutral";
   spark?: number[];
   href?: string;
   provenance: Provenance;
@@ -44,6 +46,7 @@ const cost = PORTFOLIO.invested;
 export const PORTFOLIO_METRICS: Metric[] = [
   {
     id: "nav",
+    trend: "positive",
     label: "Total NAV",
     value: PORTFOLIO.nav,
     format: "money",
@@ -65,6 +68,7 @@ export const PORTFOLIO_METRICS: Metric[] = [
   },
   {
     id: "irr",
+    trend: "negative",
     label: "Net IRR",
     value: PORTFOLIO.netIrr,
     format: "pct",
@@ -88,6 +92,7 @@ export const PORTFOLIO_METRICS: Metric[] = [
   },
   {
     id: "tvpi",
+    trend: "positive",
     label: "TVPI",
     value: PORTFOLIO.tvpi,
     format: "multiple",
@@ -111,6 +116,7 @@ export const PORTFOLIO_METRICS: Metric[] = [
   },
   {
     id: "dpi",
+    trend: "positive",
     label: "DPI",
     value: PORTFOLIO.dpi,
     format: "multiple",
@@ -133,6 +139,7 @@ export const PORTFOLIO_METRICS: Metric[] = [
   },
   {
     id: "invested",
+    trend: "positive",
     label: "Invested capital",
     value: cost,
     format: "money",
@@ -152,6 +159,7 @@ export const PORTFOLIO_METRICS: Metric[] = [
   },
   {
     id: "dry",
+    trend: "negative",
     label: "Dry powder",
     value: PORTFOLIO.dryPowder,
     format: "money",

@@ -161,16 +161,16 @@
     --color-hover: #f5f7fa;
     --color-head: #f9fafb;
     --color-canvas: #ffffff;
-    /* DS-003 borders: primary #e5e7eb · subtle #eef1f4 · controls one step stronger. */
-    --color-line: #e5e7eb;
-    --color-line-subtle: #eef1f4;
-    --color-line-strong: #d1d5db;
-    --color-chart-grid: #eef1f4;
+    /* V2 DS-003 borders: default #e2e8f0 · subtle #eef2f7 · strong #cbd5e1 (controls, hover). */
+    --color-line: #e2e8f0;
+    --color-line-subtle: #eef2f7;
+    --color-line-strong: #cbd5e1;
+    --color-chart-grid: #eef2f7;
     /* Text steps are darker than Vestra's slate so 11px text keeps 4.5:1 on tinted surfaces (axe). */
-    --color-ink: #020617;
-    --color-ink-2: #334155;
+    --color-ink: #0f172a;
+    --color-ink-2: #475569;
     --color-ink-3: #526072;
-    --color-ink-4: #667085;
+    --color-ink-4: #64748b;
 
     /* accent = text/border/ring · accent-fill = solid fills under white text · accent-ink = text on accent-soft. */
     --color-accent: #2563eb;

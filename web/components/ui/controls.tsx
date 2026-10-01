@@ -60,8 +60,9 @@ export function Tabs<T extends string>({
             "flex shrink-0 cursor-pointer items-center gap-1.5 text-[13px] font-medium transition-colors duration-150 disabled:cursor-default disabled:text-ink-4",
             variant === "underline" && "-mb-px border-b-2",
             variant === "underline" && (t.value === value ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink"),
-            variant === "pill" && "h-8 whitespace-nowrap rounded-full border px-3",
-            variant === "pill" && (t.value === value ? "border-accent-line bg-accent-soft font-semibold text-accent-ink" : "border-line bg-surface text-ink-2 hover:bg-hover hover:text-ink"),
+            /* V2 PQ-001/002: 6px radius; active = light blue fill, blue text, blue border. */
+            variant === "pill" && "h-8 whitespace-nowrap rounded-sm border px-3",
+            variant === "pill" && (t.value === value ? "border-accent/60 bg-accent-soft font-semibold text-accent-ink" : "border-line bg-surface text-ink-2 hover:border-line-strong hover:bg-hover hover:text-ink"),
             variant === "pill" ? ring : ringInset,
           )}
         >

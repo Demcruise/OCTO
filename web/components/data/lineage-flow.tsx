@@ -7,7 +7,7 @@ import { ringInset } from "@/components/ui/button";
 
 const NODE_H = 48;
 const GAP = 8;
-const HEAD = 28;
+const HEAD = 64;
 
 /**
  * Lineage flow (LIN-001). Equal-width layer columns with equal-height nodes;
@@ -15,7 +15,7 @@ const HEAD = 28;
  * Services → MAP-114 cash → Transaction ledger → Fund NAV v2.1) joined by
  * connectors. Picking any node re-routes the path through that layer.
  */
-export function LineageFlow({ layers, label, initialPath }: { layers: { layer: string; nodes: string[] }[]; label: string; initialPath?: number[] }) {
+export function LineageFlow({ layers, label, initialPath }: { layers: { layer: string; about?: string; nodes: string[] }[]; label: string; initialPath?: number[] }) {
   const [path, setPath] = useState<number[]>(initialPath ?? layers.map(() => 0));
   const y = (i: number) => HEAD + i * (NODE_H + GAP) + NODE_H / 2;
   const rows = Math.max(...layers.map((l) => l.nodes.length));
@@ -69,12 +69,15 @@ export function LineageFlow({ layers, label, initialPath }: { layers: { layer: s
   );
 }
 
-function Column({ layer, li, selected, onPick }: { layer: { layer: string; nodes: string[] }; li: number; selected: number; onPick: (i: number) => void }) {
+function Column({ layer, li, selected, onPick }: { layer: { layer: string; about?: string; nodes: string[] }; li: number; selected: number; onPick: (i: number) => void }) {
   return (
     <div className="min-w-0">
-      <p className="flex items-center text-label uppercase text-ink-4" style={{ height: HEAD - 8, marginBottom: 8 }}>
-        {li + 1}. {layer.layer}
-      </p>
+      <div className="overflow-hidden" style={{ height: HEAD - 8, marginBottom: 8 }}>
+        <p className="text-label uppercase text-ink-4">
+          {li + 1}. {layer.layer}
+        </p>
+        {layer.about && <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-3">{layer.about}</p>}
+      </div>
       <ul className="flex flex-col" style={{ gap: GAP }} aria-label={layer.layer}>
         {layer.nodes.map((n, ni) => {
           const on = ni === selected;

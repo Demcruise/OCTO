@@ -1,27 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, Plus } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, Bookmark, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
-import { ALLOCATION, AS_OF, BRIDGE, EXPOSURE_CHANGE, INVESTMENTS, MONTHS_6, NAV_SERIES, PORTFOLIO_METRICS, RISK_RETURN, SECTOR_HEAT, companyById, investmentMoic, type Metric } from "@/lib/demo";
+import { ALLOCATION, AS_OF, BRIDGE, EXPOSURE_CHANGE, INVESTMENTS, MONTHS_6, NAV_SERIES, PORTFOLIO_METRICS, RISK_PROFILE, SECTOR_HEAT, companyById, investmentMoic, type Metric } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { TrendChart } from "@/components/chart/line-chart";
 import { NavChart } from "@/components/chart/nav-chart";
 import { WaterfallChart } from "@/components/chart/waterfall-chart";
-import { ScatterChart } from "@/components/chart/scatter-chart";
+import { RiskReturnChart } from "@/components/chart/risk-return";
 import { Heatmap } from "@/components/chart/heatmap";
 import { RankingBars } from "@/components/chart/bar-chart";
 import { Legend } from "@/components/chart/core";
 import { LineageDrawer } from "@/components/metric/metric-lineage";
 import { useMetricValue } from "@/components/metric/metric-card";
-import { Button, ringInset } from "@/components/ui/button";
+import { Button, LinkButton, ringInset } from "@/components/ui/button";
+import { Sheet } from "@/components/ui/overlay";
 import { Segmented, Select } from "@/components/ui/controls";
 import { FreshnessBadge, useToast } from "@/components/feedback";
 import { useBreadcrumb } from "@/components/shell/shell-context";
+
+const HURDLE = 15;
 
 type MetricKey = "nav" | "irr" | "tvpi" | "dpi" | "moic";
 
@@ -46,7 +49,6 @@ const SAVED = [
  */
 export function AnalyticsView() {
   const f = useFormat();
-  const router = useRouter();
   const params = useSearchParams();
   const toast = useToast();
   const fmtMetric = useMetricValue();
@@ -76,7 +78,10 @@ export function AnalyticsView() {
     </Select>
   );
 
-  const points = RISK_RETURN.map((p) => ({ ...p, label: p.label }));
+  const [rrFilter, setRrFilter] = useState({ fund: "", sector: "", vintage: "", strategy: "" });
+  const rr = RISK_PROFILE.filter((p) => (!rrFilter.fund || p.fund === rrFilter.fund) && (!rrFilter.sector || p.sector === rrFilter.sector) && (!rrFilter.vintage || String(p.vintage) === rrFilter.vintage) && (!rrFilter.strategy || p.strategy === rrFilter.strategy));
+  const sel = RISK_PROFILE.find((p) => p.id === selected) ?? null;
+  const selInv = sel ? INVESTMENTS.find((i) => i.id === sel.id) : undefined;
   const focus = compare.length ? INVESTMENTS.filter((inv) => compare.includes(inv.id)) : [];
 
   return (
@@ -172,22 +177,49 @@ export function AnalyticsView() {
           </Panel>
         )}
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-          <ChartShell title="Value creation bridge" subtitle="Q3 opening to closing NAV, $M · axis starts above zero" height={260} exportData={{ filename: "bridge", head: ["Step", "$M"], rows: BRIDGE.map((b) => [b.label, b.value]) }}>
-            <WaterfallChart data={BRIDGE} label="Q3 value creation bridge" format={(v) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(1)}M`} />
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+          <ChartShell
+            className="xl:col-span-5"
+            title="Value creation bridge"
+            subtitle="Q3: opening $787.0M + $42.0M calls − $31.8M distributions + $17.4M valuation − $2.2M FX = closing $812.4M"
+            legend={<Legend items={[{ label: "Opening / closing", color: "var(--color-mark-neutral)" }, { label: "Increase", color: "var(--color-gain)" }, { label: "Decrease", color: "var(--color-loss)" }]} />}
+            height={320}
+            expandable={false}
+            exportData={{ filename: "bridge", head: ["Step", "$M"], rows: BRIDGE.map((b) => [b.label, b.value]) }}
+          >
+            <WaterfallChart data={BRIDGE} label="Q3 value creation bridge" format={(v) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(1)}M`} axisFormat={(v) => `$${Math.round(v)}M`} />
           </ChartShell>
-          <ChartShell title="Risk vs return" subtitle="Gross IRR vs MOIC, bubble = fair value; dashed lines = 15% hurdle and 1.0×" height={260} exportData={{ filename: "risk-return", head: ["Investment", "IRR %", "MOIC", "Group"], rows: points.map((p) => [p.label, p.x, p.y.toFixed(2), p.group]) }}>
-            <ScatterChart points={points} xLabel="IRR" yLabel="MOIC" formatX={(v) => f.pct(v, 0)} formatY={(v) => f.multiple(v)} formatR={(v) => f.money(v)} label="Risk vs return by position" refX={15} refY={1} onSelect={(p) => setSelected(p.id)} />
+          <ChartShell
+            className="xl:col-span-7"
+            title="Risk vs return"
+            subtitle={`${rr.length} of ${RISK_PROFILE.length} positions · gross IRR vs volatility of marks (demo) · dashed lines: median risk and ${HURDLE}% hurdle`}
+            toolbar={
+              <>
+                {(
+                  [
+                    ["fund", "Fund", "funds", [...new Set(RISK_PROFILE.map((p) => p.fund))]],
+                    ["sector", "Sector", "sectors", [...new Set(RISK_PROFILE.map((p) => p.sector))].sort()],
+                    ["vintage", "Vintage", "vintages", [...new Set(RISK_PROFILE.map((p) => String(p.vintage)))].sort()],
+                    ["strategy", "Strategy", "strategies", [...new Set(RISK_PROFILE.map((p) => p.strategy))]],
+                  ] as const
+                ).map(([key, name, plural, opts]) => (
+                  <Select key={key} aria-label={name} value={rrFilter[key]} onChange={(e) => setRrFilter((s) => ({ ...s, [key]: e.target.value }))} className="w-32 [&_select]:text-[12px]">
+                    <option value="">All {plural}</option>
+                    {opts.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </Select>
+                ))}
+              </>
+            }
+            height={320}
+            exportData={{ filename: "risk-return", head: ["Company", "Fund", "Risk %", "Return %", "Fair value"], rows: rr.map((p) => [p.company, p.fund, p.risk, p.ret, Math.round(p.fv)]) }}
+          >
+            {({ expanded }) => <RiskReturnChart key={String(expanded)} points={rr} hurdle={HURDLE} money={(v) => f.money(v)} label="Risk vs return by position" onSelect={(p) => setSelected(p.id)} />}
           </ChartShell>
         </div>
-        {selected && (
-          <p className="text-[12px] text-ink-3">
-            Selected {RISK_RETURN.find((p) => p.id === selected)?.label}.{" "}
-            <button type="button" className="cursor-pointer font-medium text-accent hover:underline" onClick={() => router.push(`/app/investments?focus=${selected}`)}>
-              Open position
-            </button>
-          </p>
-        )}
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
           <Panel className="xl:col-span-7">
@@ -205,6 +237,40 @@ export function AnalyticsView() {
         </div>
       </PageBody>
 
+      <Sheet open={!!sel} onClose={() => setSelected(null)} eyebrow={sel ? `Position · ${sel.id}` : ""} title={sel?.company ?? ""}
+        footer={
+          sel && (
+            <div className="flex flex-wrap justify-end gap-2">
+              <LinkButton href={`/app/investments?focus=${sel.id}`}>Open position</LinkButton>
+              <LinkButton variant="primary" href={`/app/companies/${sel.companyId.toLowerCase()}`}>
+                Open company <ArrowRight />
+              </LinkButton>
+            </div>
+          )
+        }
+      >
+        {sel && (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-[13px]">
+            {[
+              ["Fund", sel.fund],
+              ["Sector", sel.sector],
+              ["Instrument", sel.instrument],
+              ["Vintage", String(sel.vintage)],
+              ["Return (gross IRR)", f.pct(sel.ret)],
+              ["Risk (volatility, demo)", `${sel.risk.toFixed(1)}%`],
+              ["Fair value", f.money(sel.fv)],
+              ["MOIC", selInv ? f.multiple(investmentMoic(selInv)) : "—"],
+              ["Quadrant", `${sel.risk <= [...RISK_PROFILE].sort((a, b) => a.risk - b.risk)[Math.floor(RISK_PROFILE.length / 2)].risk ? "Low" : "High"} risk · ${sel.ret >= HURDLE ? "high" : "low"} return`],
+              ["Mark status", selInv?.riskStatus ?? "—"],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-[12px] text-ink-3">{k}</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-ink">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </Sheet>
       <LineageDrawer open={!!lineage} onClose={() => setLineage(null)} title={lineage?.label ?? ""} value={lineage ? fmtMetric(lineage) : ""} provenance={lineage?.provenance ?? null} />
     </>
   );

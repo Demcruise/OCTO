@@ -113,11 +113,11 @@ export function WorkItem({
       <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
         {secondary}
         {href ? (
-          <LinkButton href={href} size="sm" variant={severity === "critical" ? "primary" : "secondary"}>
+          <LinkButton href={href} size="sm" variant="secondary">
             {action}
           </LinkButton>
         ) : (
-          <Button size="sm" variant={severity === "critical" ? "primary" : "secondary"} onClick={onAction}>
+          <Button size="sm" variant="secondary" onClick={onAction}>
             {action}
           </Button>
         )}

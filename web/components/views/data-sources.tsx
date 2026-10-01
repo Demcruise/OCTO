@@ -22,6 +22,14 @@ import { FreshnessBadge, InlineAlert, useToast } from "@/components/feedback";
 import { ObjectMetadata } from "@/components/object/object";
 import { useBreadcrumb } from "@/components/shell/shell-context";
 
+/** What each lineage layer means (V2 DATA-003). */
+const LAYER_ABOUT: Record<string, string> = {
+  Sources: "The original incoming record from an administrator, custodian or feed.",
+  Mappings: "The rule that translates that record into OCTO's model.",
+  IBOR: "The governed book of record, derived from the transaction ledger.",
+  Metrics: "The reported value, with a versioned definition.",
+};
+
 type Tab = "sources" | "health" | "mappings" | "lineage";
 const now = new Date(DEMO_NOW);
 const STATUS_TONE: Record<DataSource["status"], Tone> = { Healthy: "ok", Delayed: "warn", Failed: "danger", Paused: "neutral" };
@@ -82,7 +90,7 @@ export function DataSourcesView() {
         variant="list"
         eyebrow="System"
         title="Data & Sources"
-        description="See where each OCTO number comes from — connected sources, ingestion health, mappings into the IBOR, and lineage to every metric."
+        description="See where OCTO numbers come from: connected sources, ingestion health, mappings into the IBOR, and lineage to every metric."
         meta={<FreshnessBadge state="demo" asOf={`checked ${f.time(DEMO_NOW)}`} />}
         tabs={<Tabs<Tab> label="Data sections" value={tab} onChange={(t) => nav(t === "sources" ? "" : `tab=${t}`)} variant="pill" className="pb-3" items={[{ value: "sources", label: "Sources", count: sources.length }, { value: "health", label: "Ingestion health" }, { value: "mappings", label: "Mappings", count: MAPPINGS.length }, { value: "lineage", label: "Lineage" }]} />}
       />
@@ -118,7 +126,7 @@ export function DataSourcesView() {
           <Panel>
             <PanelHead title="NAV lineage" description="Every reported NAV traces back through mappings and the IBOR to a source record." />
             <PanelBody>
-              <LineageFlow layers={NAV_LINEAGE} label="NAV lineage from source to metric" />
+              <LineageFlow layers={NAV_LINEAGE.map((l) => ({ ...l, about: LAYER_ABOUT[l.layer] }))} label="NAV lineage from source to metric" />
             </PanelBody>
           </Panel>
         )}
