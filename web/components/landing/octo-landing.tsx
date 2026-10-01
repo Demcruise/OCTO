@@ -1,70 +1,58 @@
-import { LandingNavigation } from "./landing-navigation";
+"use client";
+
+import { cn } from "@/lib/utils";
+import { display, serif } from "./fonts";
+import { AnnouncementBar, OctoHeader } from "./octo-header";
 import { Hero } from "./hero";
-import { AskOcto } from "./ask-octo";
-import { SourceNetwork } from "./source-network";
-import { PlatformArchitecture } from "./platform-architecture";
-import { OntologySection } from "./ontology-section";
-import { ObjectGraph } from "./object-graph";
-import { InvestmentObjectView } from "./investment-object-view";
-import { IborShowcase } from "./ibor-showcase";
-import { DecisionArchitecture } from "./decision-architecture";
-import { AnalyticsShowcase } from "./analytics-showcase";
-import { AiContext } from "./ai-context";
-import { GovernedAI } from "./governed-ai";
-import { InvestmentWorkflow } from "./investment-workflow";
-import { ControlPanel } from "./control-panel";
-import { ExceptionQueue } from "./exception-queue";
-import { Lineage } from "./lineage";
-import { Governance } from "./governance";
-import { Deployment } from "./deployment";
-import { CapabilityIndex } from "./capability-index";
-import { Editorial } from "./editorial";
-import { Cta } from "./cta";
-import { Contact } from "./contact";
+import { FeaturedStories } from "./featured-stories";
+import { OctoSystem } from "./octo-system";
+import { FragmentedTruth } from "./fragmented-truth";
+import { FutureEditorial } from "./future-editorial";
+import { FromDataToDecision } from "./from-data-to-decision";
+import { FinalCTA } from "./final-cta";
 import { Footer } from "./footer";
+import { MOTION_GATE_SCRIPT, useMotionGate } from "./motion/anime";
+import { landingSections, type LandingSection } from "./sections";
 
 /**
- * OCTO landing page (PAL-046, PAL-050).
- *
- * Rhythm: editorial statement → system visualization → product interface →
- * architecture → proof → workflow → governance → conversion. Dark sections carry
- * system diagrams; light sections carry product surfaces.
+ * The registry is typed by `LandingSection`: adding a component here without
+ * adding its key to `landingSections` (or vice versa) fails type-checking, so
+ * the page cannot silently grow a ninth primary section (megaplan §00A).
+ */
+const SECTIONS: Record<LandingSection, React.ComponentType> = {
+  hero: Hero,
+  featured: FeaturedStories,
+  "octo-system": OctoSystem,
+  "fragmented-truth": FragmentedTruth,
+  future: FutureEditorial,
+  "from-data-to-decision": FromDataToDecision,
+  cta: FinalCTA,
+  footer: Footer,
+};
+
+/**
+ * OCTO homepage — Ondo-inspired institutional rhythm, light theme only,
+ * Anime.js V4 motion, exactly eight primary sections.
  */
 export function OctoLanding() {
+  useMotionGate();
+  const body = landingSections.filter((s) => s !== "footer");
+  const FooterSection = SECTIONS.footer;
   return (
-    <div className="landing bg-canvas font-landing text-ink">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:text-void"
-      >
+    <div id="top" className={cn("landing min-h-dvh bg-octo-bg font-o-display text-octo-ink antialiased [color-scheme:light]", display.variable, serif.variable)}>
+      <script dangerouslySetInnerHTML={{ __html: MOTION_GATE_SCRIPT }} />
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-octo-ink focus:px-3 focus:py-2 focus:text-sm focus:text-white">
         Skip to content
       </a>
-      <LandingNavigation />
+      <AnnouncementBar />
+      <OctoHeader />
       <main id="main">
-        <Hero />
-        <AskOcto />
-        <SourceNetwork />
-        <PlatformArchitecture />
-        <OntologySection />
-        <ObjectGraph />
-        <InvestmentObjectView />
-        <IborShowcase />
-        <DecisionArchitecture />
-        <AnalyticsShowcase />
-        <AiContext />
-        <GovernedAI />
-        <InvestmentWorkflow />
-        <ControlPanel />
-        <ExceptionQueue />
-        <Lineage />
-        <Governance />
-        <Deployment />
-        <CapabilityIndex />
-        <Editorial />
-        <Cta />
-        <Contact />
+        {body.map((key) => {
+          const Component = SECTIONS[key];
+          return <Component key={key} />;
+        })}
       </main>
-      <Footer />
+      <FooterSection />
     </div>
   );
 }
