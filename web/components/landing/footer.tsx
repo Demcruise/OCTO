@@ -1,52 +1,82 @@
 "use client";
 
+import { useRef } from "react";
 import { ArrowRight } from "lucide-react";
-import { CTA_HREF, FOOTER, SIGN_IN_HREF } from "@/lib/landing-content";
-import { Container } from "./primitives";
-import { OctoWordmark } from "./landing-navigation";
+import { cn } from "@/lib/utils";
+import { FOOTER, LEGAL, PERSPECTIVE } from "./content";
+import { OctoMark } from "./octo-header";
+import { useAnimeScope } from "./motion/anime";
+import { revealOnView, revealTimeline } from "./motion/timelines";
+import { Container, Eyebrow, focusRing } from "./ui";
 
-const ring = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-light focus-visible:ring-offset-2 focus-visible:ring-offset-void";
-
-/** Dense near-black enterprise directory (PAL-031). Real anchors and routes only. */
+/**
+ * 08 FOOTER (megaplan §12, §14): The OCTO Perspective as short editorial
+ * links, then navigation and legal. Perspective lives here — not as a
+ * ninth section.
+ */
 export function Footer() {
+  const root = useRef<HTMLDivElement>(null);
+  useAnimeScope(root, ({ reduced }) => {
+    const el = root.current!;
+    return revealOnView(el, reduced, () => revealTimeline(el, reduced), el, "[data-anim='reveal']");
+  });
+
   return (
-    <footer className="border-t border-night-line bg-void text-white">
-      <Container className="py-14 md:py-20">
-        <div className="flex flex-col justify-between gap-8 border-b border-night-line pb-12 md:flex-row md:items-end">
-          <div>
-            <OctoWordmark />
-            <p className="mt-5 max-w-sm text-2xl font-medium leading-snug tracking-tight">Private-markets investment infrastructure.</p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <a href={CTA_HREF} className={`inline-flex h-11 items-center justify-center gap-2 rounded-sm bg-white px-5 text-sm font-medium text-void hover:bg-subtle ${ring}`}>
-              Request access <ArrowRight aria-hidden className="size-4" />
-            </a>
-            <a href={SIGN_IN_HREF} className={`inline-flex h-11 items-center justify-center rounded-sm border border-night-line px-5 text-sm font-medium hover:border-white/40 ${ring}`}>
-              Sign in
-            </a>
-          </div>
-        </div>
-        <nav aria-label="Footer" className="grid grid-cols-2 gap-x-8 gap-y-10 pt-12 sm:grid-cols-3 lg:grid-cols-6">
-          {FOOTER.map((group) => (
-            <div key={group.label}>
-              <p className="font-data text-meta uppercase text-fog">{group.label}</p>
-              <ul className="mt-4 space-y-1">
-                {group.links.map((link) => (
-                  <li key={link.title}>
-                    <a href={link.href} className={`inline-flex min-h-8 items-center text-[13px] text-white/80 hover:text-white ${ring}`}>
-                      {link.title}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+    <footer id="footer" data-landing-section="footer" aria-label="Footer" className="border-t border-octo-border bg-octo-surface pb-10 pt-16 md:pt-[100px]">
+      <div ref={root}>
+        <Container>
+          <div id="perspective" className="grid grid-cols-4 gap-x-5 gap-y-6 md:grid-cols-12 md:gap-x-[30px]">
+            <div className="col-span-4">
+              <Eyebrow anim="reveal">{PERSPECTIVE.title}</Eyebrow>
             </div>
-          ))}
-        </nav>
-        <div className="mt-14 flex flex-col gap-2 border-t border-night-line pt-6 font-data text-[11px] uppercase tracking-[0.1em] text-fog sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} OCTO</p>
-          <p>One database · One system · One process</p>
-        </div>
-      </Container>
+            <ul className="col-span-4 md:col-span-8">
+              {PERSPECTIVE.links.map((l) => (
+                <li key={l.label} data-anim="reveal">
+                  <a href={l.href} className={cn("group flex items-center justify-between gap-4 border-t border-octo-border py-5 font-o-serif text-[22px] leading-snug text-octo-ink transition-colors hover:text-octo-accent-ink md:text-[28px]", focusRing)}>
+                    {l.label}
+                    <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform duration-200 group-hover:translate-x-1" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-16 grid grid-cols-2 gap-x-5 gap-y-10 border-t border-octo-border pt-12 md:mt-24 md:grid-cols-12 md:gap-x-[30px]">
+            <div data-anim="reveal" className="col-span-2 md:col-span-4">
+              <a href="#top" className={cn("inline-flex items-center gap-2 rounded-sm text-octo-ink", focusRing)} aria-label="OCTO home">
+                <OctoMark />
+                <span className="font-o-display text-[17px] font-medium tracking-[0.14em]">OCTO</span>
+              </a>
+              <p className="mt-4 max-w-xs font-o-serif text-[16px] text-octo-text-muted">Private markets infrastructure. One governed system for every investment decision.</p>
+            </div>
+            {FOOTER.map((col) => (
+              <nav key={col.title} data-anim="reveal" aria-label={col.title} className="md:col-span-2">
+                <p className="font-data text-o-label uppercase text-octo-text-muted">{col.title}</p>
+                <ul className="mt-4 space-y-2.5">
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <a href={l.href} className={cn("rounded-sm text-[15px] text-octo-ink hover:underline", focusRing)}>
+                        {l.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))}
+          </div>
+
+          <div className="mt-14 flex flex-col gap-3 border-t border-octo-border pt-6 text-[13px] text-octo-text-muted md:flex-row md:items-center md:justify-between">
+            <p>© 2026 OCTO. Figures on this page are demo data.</p>
+            <ul className="flex gap-5" aria-label="Legal">
+              {LEGAL.map((l) => (
+                <li key={l} title="Shared on request during onboarding">
+                  {l}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Container>
+      </div>
     </footer>
   );
 }

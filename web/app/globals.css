@@ -223,29 +223,91 @@
     }
 }
 
-/* Low-radius geometry for the landing only (PAL-005); /app keeps Tailwind defaults. */
-.landing {
-    --radius-sm: 2px;
-    --radius-md: 3px;
-    --radius-lg: 4px;
-    --radius-xl: 4px;
-    --radius-2xl: 6px;
+/*
+ * OCTO landing tokens — Ondo-inspired, light only (megaplan §24–27).
+ * One source of truth: every landing colour comes from --color-octo-*.
+ */
+@theme {
+    --color-octo-bg: #ffffff;
+    --color-octo-surface: #f9f9f9;
+    --color-octo-muted: #f3f3f3;
+    --color-octo-ink: #1e2124;
+    --color-octo-text-muted: #636363;
+    --color-octo-text-light: #6b6b6b; /* plan #767676 is 4.3:1 on the #f9f9f9 surface; darkened for AA */
+    --color-octo-border: rgb(30 33 36 / 0.16);
+    --color-octo-hairline: rgb(30 33 36 / 0.09);
+    --color-octo-accent: #6d45ff;
+    --color-octo-accent-ink: #5530e6;
+    --color-octo-error: #ff4136;
+    --color-octo-notice: #368cff;
+
+    --color-octo-data-default: #a7b6c2;
+    --color-octo-data-blue: #147eb3;
+    --color-octo-data-green: #29a634;
+    --color-octo-data-amber: #d1980b;
+    --color-octo-data-red: #d13913;
+    --color-octo-data-violet: #634dbf;
+    --color-octo-data-orange: #d17e09;
+    --color-octo-data-crimson: #9f1239;
+    --color-octo-data-teal: #00a396;
+    --color-octo-data-deep-violet: #5642a6;
+    --color-octo-data-olive: #728c23;
+
+    /* Type (§25): display 64–100 / section 40–68, both weight 400. */
+    --text-o-display: clamp(3rem, 1.55rem + 5.4vw, 6.25rem);
+    --text-o-display--line-height: 0.98;
+    --text-o-display--letter-spacing: -0.035em;
+    --text-o-section: clamp(2.5rem, 1.75rem + 2.9vw, 4.25rem);
+    --text-o-section--line-height: 1.02;
+    --text-o-section--letter-spacing: -0.03em;
+    --text-o-title: clamp(1.75rem, 1.35rem + 1.3vw, 2.5rem);
+    --text-o-title--line-height: 1.08;
+    --text-o-title--letter-spacing: -0.025em;
+    --text-o-lead: clamp(1.125rem, 1.02rem + 0.35vw, 1.3125rem);
+    --text-o-lead--line-height: 1.45;
+    --text-o-label: 0.625rem;
+    --text-o-label--line-height: 0.875rem;
+    --text-o-label--letter-spacing: 0.12em;
+
+    --ease-o-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
     --font-landing: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     --font-data: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+    --font-o-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    --font-o-serif: var(--font-newsreader), ui-serif, Georgia, serif;
 }
 
-/* Anchor targets clear the sticky 64px header. */
+/* Ondo's soft geometry: 8px controls, 16–24px media frames. */
+.landing {
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-3xl: 24px;
+}
+
+/* Anchor targets clear the sticky header. */
 .landing [id] {
-    scroll-margin-top: 4.5rem;
+    scroll-margin-top: 5.5rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
     html:has(.landing) {
         scroll-behavior: smooth;
     }
+}
+
+/*
+ * Motion gate (§23). An inline script adds .o-motion before paint only when
+ * the viewer allows motion; elements marked data-anim start hidden and
+ * Anime.js reveals them. Without the class (reduced motion, no JS, or the
+ * 4s safety timeout) everything renders in its final state.
+ */
+.o-motion .landing [data-anim] {
+    opacity: 0;
 }
 
 /* Horizontal strips (tabs, data rows) scroll on small screens without a visible bar. */

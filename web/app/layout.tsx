@@ -32,7 +32,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <body className="bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-white">
         {children}
       </body>
