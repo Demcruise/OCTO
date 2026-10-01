@@ -54,7 +54,7 @@ export function WorkflowStepper({ steps }: { steps: { label: string; state: "don
           <span
             className={cn(
               "flex size-5 items-center justify-center rounded-full border text-[10px] font-semibold",
-              s.state === "done" && "border-ok bg-ok text-white",
+              s.state === "done" && "border-mark-ok bg-mark-ok text-white",
               s.state === "current" && "border-accent bg-accent-soft text-accent-ink",
               s.state === "todo" && "border-line-strong text-ink-4",
             )}

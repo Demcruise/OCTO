@@ -139,7 +139,7 @@ export function ReportDetail({ id }: { id: string }) {
         }
       />
 
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <Facts report={report} fund={fund} />
 
         {report.status === "Archived" && <InlineAlert tone="restricted" title="Archived · read-only">Kept for the audit trail. Figures are frozen at publication and are not refreshed.</InlineAlert>}
@@ -370,13 +370,13 @@ export function ReportReview({ report, fund }: { report: Report; fund?: Fund }) 
       </section>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <NavChart className="xl:col-span-7" title="Performance" points={points} benchmark={!fund} height={240} />
+        <NavChart className="xl:col-span-7" title="Performance" points={points} benchmark={!fund} height={360} />
         <ChartShell
           className="xl:col-span-5"
           title="Attribution"
           subtitle="Opening + calls − distributions ± valuation ± FX = closing"
           legend={<Legend items={[{ label: "Opening / closing", color: "var(--color-mark-neutral)" }, { label: "Increase", color: "var(--color-gain)" }, { label: "Decrease", color: "var(--color-loss)" }]} />}
-          height={240}
+          height={360}
           expandable={false}
         >
           <WaterfallChart data={bridge} label={`${report.name} attribution`} format={fmtM} axisFormat={(v) => `$${Math.round(v)}M`} />

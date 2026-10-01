@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Check, Copy, KeyRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
-import { usePreferences, type Density, type Locale } from "@/lib/preferences";
+import { usePreferences, type Density, type Locale, type Theme } from "@/lib/preferences";
 import { useWorkspace } from "@/lib/workspace";
 import { AUDIT, DEMO_NOW, ROLES, SOURCES, USERS } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
@@ -131,9 +131,10 @@ function SectionBody({ section }: { section: Section }) {
     case "appearance":
       return (
         <Panel>
-          <PanelHead title="Display" description="Applies across every page, on this browser. OCTO uses a light theme." />
+          <PanelHead title="Display" description="Applies across every page, on this browser." />
           <PanelBody>
-            <Row title="Density" body="Compact rows are 44px; comfortable rows are 52px. Every table follows this." control={<Segmented<Density> label="Density" value={prefs.density} onChange={prefs.setDensity} items={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfortable" }]} />} />
+            <Row title="Theme" body="Light is the default. System follows this device's setting. Also in the top bar." control={<Segmented<Theme> label="Theme" value={prefs.theme} onChange={prefs.setTheme} items={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }, { value: "system", label: "System" }]} />} />
+            <Row title="Density" body="Compact rows are 56px; comfortable rows are 64px. Every table follows this." control={<Segmented<Density> label="Density" value={prefs.density} onChange={prefs.setDensity} items={[{ value: "compact", label: "Compact" }, { value: "comfortable", label: "Comfortable" }]} />} />
             <Row title="Number & date format" body={`Preview: ${f.money(812.4e6)} · ${f.pct(18.2)} · ${f.dateTime(DEMO_NOW)}`} control={<Segmented<Locale> label="Language" value={prefs.locale} onChange={prefs.setLocale} items={[{ value: "en", label: "English" }, { value: "id", label: "Bahasa Indonesia" }]} />} />
             <Row title="Collapsed sidebar" body="Toggle any time with [" control={<Switch checked={prefs.sidebarCollapsed} onChange={prefs.setSidebarCollapsed} label="Collapsed sidebar" />} />
           </PanelBody>

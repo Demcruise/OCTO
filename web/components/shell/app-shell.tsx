@@ -93,7 +93,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar onOpenDrawer={() => setDrawerOpen(true)} onShortcuts={() => setShortcutsOpen(true)} />
+        <Topbar onOpenDrawer={() => setDrawerOpen(true)} />
         <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto focus:outline-none">
           {children}
         </main>

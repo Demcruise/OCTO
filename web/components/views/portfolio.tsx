@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertOctagon, ArrowDownRight, ArrowUpRight, Boxes, GitCompareArrows, Hourglass, Landmark, Newspaper, PieChart, Scale, ShieldCheck, Target, TrendingUp } from "lucide-react";
@@ -42,7 +43,7 @@ import { DonutChart } from "@/components/chart/donut-chart";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { DeltaCell, EntityCell, NumericCell, SparklineCell, StatusCell } from "@/components/data/cells";
 import { LinkButton } from "@/components/ui/button";
-import { EntityChip, Monogram, Tag, type Tone } from "@/components/ui/badge";
+import { Monogram, Tag, type Tone } from "@/components/ui/badge";
 import { Segmented, Select, Tabs } from "@/components/ui/controls";
 import { FreshnessBadge } from "@/components/feedback";
 import { useBreadcrumb } from "@/components/shell/shell-context";
@@ -174,7 +175,7 @@ export function PortfolioView() {
           </>
         }
       />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <MetricGrid cols={6}>
           {strip.map(({ m, icon }) => (
             <MetricCard key={m.id} metric={m} icon={icon} onOpen={setKpi} state={inv.isLoading ? "loading" : "ready"} />
@@ -184,6 +185,7 @@ export function PortfolioView() {
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
           <NavChart
             className="xl:col-span-8"
+            height={360}
             title={scope ? `${scope.name} NAV` : "Portfolio value"}
             points={base}
             state={inv.isLoading ? "loading" : "ready"}
@@ -291,13 +293,22 @@ export function PortfolioView() {
             <PanelHead title="Intelligence" icon={<Newspaper />} toolbar={<Tag tone="info">Demo</Tag>} />
             <PanelBody className="space-y-2 pt-1">
               {SIGNALS.slice(0, 3).map((s) => (
-                <article key={s.id} className="rounded-lg border border-line p-2.5 transition-colors hover:bg-hover">
-                  <Tag tone={s.kind === "Macro signal" ? "warn" : s.kind === "Regulatory event" ? "info" : "accent"}>{s.kind}</Tag>
-                  <p className="mt-1.5 text-[12px] font-semibold leading-snug text-ink">{s.title}</p>
-                  <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-ink-4">
-                    {s.entity ? <EntityChip type={s.entity.type} name={s.entity.name} href={hrefFor(s.entity)} /> : <span>{s.source}</span>}
-                    <span>{f.ago(s.at, now)}</span>
+                <article key={s.id} className="min-w-0 rounded-lg border border-line p-3 transition-colors hover:bg-hover">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <Tag tone={s.kind === "Macro signal" ? "warn" : s.kind === "Regulatory event" ? "info" : "accent"}>{s.kind}</Tag>
+                    <time dateTime={s.at} className="text-[11px] text-ink-4">
+                      {f.ago(s.at, now)}
+                    </time>
                   </div>
+                  <p className="mt-1.5 break-words text-[12px] font-semibold leading-snug text-ink">{s.title}</p>
+                  {/* V3 INT-002: names wrap instead of clipping inside the narrow column. */}
+                  {s.entity ? (
+                    <Link href={hrefFor(s.entity) ?? "#"} className="mt-1 inline-block max-w-full break-words text-[12px] text-ink-2 underline decoration-line-strong underline-offset-2 hover:text-accent-ink">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ink-4">{s.entity.type}</span> {s.entity.name}
+                    </Link>
+                  ) : (
+                    <p className="mt-1 break-words text-[12px] text-ink-3">{s.source}</p>
+                  )}
                 </article>
               ))}
             </PanelBody>

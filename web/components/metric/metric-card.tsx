@@ -104,15 +104,15 @@ export function MetricCard({
   );
 }
 
-/** Responsive KPI grid (KPI-003): 6 cols desktop → 3×2 tablet → 2×3 mobile. */
+/** Responsive KPI grid (V3 CC-001): six KPIs read as 3 + 3 on desktop and laptop, 2 columns on tablet, 1 on phones. */
 export function MetricGrid({ children, cols = 4, className }: { children: React.ReactNode; cols?: 3 | 4 | 6; className?: string }) {
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-3",
+        "grid grid-cols-1 gap-4 min-[560px]:grid-cols-2",
         cols === 3 && "lg:grid-cols-3",
         cols === 4 && "lg:grid-cols-4",
-        cols === 6 && "md:grid-cols-3 xl:grid-cols-6",
+        cols === 6 && "lg:grid-cols-3",
         className,
       )}
     >

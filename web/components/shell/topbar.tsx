@@ -10,7 +10,7 @@ import { IconButton, ring } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/badge";
 import { breadcrumb, type Crumb } from "./nav-config";
 import { useShell } from "./shell-context";
-import { HelpButton, NotificationCenter } from "./topbar-menus";
+import { NotificationCenter, ThemeSwitcher } from "./topbar-menus";
 
 export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
   return (
@@ -39,17 +39,17 @@ export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
 }
 
 /**
- * Topbar (V2 TOP-001/002/003): breadcrumb left; data date, search,
- * notifications and help right. The QTD/YTD/LTM/ITD switch was removed — it
+ * Topbar (V2 TOP-001/002/003, V3 THEME-001): breadcrumb left; data date, search,
+ * notifications and theme right (shortcuts remain on the ? key). The QTD/YTD/LTM/ITD switch was removed — it
  * changed no figures — and system status lives in the sidebar footer.
  */
-export function Topbar({ onOpenDrawer, onShortcuts }: { onOpenDrawer: () => void; onShortcuts: () => void }) {
+export function Topbar({ onOpenDrawer }: { onOpenDrawer: () => void }) {
   const pathname = usePathname();
   const { crumbs, openCommand } = useShell();
   const f = useFormat();
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-app px-3 sm:gap-3 sm:px-6 lg:px-7">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-app px-3 sm:gap-3 sm:px-6 lg:px-8">
       <IconButton className="lg:hidden" label="Open navigation" icon={<Menu />} onClick={onOpenDrawer} />
       <Breadcrumbs crumbs={crumbs ?? breadcrumb(pathname)} />
 
@@ -70,9 +70,7 @@ export function Topbar({ onOpenDrawer, onShortcuts }: { onOpenDrawer: () => void
 
         <div className="flex items-center gap-1.5">
           <NotificationCenter />
-          <span className="hidden sm:contents">
-            <HelpButton onShortcuts={onShortcuts} />
-          </span>
+          <ThemeSwitcher />
         </div>
       </div>
     </header>

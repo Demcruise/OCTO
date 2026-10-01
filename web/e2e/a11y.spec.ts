@@ -2,8 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 /**
- * Accessibility gate (plan §29, §35): axe on every major route. The
- * dashboard is light-only (DS-002). Serious and critical violations fail.
+ * Accessibility gate (plan §29, §35): axe on every major route in Light, and
+ * on the main surfaces in Dark (V3 THEME). Serious and critical violations fail.
  */
 const ROUTES = [
   "/app",
@@ -35,13 +35,20 @@ const ROUTES = [
   "/app/settings",
 ];
 
-{
-  test.describe("axe · light", () => {
-    test.use({ colorScheme: "light" });
-    for (const route of ROUTES) {
+const DARK_ROUTES = ["/app", "/app/portfolio", "/app/funds/fnd-002", "/app/investments", "/app/deals?view=calendar", "/app/workflows?tab=ai", "/app/analytics", "/app/reports/rpt-0231", "/app/data?tab=lineage", "/app/settings"];
+
+for (const scheme of ["light", "dark"] as const) {
+  test.describe(`axe · ${scheme}`, () => {
+    test.use({ colorScheme: scheme });
+    // Dark is checked through the theme switcher's "system" mode following the browser scheme.
+    test.beforeEach(async ({ page }) => {
+      if (scheme === "dark") await page.addInitScript(() => localStorage.setItem("octo-theme", "system"));
+    });
+    for (const route of scheme === "dark" ? DARK_ROUTES : ROUTES) {
       test(`${route} has no serious violations`, async ({ page }) => {
         await page.goto(route);
         await expect(page.locator("main h1").first()).toBeVisible();
+        if (scheme === "dark") await expect(page.locator(".octo-app")).toHaveClass(/(^| )dark( |$)/);
         await page.waitForTimeout(400); // demo resolvers settle
         const results = await new AxeBuilder({ page }).include(".octo-app").withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
         const serious = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");

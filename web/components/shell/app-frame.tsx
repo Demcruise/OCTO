@@ -35,10 +35,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
 }
 
 function Themed({ children }: { children: React.ReactNode }) {
-  const { locale } = usePreferences();
-  // DS-002: light enterprise theme only.
+  const { locale, resolvedTheme } = usePreferences();
+  // V3 THEME-003: Light by default; Dark/System resolve to the full dark token mapping.
   return (
-    <div lang={locale === "id" ? "id" : "en"} className={cn("octo-app min-h-dvh bg-app font-landing text-ink antialiased [font-feature-settings:'cv11','ss01']")} style={{ colorScheme: "light" }}>
+    <div lang={locale === "id" ? "id" : "en"} data-theme={resolvedTheme} className={cn("octo-app min-h-dvh bg-app font-landing text-ink antialiased [font-feature-settings:'cv11','ss01']", resolvedTheme === "dark" && "dark")} style={{ colorScheme: resolvedTheme }}>
       {children}
     </div>
   );

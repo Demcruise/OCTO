@@ -81,7 +81,7 @@ export function ChartShell({
   emptyText?: string;
   onRetry?: () => void;
   exportData?: ChartExport;
-  /** Plot height in px, or "auto" when the body sizes itself (donut + legend). */
+  /** Minimum plot height in px — the plot grows to fill a taller card — or "auto" when the body sizes itself (donut + legend). */
   height?: number | "auto";
   expandable?: boolean;
   className?: string;
@@ -108,9 +108,14 @@ export function ChartShell({
     ) : state === "permission" ? (
       <PermissionState scope="this chart" className="py-6" />
     ) : (
-      <div style={{ height: height === "auto" ? undefined : height }} className={cn(state === "stale" && "opacity-80")}>
-        {render(false)}
-      </div>
+      height === "auto" ? (
+        <div className={cn(state === "stale" && "opacity-80")}>{render(false)}</div>
+      ) : (
+        // V3 §23: the plot flex-fills whatever height the card gets; `height` is its minimum, never a cap.
+        <div style={{ minHeight: height }} className={cn("relative flex-1", state === "stale" && "opacity-80")}>
+          <div className="absolute inset-0">{render(false)}</div>
+        </div>
+      )
     );
 
   const ready = state === "ready" || state === "stale";
@@ -133,7 +138,7 @@ export function ChartShell({
         </ChartToolbar>
       </header>
       {legend && <div className="px-5 pt-2">{legend}</div>}
-      <div className="min-h-0 px-5 pb-4 pt-3">{body}</div>
+      <div className="flex min-h-0 flex-1 flex-col px-5 pb-4 pt-3">{body}</div>
       {(freshness || source || onLineage || state === "stale") && (
         <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-subtle px-5 py-2.5 text-[11px] text-ink-3">
           {freshness}
@@ -204,3 +209,6 @@ function ExpandedBody({ title, subtitle, headline, toolbar, legend, exportData, 
 
 /** V2 shared-primitive name for the chart container. */
 export { ChartShell as ChartCard };
+
+/** V3 shared-primitive names: ChartFrame and ExpandableChart are the same component. */
+export { ChartShell as ChartFrame, ChartShell as ExpandableChart };

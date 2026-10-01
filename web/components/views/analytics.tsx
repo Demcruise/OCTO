@@ -98,10 +98,10 @@ export function AnalyticsView() {
           </Button>
         }
       />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
           {metric === "nav" ? (
-            <NavChart className="xl:col-span-9" height={320} toolbar={metricSelect} onLineage={() => setLineage(PORTFOLIO_METRICS[0])} />
+            <NavChart className="xl:col-span-9" height={420} toolbar={metricSelect} onLineage={() => setLineage(PORTFOLIO_METRICS[0])} />
           ) : (
           <ChartShell
             className="xl:col-span-9"
@@ -126,7 +126,7 @@ export function AnalyticsView() {
             source="Metrics engine · IBOR"
             onLineage={() => setLineage(PORTFOLIO_METRICS.find((m) => m.id === (metric === "moic" ? "tvpi" : metric)) ?? PORTFOLIO_METRICS[0])}
             exportData={{ filename: `analytics-${metric}`, head: ["Period", s.label, "Benchmark"], rows: x.map((p, k) => [p, values[k], bench?.[k] ?? ""]) }}
-            height={320}
+            height={420}
           >
             <TrendChart key={`${metric}-${agg}`} x={x} series={[{ id: "p", label: "Portfolio", values }, ...(bench ? [{ id: "b", label: metric === "irr" ? "Hurdle" : "Benchmark", values: bench, color: "var(--color-ink-4)", dashed: true, area: false }] : [])]} format={(v) => s.format(v, f)} label={s.label} onHover={setHover} />
           </ChartShell>
@@ -183,7 +183,7 @@ export function AnalyticsView() {
             title="Value creation bridge"
             subtitle="Q3: opening $787.0M + $42.0M calls − $31.8M distributions + $17.4M valuation − $2.2M FX = closing $812.4M"
             legend={<Legend items={[{ label: "Opening / closing", color: "var(--color-mark-neutral)" }, { label: "Increase", color: "var(--color-gain)" }, { label: "Decrease", color: "var(--color-loss)" }]} />}
-            height={320}
+            height={420}
             expandable={false}
             exportData={{ filename: "bridge", head: ["Step", "$M"], rows: BRIDGE.map((b) => [b.label, b.value]) }}
           >
@@ -214,7 +214,7 @@ export function AnalyticsView() {
                 ))}
               </>
             }
-            height={320}
+            height={420}
             exportData={{ filename: "risk-return", head: ["Company", "Fund", "Risk %", "Return %", "Fair value"], rows: rr.map((p) => [p.company, p.fund, p.risk, p.ret, Math.round(p.fv)]) }}
           >
             {({ expanded }) => <RiskReturnChart key={String(expanded)} points={rr} hurdle={HURDLE} money={(v) => f.money(v)} label="Risk vs return by position" onSelect={(p) => setSelected(p.id)} />}

@@ -9,7 +9,25 @@ import { Button, IconButton, ringInset } from "@/components/ui/button";
 import { Checkbox, FilterChip, SearchInput, Select } from "@/components/ui/controls";
 import { Menu, type MenuItem } from "@/components/ui/overlay";
 import { EmptyState, ErrorState, InlineAlert, Skeleton, useToast } from "@/components/feedback";
-import { ColumnManager, DensityToggle, FacetFilter, Pagination, SavedViewPicker } from "./table-controls";
+import { ColumnManager, DensityToggle, Pagination, SavedViewPicker } from "./table-controls";
+import { FilterButton, FilterDrawer } from "./filters";
+
+const SESSION_KEY = (id: string) => `octo.table.${id}`;
+function readSessionView(id: string): Partial<ViewState> | null {
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_KEY(id));
+    return raw ? (JSON.parse(raw) as Partial<ViewState>) : null;
+  } catch {
+    return null;
+  }
+}
+function writeSessionView(id: string, v: ViewState) {
+  try {
+    window.sessionStorage.setItem(SESSION_KEY(id), JSON.stringify({ query: v.query, facets: v.facets, sort: v.sort, groupBy: v.groupBy }));
+  } catch {
+    /* storage blocked — the view still works for this visit */
+  }
+}
 import { decodeView, encodeView, facetOptions, filterRows, groupRows, nextSort, orderColumns, sortRows, toCsv, type ColumnLogic, type SavedView, type ViewState } from "./table-state";
 
 /**
@@ -71,6 +89,8 @@ export type DataTableProps<T> = {
   views?: SavedView[];
   initial?: Partial<ViewState>;
   searchPlaceholder?: string;
+  /** Hide the table search when the page already owns one (e.g. Deals across views). */
+  search?: boolean;
   toolbar?: React.ReactNode;
   selectable?: boolean;
   bulkActions?: (rows: T[], clear: () => void) => React.ReactNode;
@@ -156,6 +176,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
     maxHeight = 640,
     totals,
     chrome = "full",
+    search = true,
     className,
   } = props;
   const { density } = usePreferences();
@@ -179,6 +200,7 @@ export function DataTable<T>(props: DataTableProps<T>) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLTableSectionElement>(null);
 
@@ -187,8 +209,13 @@ export function DataTable<T>(props: DataTableProps<T>) {
     setCustom(readSavedViews(id));
     const shared = new URLSearchParams(window.location.search).get(id);
     const decoded = shared ? decodeView(shared) : null;
+    const session = readSessionView(id);
     if (decoded) {
       setView(decoded);
+      setActiveView(null);
+    } else if (session) {
+      // V3 FILTER-003: returning from a detail page restores search, filters, sort and grouping.
+      setView({ ...defaults, ...session });
       setActiveView(null);
     } else if (builtInViews[0]) {
       setView({ ...defaults, ...builtInViews[0].state });
@@ -197,7 +224,11 @@ export function DataTable<T>(props: DataTableProps<T>) {
   }, [id]);
 
   const patch = (p: Partial<ViewState>) => {
-    setView((v) => ({ ...v, ...p }));
+    setView((v) => {
+      const next = { ...v, ...p };
+      writeSessionView(id, next);
+      return next;
+    });
     setPage(0);
   };
 
@@ -364,14 +395,12 @@ export function DataTable<T>(props: DataTableProps<T>) {
       {/* Toolbar: search · filters · group · views · columns · density · export */}
       {chrome === "full" && (
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2.5">
-        <SearchInput aria-label={`Search ${label}`} placeholder={searchPlaceholder} value={view.query} onChange={(e) => patch({ query: e.target.value })} className="w-full sm:w-60" />
-        {facetCols.map((c) => (
-          <FacetFilter key={c.id} header={c.header} options={facetOptions(data, c)} selected={view.facets[c.id] ?? []} onChange={(v) => patch({ facets: { ...view.facets, [c.id]: v } })} />
-        ))}
+        {search && <SearchInput aria-label={`Search ${label}`} placeholder={searchPlaceholder} value={view.query} onChange={(e) => patch({ query: e.target.value })} className="w-full sm:w-60" />}
+        {facetCols.length > 0 && <FilterButton count={activeFacets.length} open={filtersOpen} onClick={() => setFiltersOpen(true)} />}
         {groupCols.length > 0 && (
           <label className="flex items-center gap-1.5 text-[12px] text-ink-3">
             <Layers aria-hidden className="size-3.5" />
-            <Select value={view.groupBy ?? ""} onChange={(e) => patch({ groupBy: e.target.value || null })} className="w-40 [&_select]:h-7 [&_select]:text-[12px]" aria-label="Group rows by">
+            <Select value={view.groupBy ?? ""} onChange={(e) => patch({ groupBy: e.target.value || null })} className="w-40 [&_select]:text-[12px]" aria-label="Group rows by">
               <option value="">No grouping</option>
               {groupCols.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -412,6 +441,15 @@ export function DataTable<T>(props: DataTableProps<T>) {
         </div>
       </div>
       )}
+
+      <FilterDrawer
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title={`Filter ${label.toLowerCase()}`}
+        fields={facetCols.map((c) => ({ id: c.id, label: c.header, options: facetOptions(data, c) }))}
+        value={view.facets}
+        onApply={(facets) => patch({ facets })}
+      />
 
       {/* Applied filters with scope count (plan §22: removable, counted, persisted in the view) */}
       {filtering && (
