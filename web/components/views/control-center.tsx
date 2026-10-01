@@ -145,7 +145,7 @@ export function ControlCenter() {
         }
       />
 
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <InlineAlert tone="demo">Portfolio numbers, queues and feeds are illustrative demo data. Workspaces load from the OCTO API when it is reachable.</InlineAlert>
 
         <MetricGrid cols={6}>
@@ -169,7 +169,7 @@ export function ControlCenter() {
             <div className="px-5 pb-3">
               <Tabs<Filter> variant="pill" label="Filter priority queue" value={filter} onChange={setFilter} items={FILTERS.map((x) => ({ ...x, count: x.value === "all" ? feed.length : count(x.value) }))} />
             </div>
-            <PanelBody flush className="border-t border-line">
+            <PanelBody flush fill={420} label="Priority queue items" className="border-t border-line">
               {loadingFeed ? (
                 <div className="space-y-3 p-4" role="status" aria-label="Loading priority queue">
                   {[0, 1, 2, 3].map((i) => (
@@ -182,7 +182,7 @@ export function ControlCenter() {
               ) : shown.length === 0 ? (
                 <EmptyState icon={<ShieldCheck />} title="Nothing waiting here" body="New items appear when alerts fire, breaks are detected, drafts are generated, or approvals are requested." />
               ) : (
-                <ul className="max-h-[560px] divide-y divide-line overflow-y-auto">
+                <ul className="divide-y divide-line">
                   {shown.map((item) => (
                     <li key={item.id}>
                       <WorkItem
@@ -242,11 +242,11 @@ export function ControlCenter() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-          <NavChart className="xl:col-span-8" state={metrics.isLoading ? "loading" : "ready"} onLineage={() => setLineage(metrics.data?.[0] ?? null)} />
+          <NavChart className="xl:col-span-8" height={360} state={metrics.isLoading ? "loading" : "ready"} onLineage={() => setLineage(metrics.data?.[0] ?? null)} />
 
           <Panel className="xl:col-span-4">
             <PanelHead title="Recent activity" icon={<History />} />
-            <PanelBody>
+            <PanelBody fill={360} label="Recent activity events">
               <ActivityTimeline now={now} items={ACTIVITY.map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, state: a.state }))} />
             </PanelBody>
           </Panel>

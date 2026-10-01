@@ -30,6 +30,8 @@ export function FundsView() {
   useBreadcrumb(null);
   const funds = useFunds();
   const [measure, setMeasure] = useState<"irr" | "tvpi">("irr");
+  // V3 VINTAGE-002: always chronological by numeric year, never by source order.
+  const vintage = [...VINTAGE].sort((a, b) => a.vintage - b.vintage);
 
   const cols: Column<Fund>[] = [
     { id: "name", header: "Fund", width: 250, hideable: false, value: (x) => x.name, cell: (x) => <EntityCell name={x.name} sub={`${x.geography} · ${x.manager}`} href={`/app/funds/${x.slug}`} /> },
@@ -49,7 +51,7 @@ export function FundsView() {
   return (
     <>
       <PageHeader variant="list" eyebrow="Invest" title="Funds" description="Commitments, deployment and performance for every vehicle." meta={<FreshnessBadge state="demo" asOf={`as of ${f.date(AS_OF)}`} />} />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <section aria-label="Fund summaries" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {funds.isLoading
             ? Array.from({ length: 5 }, (_, i) => <MetricSkeleton key={i} />)
@@ -105,13 +107,13 @@ export function FundsView() {
           <ChartShell
             className="xl:col-span-4"
             title="Vintage comparison"
-            subtitle={measure === "irr" ? "Net IRR by fund, %" : "TVPI by fund, ×"}
+            subtitle={`${measure === "irr" ? "Net IRR, %" : "TVPI, ×"} by vintage year · ${vintage.map((v) => `${v.vintage} ${v.fund}`).join(" · ")}`}
             toolbar={<Segmented size="sm" label="Measure" value={measure} onChange={setMeasure} items={[{ value: "irr", label: "IRR" }, { value: "tvpi", label: "TVPI" }]} />}
             legend={<Legend items={[{ label: measure === "irr" ? "Net IRR" : "TVPI", color: "var(--color-chart-1)" }, ...(measure === "irr" && VINTAGE.some((v) => v.irr < 0) ? [{ label: "Negative", color: "var(--color-loss)" }] : [])]} />}
-            exportData={{ filename: "vintage-comparison", head: ["Fund", "Vintage", "Net IRR %", "TVPI"], rows: VINTAGE.map((v) => [v.fund, v.vintage, v.irr, v.tvpi.toFixed(2)]) }}
-            height={260}
+            exportData={{ filename: "vintage-comparison", head: ["Fund", "Vintage", "Net IRR %", "TVPI"], rows: vintage.map((v) => [v.fund, v.vintage, v.irr, v.tvpi.toFixed(2)]) }}
+            height={300}
           >
-            <BarChart x={VINTAGE.map((v) => `${v.vintage}`)} series={[{ id: "m", label: measure === "irr" ? "Net IRR" : "TVPI", values: VINTAGE.map((v) => (measure === "irr" ? v.irr : Math.round(v.tvpi * 100) / 100)) }]} format={(v) => (measure === "irr" ? f.pct(v) : f.multiple(v))} label="Vintage comparison" signed />
+            <BarChart x={vintage.map((v) => `${v.vintage}`)} series={[{ id: "m", label: measure === "irr" ? "Net IRR" : "TVPI", values: vintage.map((v) => (measure === "irr" ? v.irr : Math.round(v.tvpi * 100) / 100)) }]} format={(v) => (measure === "irr" ? f.pct(v) : f.multiple(v))} label="Vintage comparison" signed />
           </ChartShell>
         </div>
       </PageBody>

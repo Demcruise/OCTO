@@ -1,51 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Bookmark, Check, ChevronLeft, ChevronRight, Columns3, Link2, ListFilter, Pin, PinOff, Rows3, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Bookmark, Check, ChevronLeft, ChevronRight, Columns3, Link2, Pin, PinOff, Rows3, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePreferences } from "@/lib/preferences";
 import { Button, IconButton, ringInset } from "@/components/ui/button";
-import { CountBadge } from "@/components/ui/badge";
 import { Checkbox, Input } from "@/components/ui/controls";
 import { PopoverPanel, useDismissable } from "@/components/ui/overlay";
 import type { SavedView } from "./table-state";
-
-/* ---------- Faceted filter ---------- */
-
-export function FacetFilter({ header, options, selected, onChange }: { header: string; options: [string, number][]; selected: string[]; onChange: (v: string[]) => void }) {
-  const { open, setOpen, rootRef, triggerRef } = useDismissable();
-  const [q, setQ] = useState("");
-  const shown = options.filter(([k]) => k.toLowerCase().includes(q.toLowerCase()));
-  return (
-    <div ref={rootRef} className="relative">
-      <Button ref={triggerRef} size="sm" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)} className={cn(selected.length > 0 && "border-accent-line bg-accent-soft text-accent-ink")}>
-        <ListFilter /> {header}
-        {selected.length > 0 && <CountBadge tone="accent">{selected.length}</CountBadge>}
-      </Button>
-      {open && (
-        <PopoverPanel align="start" role="dialog" aria-label={`Filter by ${header}`} className="w-60 p-1">
-          {options.length > 7 && <Input aria-label={`Search ${header}`} placeholder={`Search ${header.toLowerCase()}…`} value={q} onChange={(e) => setQ(e.target.value)} className="mb-1 h-7" />}
-          <ul className="max-h-64 overflow-y-auto">
-            {shown.map(([k, n]) => (
-              <li key={k}>
-                <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[13px] hover:bg-hover">
-                  <Checkbox label={k} checked={selected.includes(k)} onChange={() => onChange(selected.includes(k) ? selected.filter((x) => x !== k) : [...selected, k])} />
-                  <span className="flex-1 truncate">{k}</span>
-                  <span className="text-[11px] tabular-nums text-ink-4">{n}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-          {selected.length > 0 && (
-            <button type="button" onClick={() => onChange([])} className={cn("mt-1 w-full cursor-pointer rounded-md border-t border-line px-2 py-1.5 text-left text-[12px] text-accent hover:bg-hover", ringInset)}>
-              Clear {header.toLowerCase()}
-            </button>
-          )}
-        </PopoverPanel>
-      )}
-    </div>
-  );
-}
 
 /* ---------- Column manager: visibility, order, pinning ---------- */
 

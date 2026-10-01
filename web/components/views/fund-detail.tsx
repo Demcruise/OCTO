@@ -158,7 +158,7 @@ export function FundDetail({ id }: { id: string }) {
         }
       />
 
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         {tab === "overview" && (
           <>
             <MetricGrid cols={4}>
@@ -173,7 +173,7 @@ export function FundDetail({ id }: { id: string }) {
                 title="Q3 value bridge"
                 subtitle={`Opening ${fmtM(opening)} + calls − distributions ± valuation ± FX = closing ${fmtM(closing)}`}
                 legend={<Legend items={[{ label: "Opening / closing", color: "var(--color-mark-neutral)" }, { label: "Increase", color: "var(--color-gain)" }, { label: "Decrease", color: "var(--color-loss)" }]} />}
-                height={280}
+                height={360}
                 expandable={false}
                 exportData={{ filename: `${x.slug}-bridge`, head: ["Step", "$M"], rows: bridge.map((b) => [b.label, b.value]) }}
               >
@@ -181,7 +181,7 @@ export function FundDetail({ id }: { id: string }) {
               </ChartShell>
               <Panel className="xl:col-span-5">
                 <PanelHead title="Recent activity" icon={<History />} toolbar={<Button size="sm" variant="ghost" onClick={() => setTab("activity")}>All activity</Button>} />
-                <PanelBody>
+                <PanelBody fill={360} label="Recent fund activity">
                   <ActivityTimeline items={activity.slice(0, 4)} now={now} />
                 </PanelBody>
               </Panel>
@@ -242,7 +242,7 @@ export function FundDetail({ id }: { id: string }) {
 
         {tab === "attribution" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <ChartShell title="Sector allocation" subtitle="Share of fair value" height={360}>
+            <ChartShell title="Sector allocation" subtitle="Share of fair value" height="auto">
               <DonutChart data={[...bySector].map(([key, value]) => ({ key, value })).sort((a, b) => b.value - a.value)} label="Sector allocation" format={(v) => f.money(v)} />
             </ChartShell>
             <Panel>

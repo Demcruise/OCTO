@@ -100,7 +100,7 @@ export function DealDetail({ id }: { id: string }) {
         }
         tabs={<Tabs<Tab> label="Deal sections" value={tab} onChange={setTab} className="border-b-0" items={TABS.map((t) => ({ value: t, label: LABEL[t] }))} />}
       />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <Panel>
           <PanelBody className="py-3">
             <WorkflowStepper steps={steps} />

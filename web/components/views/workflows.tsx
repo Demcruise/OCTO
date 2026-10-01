@@ -56,7 +56,7 @@ export function WorkflowsView() {
     { id: "priority", header: "Priority", value: (t) => t.priority, sortValue: (t) => SEVERITY_ORDER[t.priority], facet: true, cell: (t) => <SeverityBadge severity={t.priority} /> },
     { id: "status", header: "Status", value: (t) => t.status, facet: true, groupable: true, cell: (t) => <WorkflowStatus state={t.status} /> },
     { id: "assignee", header: "Assignee", value: (t) => t.assignee, facet: true },
-    { id: "due", header: "Due", value: (t) => t.due, align: "right" },
+    { id: "due", kind: "date", header: "Due", value: (t) => t.due, facet: true, facetValue: (t) => dueBucket(t.due) },
   ];
 
   const approvalCols: Column<Approval>[] = [
@@ -111,7 +111,7 @@ export function WorkflowsView() {
           />
         }
       />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         {tab === "tasks" && (
           <DataTable
             id="tasks"
@@ -245,6 +245,14 @@ export function WorkflowsView() {
       />
     </>
   );
+}
+
+/** "30 Sep" / "2 Oct" → Overdue · Due today · This week · Later, relative to the demo clock. */
+function dueBucket(due: string) {
+  const t = Date.parse(`${due} 2026 12:00 UTC`);
+  if (Number.isNaN(t)) return due;
+  const days = Math.floor((t - now.getTime()) / 86_400_000);
+  return days < 0 ? "Overdue" : days === 0 ? "Due today" : days <= 7 ? "This week" : "Later";
 }
 
 /** "2h" → 2, "3d" → 72; used to sort exception age. */

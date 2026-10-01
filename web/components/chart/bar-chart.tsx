@@ -66,7 +66,8 @@ export function BarChart({ x, series, format, label, stacked = false, signed = f
               </g>
             );
           })}
-          {lo < 0 && <line x1={pl} x2={w} y1={Y(0)} y2={Y(0)} stroke="var(--color-ink-3)" strokeWidth="1.25" />}
+          {/* Explicit zero line, always (V3 VINTAGE-003). */}
+          <line x1={pl} x2={w} y1={Y(0)} y2={Y(0)} stroke="var(--color-ink-3)" strokeWidth="1.25" />
         </svg>
       )}
       {hover !== null && w > 0 && (

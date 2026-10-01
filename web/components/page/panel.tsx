@@ -36,7 +36,21 @@ export function PanelToolbar({ children, className }: { children: React.ReactNod
   return <div className={cn("flex shrink-0 items-center gap-1.5", className)}>{children}</div>;
 }
 
-export function PanelBody({ className, children, flush }: { className?: string; children: React.ReactNode; flush?: boolean }) {
+/**
+ * Panel body. With `fill`, the body takes all remaining card height (min `fill`
+ * px) and scrolls inside — so a list beside a taller neighbour never leaves the
+ * card hanging with empty space (V3 §03, PQ-001).
+ */
+export function PanelBody({ className, children, flush, fill, label }: { className?: string; children: React.ReactNode; flush?: boolean; fill?: number; label?: string }) {
+  if (fill)
+    return (
+      <div className="relative min-h-0 flex-1" style={{ minHeight: fill }}>
+        {/* Keyboard users can focus and scroll the region even when it holds no links (axe scrollable-region-focusable). */}
+        <div tabIndex={0} role="region" aria-label={label ?? "Scrollable list"} className={cn("absolute inset-0 overflow-y-auto overscroll-contain focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus", flush ? "" : "p-5 pt-3", className)}>
+          {children}
+        </div>
+      </div>
+    );
   return <div className={cn("min-h-0 flex-1", flush ? "" : "p-5 pt-3", className)}>{children}</div>;
 }
 

@@ -68,7 +68,7 @@ export function ReconciliationView() {
     { id: "sv", header: "Source value", value: (b) => b.sourceValue, align: "right", cell: (b) => <span className="tabular-nums">{b.sourceValue}</span> },
     { id: "iv", header: "IBOR value", value: (b) => b.iborValue, align: "right", cell: (b) => <span className="tabular-nums">{b.iborValue}</span> },
     { id: "variance", header: "Variance", value: (b) => b.variance, sortValue: (b) => b.varianceAbs, align: "right", cell: (b) => <span className={cn("font-medium tabular-nums", b.varianceAbs ? "text-danger" : "text-ink-3")}>{b.variance}</span>, aggregate: (r) => f.money(r.reduce((n, b) => n + b.varianceAbs, 0)) },
-    { id: "age", header: "Age", value: (b) => b.ageHours, align: "right", cell: (b) => (b.ageHours < 48 ? `${b.ageHours}h` : `${Math.round(b.ageHours / 24)}d`) },
+    { id: "age", kind: "date", header: "Age", value: (b) => b.ageHours, facet: true, facetValue: (b) => (b.ageHours < 24 ? "Under 1 day" : b.ageHours < 72 ? "1–3 days" : "Over 3 days"), cell: (b) => (b.ageHours < 48 ? `${b.ageHours}h` : `${Math.round(b.ageHours / 24)}d`) },
     { id: "sev", header: "Severity", value: (b) => b.severity, sortValue: (b) => SEVERITY_ORDER[b.severity], facet: true, cell: (b) => <SeverityBadge severity={b.severity} /> },
     { id: "owner", header: "Owner", value: (b) => b.owner, facet: true },
     { id: "state", header: "State", value: (b) => b.state, facet: true, groupable: true, cell: (b) => <WorkflowStatus state={b.state} /> },
@@ -85,7 +85,7 @@ export function ReconciliationView() {
   return (
     <>
       <PageHeader variant="workflow" eyebrow="Operate" title="Reconciliation" description="Where a source disagrees with the IBOR. Every break gets a resolution and a reason." meta={<FreshnessBadge state="demo" asOf={`matched ${f.time(DEMO_NOW)}`} />} />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <MetricGrid cols={4}>
           {kpis.map((m) => (
             <MetricCard key={m.id} metric={m} variant="compact" state={q.isLoading ? "loading" : "ready"} />

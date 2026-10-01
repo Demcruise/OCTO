@@ -73,7 +73,7 @@ export function WaterfallChart({ data, label, format, axisFormat }: { data: { la
             return (
               <g key={b.label} onPointerEnter={() => setHover(i)} opacity={hover !== null && hover !== i ? 0.5 : 1}>
                 <rect x={pl + band * i} y={pt} width={band} height={h - pt - pb} fill="transparent" />
-                <rect x={x} y={top} width={bw} height={Math.max(1.5, bottom - top)} rx="2" fill={fill} />
+                <rect x={x} y={top} width={bw} height={Math.max(3, bottom - top)} rx="2" fill={fill} />
                 {i < bars.length - 1 && <line x1={x + bw} x2={x + band} y1={Y(b.to)} y2={Y(b.to)} stroke="var(--color-line-strong)" strokeDasharray="2 2" />}
                 <text x={x + bw / 2} y={below ? bottom + 13 : top - 5} textAnchor="middle" className="fill-ink-2 text-[11px] font-medium tabular-nums">
                   {fmtSigned(b)}

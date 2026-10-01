@@ -12,7 +12,11 @@ export type ColumnLogic<T> = {
   value: (row: T) => Value;
   sortValue?: (row: T) => Value;
   facet?: boolean;
+  /** Bucketed value used by the Filters drawer when the raw value is too granular (dates, ages). */
+  facetValue?: (row: T) => Value;
 };
+
+const facetOf = <T,>(col: ColumnLogic<T>, r: T) => (col.facetValue ?? col.value)(r);
 
 export type Sort = { id: string; desc: boolean };
 
@@ -49,7 +53,7 @@ export function filterRows<T>(rows: T[], columns: ColumnLogic<T>[], query: strin
   return rows.filter((r) => {
     for (const [id, vals] of active) {
       const col = byId.get(id);
-      if (col && !vals.includes(facetKey(col.value(r)))) return false;
+      if (col && !vals.includes(facetKey(facetOf(col, r)))) return false;
     }
     if (!q) return true;
     return columns.some((c) => String(c.value(r) ?? "").toLowerCase().includes(q));
@@ -90,7 +94,7 @@ export function groupRows<T>(rows: T[], col: ColumnLogic<T> | undefined): Group<
   if (!col) return [{ key: "", rows }];
   const m = new Map<string, T[]>();
   for (const r of rows) {
-    const k = facetKey(col.value(r));
+    const k = facetKey(facetOf(col, r));
     if (!m.has(k)) m.set(k, []);
     m.get(k)!.push(r);
   }
@@ -101,7 +105,7 @@ export function groupRows<T>(rows: T[], col: ColumnLogic<T> | undefined): Group<
 export function facetOptions<T>(rows: T[], col: ColumnLogic<T>): [string, number][] {
   const m = new Map<string, number>();
   for (const r of rows) {
-    const k = facetKey(col.value(r));
+    const k = facetKey(facetOf(col, r));
     m.set(k, (m.get(k) ?? 0) + 1);
   }
   return [...m.entries()].sort((a, b) => compare(a[0], b[0]));

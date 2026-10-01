@@ -67,10 +67,12 @@ test("company dossier exposes all ten tabs", async ({ page }) => {
 
 test("faceted filter shows a removable chip and a shared view restores it", async ({ page }) => {
   await ready(page, "/app/investments");
-  // The toolbar facet comes before the column header of the same name.
-  await page.getByRole("button", { name: "Fund", exact: true }).first().click();
-  await page.getByRole("dialog", { name: "Filter by Fund" }).getByRole("checkbox", { name: "Opportunities I" }).click();
-  await page.keyboard.press("Escape");
+  // V3 FILTER-001: one Filters control opens a drawer with every field.
+  await page.getByRole("button", { name: "Filters", exact: true }).click();
+  const drawer = page.getByRole("dialog", { name: "Filter investments" });
+  await drawer.getByRole("button", { name: /^Opportunities I/ }).click();
+  await drawer.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("button", { name: /^Filters 1 active/ })).toBeVisible();
   const chip = page.getByRole("button", { name: "Remove Fund filter Opportunities I" });
   await expect(chip).toBeVisible();
   await expect(page.getByText(/4 of 20/).first()).toBeVisible();
@@ -85,8 +87,8 @@ test("faceted filter shows a removable chip and a shared view restores it", asyn
 test("table sort, selection and bulk actions", async ({ page }) => {
   await ready(page, "/app/alerts");
   const table = page.getByRole("table", { name: "Alerts" });
-  await table.getByRole("button", { name: /^Triggered/ }).click();
-  await expect(table.getByRole("columnheader", { name: /Triggered/ })).toHaveAttribute("aria-sort", "ascending");
+  await table.getByRole("button", { name: /^Date/ }).click();
+  await expect(table.getByRole("columnheader", { name: /Date/ })).toHaveAttribute("aria-sort", "ascending");
   await table.getByRole("checkbox", { name: "Select ALR-1841" }).click();
   const bulk = page.getByRole("region", { name: "Bulk actions" });
   await expect(bulk).toContainText("1 selected");
@@ -116,13 +118,30 @@ test("reconciliation break cannot be resolved without a reason", async ({ page }
   await expect(page.getByRole("status").filter({ hasText: "REC-2207" })).toBeVisible();
 });
 
-test("density preference applies globally and the app stays light", async ({ page }) => {
+test("density preference applies globally and Light is the default theme", async ({ page }) => {
   await ready(page, "/app/settings?tab=appearance");
-  await expect(page.getByRole("radio", { name: "Dark" })).toHaveCount(0);
+  await expect(page.locator(".octo-app")).not.toHaveClass(/\bdark\b/);
   await page.getByRole("radio", { name: "Comfortable" }).first().click();
   await ready(page, "/app/companies");
   await expect(page.locator("tbody tr[data-row-id]").first()).toHaveClass(/h-16/);
-  await expect(page.locator(".octo-app")).not.toHaveClass(/\bdark\b/);
+});
+
+test("theme switcher replaces help: Light / Dark / System persists", async ({ page }) => {
+  await ready(page, "/app");
+  const header = page.locator("header").filter({ has: page.getByRole("button", { name: "Search and commands" }) });
+  await expect(header.getByRole("button", { name: /Keyboard shortcuts/ })).toHaveCount(0);
+  await header.getByRole("button", { name: "Theme" }).click();
+  const menu = page.getByRole("menu", { name: "Theme" });
+  await expect(menu.getByRole("menuitemradio", { name: /Light/ })).toHaveAttribute("aria-checked", "true");
+  await menu.getByRole("menuitemradio", { name: /Dark/ }).click();
+  await expect(page.locator(".octo-app")).toHaveClass(/\bdark\b/);
+  expect(await page.evaluate(() => localStorage.getItem("octo-theme"))).toBe("dark");
+  await page.reload();
+  await expect(page.locator(".octo-app")).toHaveClass(/\bdark\b/);
+  await header.getByRole("button", { name: "Theme" }).click();
+  await page.getByRole("menuitemradio", { name: /System/ }).click();
+  expect(await page.evaluate(() => localStorage.getItem("octo-theme"))).toBe("system");
+  await expect(page.locator(".octo-app")).not.toHaveClass(/\bdark\b/); // the test browser prefers light
 });
 
 test("KPI card opens the metric drawer, which hands over to lineage", async ({ page }) => {
@@ -196,13 +215,89 @@ test("report generation failure offers recovery", async ({ page }) => {
   await expect(page.getByText("Draft generated")).toBeVisible();
 });
 
-test("V2 top bar keeps only search, notifications and help", async ({ page }) => {
+test("top bar keeps only search, notifications and theme", async ({ page }) => {
   await ready(page, "/app");
   const header = page.locator("header").filter({ has: page.getByRole("button", { name: "Search and commands" }) });
   await expect(header.getByRole("radiogroup", { name: "Reporting period" })).toHaveCount(0);
   await expect(header.getByRole("button", { name: /System status/ })).toHaveCount(0);
   await expect(header.getByRole("button", { name: "Search and commands" })).toBeVisible();
   await expect(header.getByRole("button", { name: /^Notifications/ })).toBeVisible();
+  await expect(header.getByRole("button", { name: "Theme" })).toBeVisible();
+});
+
+test("V3: KPI grids read 3 + 3 and the queue and NAV fill their frames", async ({ page }) => {
+  await ready(page, "/app");
+  const grid = page.getByRole("button", { name: /^Total NAV: / }).locator("xpath=..");
+  expect((await grid.evaluate((el) => getComputedStyle(el).gridTemplateColumns)).split(" ").length).toBe(3);
+  const heights = await page.evaluate(() => {
+    const h = (t: string) => [...document.querySelectorAll("h2")].find((x) => x.textContent?.includes(t))!.closest("section")!;
+    const pq = h("Priority queue");
+    const nav = document.querySelector('[aria-label="Portfolio NAV"]')!;
+    const act = h("Recent activity");
+    return { pq: pq.getBoundingClientRect().height, right: (pq.nextElementSibling as HTMLElement).getBoundingClientRect().height, nav: nav.getBoundingClientRect().height, act: act.getBoundingClientRect().height };
+  });
+  expect(Math.abs(heights.pq - heights.right)).toBeLessThan(2);
+  expect(Math.abs(heights.nav - heights.act)).toBeLessThan(2);
+  await ready(page, "/app/portfolio");
+  const pgrid = page.getByRole("button", { name: /^Total NAV: / }).locator("xpath=..");
+  expect((await pgrid.evaluate((el) => getComputedStyle(el).gridTemplateColumns)).split(" ").length).toBe(3);
+});
+
+test("vintage comparison lists years chronologically", async ({ page }) => {
+  await ready(page, "/app/funds");
+  const chart = page.getByRole("region", { name: "Vintage comparison" });
+  const years = await chart.locator("table.sr-only tbody tr th, table.sr-only tbody tr td:first-child").allTextContents();
+  const nums = years.map(Number).filter((n) => !Number.isNaN(n));
+  expect(nums.length).toBeGreaterThan(2);
+  expect([...nums].sort((a, b) => a - b)).toEqual(nums);
+});
+
+test("filters persist when returning from a detail page", async ({ page }) => {
+  await ready(page, "/app/companies");
+  await page.getByRole("button", { name: /^Filters/ }).click();
+  const drawer = page.getByRole("dialog", { name: "Filter companies" });
+  await drawer.getByRole("button", { name: /^Renewables/ }).click();
+  await drawer.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("button", { name: "Remove Sector filter Renewables" })).toBeVisible();
+  await page.getByRole("table", { name: "Companies" }).getByRole("link").first().click();
+  await expect(page).toHaveURL(/\/app\/companies\/cmp-/);
+  await page.goBack();
+  await expect(page.getByRole("button", { name: "Remove Sector filter Renewables" })).toBeVisible();
+});
+
+test("deals share one filter state across board, timeline and calendar", async ({ page }) => {
+  await ready(page, "/app/deals");
+  await page.getByRole("button", { name: "Filters", exact: true }).click();
+  const drawer = page.getByRole("dialog", { name: "Filter deals" });
+  await drawer.getByRole("button", { name: /^R\. Tan/ }).click();
+  await drawer.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByText(/4 of 12 deals/)).toBeVisible();
+  await page.getByRole("tab", { name: /Timeline/ }).click();
+  await expect(page.getByText(/4 of 12 deals/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Blocked" })).not.toContainText("Aruna Payments");
+  await page.getByRole("tab", { name: /Calendar/ }).click();
+  await expect(page.getByRole("button", { name: /^Filters 1 active/ })).toBeVisible();
+});
+
+test("lineage explorer: landing state, node drawer, open source and come back", async ({ page }) => {
+  await ready(page, "/app/data?tab=lineage");
+  await expect(page.getByText("Highlighted path:")).toBeVisible();
+  for (const t of ["Recently changed mappings", "Lineage exceptions", "Popular metrics"]) await expect(page.getByRole("heading", { name: t })).toBeVisible();
+  await page.getByRole("button", { name: /MAP-090 accruals/ }).first().click();
+  await expect(page).toHaveURL(/chain=fund-nav-accruals/);
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("Source field");
+  await expect(drawer).toContainText("accruals.mgmt_fee");
+  await drawer.getByRole("button", { name: "Back to lineage" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText(/lineage exception/)).toBeVisible();
+  await page.getByRole("button", { name: "Inspect source" }).click();
+  await expect(page.getByRole("dialog")).toContainText("Rows processed");
+  await page.getByRole("dialog").getByRole("link", { name: "Open source" }).click();
+  await expect(page).toHaveURL(/source=SRC-ADM2/);
+  await page.getByRole("dialog").getByRole("link", { name: /Back to lineage/ }).click();
+  await expect(page).toHaveURL(/tab=lineage&chain=fund-nav-accruals/);
+  await expect(page.getByText(/lineage exception/)).toBeVisible();
 });
 
 test("KPI cards carry no mini charts and use explicit trend semantics", async ({ page }) => {

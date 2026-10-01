@@ -1,34 +1,26 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
 import { useSources } from "@/lib/data/queries";
-import { DEMO_NOW, MAPPINGS, NAV_LINEAGE, PORTFOLIO_METRICS, type DataSource, type Mapping, type Metric } from "@/lib/demo";
+import { DEMO_NOW, MAPPINGS, PORTFOLIO_METRICS, type DataSource, type Mapping, type Metric } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { MetricCard, MetricGrid } from "@/components/metric/metric-card";
 import { ChartShell } from "@/components/chart/chart-shell";
 import { BarChart } from "@/components/chart/bar-chart";
 import { Legend } from "@/components/chart/core";
-import { LineageFlow } from "@/components/data/lineage-flow";
+import { LineageExplorer } from "@/components/data/lineage-explorer";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { NumericCell, SparklineCell, StatusCell } from "@/components/data/cells";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { StatusBadge, type Tone } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/controls";
 import { Sheet } from "@/components/ui/overlay";
 import { FreshnessBadge, InlineAlert, useToast } from "@/components/feedback";
 import { ObjectMetadata } from "@/components/object/object";
 import { useBreadcrumb } from "@/components/shell/shell-context";
-
-/** What each lineage layer means (V2 DATA-003). */
-const LAYER_ABOUT: Record<string, string> = {
-  Sources: "The original incoming record from an administrator, custodian or feed.",
-  Mappings: "The rule that translates that record into OCTO's model.",
-  IBOR: "The governed book of record, derived from the transaction ledger.",
-  Metrics: "The reported value, with a versioned definition.",
-};
 
 type Tab = "sources" | "health" | "mappings" | "lineage";
 const now = new Date(DEMO_NOW);
@@ -49,6 +41,8 @@ export function DataSourcesView() {
   const openId = params.get("source");
   const open = sources.find((s) => s.id === openId) ?? null;
   const nav = (qs: string) => router.replace(`/app/data${qs ? `?${qs}` : ""}`, { scroll: false });
+  const backRaw = params.get("back");
+  const back = backRaw && backRaw.startsWith("/app/data") ? backRaw : null;
 
   const prov = PORTFOLIO_METRICS[0].provenance;
   const kpis: Metric[] = [
@@ -94,7 +88,7 @@ export function DataSourcesView() {
         meta={<FreshnessBadge state="demo" asOf={`checked ${f.time(DEMO_NOW)}`} />}
         tabs={<Tabs<Tab> label="Data sections" value={tab} onChange={(t) => nav(t === "sources" ? "" : `tab=${t}`)} variant="pill" className="pb-3" items={[{ value: "sources", label: "Sources", count: sources.length }, { value: "health", label: "Ingestion health" }, { value: "mappings", label: "Mappings", count: MAPPINGS.length }, { value: "lineage", label: "Lineage" }]} />}
       />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         {tab === "sources" && (
           <>
             <MetricGrid cols={4}>
@@ -120,19 +114,23 @@ export function DataSourcesView() {
           </ChartShell>
         )}
 
+        {back && tab !== "lineage" && (
+          <InlineAlert tone="info" title="Opened from lineage" action={<LinkButton size="sm" href={back}><ArrowLeft /> Back to lineage</LinkButton>}>
+            Your lineage path is kept; return to it at any time.
+          </InlineAlert>
+        )}
         {tab === "mappings" && <DataTable id="mappings" label="Mappings" data={MAPPINGS} columns={mapCols} rowId={(m) => m.id} demo empty={{ title: "No mappings", body: "" }} />}
 
-        {tab === "lineage" && (
-          <Panel>
-            <PanelHead title="NAV lineage" description="Every reported NAV traces back through mappings and the IBOR to a source record." />
-            <PanelBody>
-              <LineageFlow layers={NAV_LINEAGE.map((l) => ({ ...l, about: LAYER_ABOUT[l.layer] }))} label="NAV lineage from source to metric" />
-            </PanelBody>
-          </Panel>
-        )}
+        {tab === "lineage" && <LineageExplorer />}
       </PageBody>
 
-      <Sheet open={!!open} onClose={() => nav("")} eyebrow={open ? `Source · ${open.kind}` : ""} title={open?.name ?? ""}>
+      <Sheet
+        open={!!open}
+        onClose={() => (back ? router.replace(back, { scroll: false }) : nav(""))}
+        eyebrow={open ? `Source · ${open.kind}` : ""}
+        title={open?.name ?? ""}
+        footer={back ? <LinkButton href={back}><ArrowLeft /> Back to lineage</LinkButton> : undefined}
+      >
         {open && (
           <div className="space-y-5">
             <div className="flex items-center gap-2">

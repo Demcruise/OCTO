@@ -59,7 +59,7 @@ export function AlertsView() {
     { id: "rule", header: "Rule", value: (a) => a.ruleId, facet: true, cell: (a) => <span className="font-data text-[12px]">{a.ruleId}</span> },
     { id: "observed", header: "Observed", value: (a) => a.observed, align: "right" },
     { id: "owner", header: "Owner", value: (a) => a.owner, facet: true },
-    { id: "triggered", header: "Triggered", value: (a) => a.triggeredAt, align: "right", cell: (a) => f.ago(a.triggeredAt, now) },
+    { id: "triggered", kind: "date", header: "Date", value: (a) => a.triggeredAt, facet: true, facetValue: (a) => { const h = (now.getTime() - new Date(a.triggeredAt).getTime()) / 3600_000; return h < 24 ? "Last 24 hours" : h < 168 ? "This week" : "Older"; }, cell: (a) => f.ago(a.triggeredAt, now) },
     { id: "age", header: "Age", value: (a) => now.getTime() - new Date(a.triggeredAt).getTime(), align: "right", defaultHidden: true, cell: (a) => `${Math.round((now.getTime() - new Date(a.triggeredAt).getTime()) / 3600_000)}h` },
   ];
 

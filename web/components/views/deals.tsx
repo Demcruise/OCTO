@@ -13,12 +13,13 @@ import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { Funnel } from "@/components/chart/funnel";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { EntityCell, NumericCell, StatusCell } from "@/components/data/cells";
-import { IconButton, ring } from "@/components/ui/button";
+import { Button, IconButton, ring } from "@/components/ui/button";
 import { CountBadge, Monogram, StatusBadge, type Tone } from "@/components/ui/badge";
-import { Tabs } from "@/components/ui/controls";
+import { SearchInput, Tabs } from "@/components/ui/controls";
 import { Menu } from "@/components/ui/overlay";
 import { FreshnessBadge, Skeleton, useToast } from "@/components/feedback";
 import { useBreadcrumb } from "@/components/shell/shell-context";
+import { FilterButton, FilterDrawer, activeFilterCount, type FilterValue } from "@/components/data/filters";
 import { DealCalendar, DealTimeline } from "./deal-schedule";
 
 type View = "board" | "table" | "timeline" | "calendar";
@@ -63,14 +64,52 @@ export function DealsView() {
     if (q.data) setDeals(q.data);
   }, [q.data]);
   const view = (["board", "table", "timeline", "calendar"].includes(params.get("view") ?? "") ? params.get("view") : "board") as View;
-  const setView = (v: View) => router.replace(`/app/deals${v === "board" ? "" : `?view=${v}`}`, { scroll: false });
+
+  // One filter state for Board, Table, Timeline and Calendar (V3 §14), kept in the URL so it survives drill-down and back.
+  const filters = useMemo<FilterValue>(() => {
+    try {
+      return JSON.parse(params.get("f") ?? "{}") as FilterValue;
+    } catch {
+      return {};
+    }
+  }, [params]);
+  const query = params.get("q") ?? "";
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const nav = (next: { view?: View; f?: FilterValue; q?: string }) => {
+    const p = new URLSearchParams();
+    const v = next.view ?? view;
+    const fv = next.f ?? filters;
+    const qq = next.q ?? query;
+    if (v !== "board") p.set("view", v);
+    if (Object.keys(fv).length) p.set("f", JSON.stringify(fv));
+    if (qq) p.set("q", qq);
+    router.replace(`/app/deals${p.size ? `?${p}` : ""}`, { scroll: false });
+  };
+  const setView = (v: View) => nav({ view: v });
+  const dateBucket = (d: Deal) => {
+    const h = (now.getTime() - new Date(d.lastActivity.at).getTime()) / 3600_000;
+    return h < 24 * 7 ? "Active in last 7 days" : h < 24 * 30 ? "Active in last 30 days" : "Quiet for 30+ days";
+  };
+  const FIELDS: { id: string; label: string; get: (d: Deal) => string }[] = [
+    { id: "stage", label: "Stage", get: (d) => d.stage },
+    { id: "owner", label: "Owner", get: (d) => d.owner },
+    { id: "fund", label: "Fund", get: (d) => fundById(d.fundId)!.short },
+    { id: "evidence", label: "Evidence", get: (d) => d.evidence },
+    { id: "date", label: "Date", get: dateBucket },
+  ];
 
   const move = (d: Deal, stage: DealStage) => {
     setDeals((xs) => xs.map((x) => (x.id === d.id ? { ...x, stage } : x)));
     toast({ tone: "ok", title: `${d.company} → ${stage}`, body: "Stage change recorded in this session (demo)." });
   };
 
-  const events = useMemo(() => buildDealEvents(deals), [deals]);
+  const shown = deals.filter((d) => FIELDS.every((fl) => !filters[fl.id]?.length || filters[fl.id].includes(fl.get(d))) && (!query || `${d.company} ${d.sector} ${d.owner}`.toLowerCase().includes(query.toLowerCase())));
+  const fieldOptions = FIELDS.map((fl) => {
+    const m = new Map<string, number>();
+    for (const d of deals) m.set(fl.get(d), (m.get(fl.get(d)) ?? 0) + 1);
+    return { id: fl.id, label: fl.label, options: [...m.entries()].sort((a, b) => (fl.id === "stage" ? DEAL_STAGES.indexOf(a[0] as DealStage) - DEAL_STAGES.indexOf(b[0] as DealStage) : a[0].localeCompare(b[0]))) as [string, number][] };
+  });
+  const events = useMemo(() => buildDealEvents(shown), [shown]);
   const open = deals.filter((d) => d.stage !== "Passed" && d.stage !== "Invested");
   const funnel = DEAL_STAGES.filter((s) => s !== "Passed").map((s, i, arr) => {
     const reached = deals.filter((d) => arr.indexOf(d.stage as (typeof arr)[number]) >= i || (d.stage === "Passed" && i <= 1));
@@ -79,13 +118,13 @@ export function DealsView() {
 
   const cols: Column<Deal>[] = [
     { id: "company", header: "Company", width: 240, hideable: false, value: (d) => d.company, cell: (d) => <EntityCell name={d.company} sub={`${d.sector} · ${d.geography}`} href={`/app/deals/${d.id.toLowerCase()}`} /> },
-    { id: "stage", header: "Stage", value: (d) => d.stage, sortValue: (d) => DEAL_STAGES.indexOf(d.stage), facet: true, groupable: true, cell: (d) => <span className="inline-flex items-center gap-1.5 text-ink-2"><span aria-hidden className={cn("size-2 rounded-full", STAGE_TONE[d.stage])} />{d.stage}</span> },
+    { id: "stage", header: "Stage", value: (d) => d.stage, sortValue: (d) => DEAL_STAGES.indexOf(d.stage), groupable: true, cell: (d) => <span className="inline-flex items-center gap-1.5 text-ink-2"><span aria-hidden className={cn("size-2 rounded-full", STAGE_TONE[d.stage])} />{d.stage}</span> },
     { id: "size", header: "Ticket", value: (d) => d.size, align: "right", cell: (d) => <NumericCell value={d.size} />, aggregate: (r) => f.money(r.reduce((n, d) => n + d.size, 0)) },
-    { id: "owner", header: "Owner", value: (d) => d.owner, facet: true, groupable: true },
-    { id: "fund", header: "Fund", value: (d) => fundById(d.fundId)!.short, facet: true },
+    { id: "owner", header: "Owner", value: (d) => d.owner, groupable: true },
+    { id: "fund", header: "Fund", value: (d) => fundById(d.fundId)!.short },
     { id: "age", header: "Age", value: (d) => d.ageDays, align: "right", cell: (d) => `${d.ageDays}d` },
     { id: "score", header: "Score", value: (d) => d.score, align: "right", cell: (d) => <ScoreMeter score={d.score} /> },
-    { id: "evidence", header: "Evidence", value: (d) => d.evidence, facet: true, cell: (d) => <StatusCell tone={EVIDENCE_TONE[d.evidence]}>{d.evidence}</StatusCell> },
+    { id: "evidence", header: "Evidence", value: (d) => d.evidence, cell: (d) => <StatusCell tone={EVIDENCE_TONE[d.evidence]}>{d.evidence}</StatusCell> },
     { id: "risks", header: "Risk flags", value: (d) => d.risks.join(", ") || "—" },
     { id: "next", header: "Next action", value: (d) => d.nextAction },
     { id: "activity", header: "Latest activity", value: (d) => d.lastActivity.at, cell: (d) => <span className="text-[12px]">{d.lastActivity.title} <span className="text-ink-4">· {f.ago(d.lastActivity.at, now)}</span></span>, defaultHidden: true },
@@ -114,19 +153,34 @@ export function DealsView() {
             className="border-b-0"
             items={[
               { value: "board", label: "Board" },
-              { value: "table", label: "Table", count: deals.length },
+              { value: "table", label: "Table", count: shown.length },
               { value: "timeline", label: "Timeline" },
               { value: "calendar", label: "Calendar", count: events.filter((e) => e.status !== "done").length },
             ]}
           />
         }
       />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <SearchInput aria-label="Search deals" placeholder="Search deals…" value={query} onChange={(e) => nav({ q: e.target.value })} className="w-full sm:w-60" />
+          <FilterButton count={activeFilterCount(filters)} open={filtersOpen} onClick={() => setFiltersOpen(true)} />
+          {(activeFilterCount(filters) > 0 || query) && (
+            <>
+              <span className="text-[12px] tabular-nums text-ink-3">
+                {shown.length} of {deals.length} deals
+              </span>
+              <Button size="xs" variant="ghost" onClick={() => nav({ f: {}, q: "" })}>
+                Clear all
+              </Button>
+            </>
+          )}
+        </div>
+        <FilterDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} title="Filter deals" fields={fieldOptions} value={filters} onApply={(fv) => nav({ f: fv })} />
         {view === "board" && (
           <div className="grid grid-cols-1 gap-4 2xl:grid-cols-12">
             <div className="no-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-2 2xl:col-span-9" role="list" aria-label="Pipeline stages">
               {DEAL_STAGES.map((stage) => {
-                const items = deals.filter((d) => d.stage === stage);
+                const items = shown.filter((d) => d.stage === stage);
                 return (
                   <section key={stage} role="listitem" aria-label={`${stage}, ${items.length} deals`} className="flex w-[272px] shrink-0 flex-col rounded-lg border border-line bg-subtle">
                     <header className="flex items-center justify-between px-3 py-2.5">
@@ -162,7 +216,8 @@ export function DealsView() {
           <DataTable
             id="deals"
             label="Deals"
-            data={deals}
+            data={shown}
+            search={false}
             status={q.isLoading ? "loading" : "ready"}
             columns={cols}
             rowId={(d) => d.id}

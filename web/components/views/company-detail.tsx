@@ -135,7 +135,7 @@ export function CompanyDetail({ id }: { id: string }) {
         tabs={<Tabs<Tab> label="Company sections" value={tab} onChange={setTab} className="border-b-0" items={TABS.map((t) => ({ value: t, label: t[0].toUpperCase() + t.slice(1), count: t === "risks" ? c.risks.length + alerts.length || undefined : t === "news" ? news.length || undefined : undefined }))} />}
       />
 
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         {tab === "overview" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
             <div className="space-y-4 xl:col-span-4">

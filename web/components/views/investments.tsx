@@ -87,7 +87,7 @@ export function InvestmentsView() {
   return (
     <>
       <PageHeader variant="list" eyebrow="Invest" title="Investments" description="Every position across funds. Filter first, then drill into the company." meta={<FreshnessBadge state="demo" asOf={`marks as of ${f.date(AS_OF)}`} />} />
-      <PageBody className="space-y-4">
+      <PageBody className="space-y-6">
         <MetricGrid cols={4}>
           {summary.map((m) => (
             <MetricCard key={m.id} metric={m} variant="compact" onOpen={setKpi} state={inv.isLoading ? "loading" : "ready"} />
