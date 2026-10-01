@@ -42,7 +42,9 @@ export function DonutChart({ data, label, format, centerLabel, size = 184 }: { d
                 className="transition-[stroke-width,opacity] duration-150"
                 onPointerEnter={() => setActive(i)}
                 onPointerLeave={() => setActive(null)}
-              />
+              >
+                <title>{`${d.key}: ${pct(d.value)} · ${format(d.value)}`}</title>
+              </circle>
             );
             offset += (d.value / total) * c;
             return el;
@@ -51,9 +53,10 @@ export function DonutChart({ data, label, format, centerLabel, size = 184 }: { d
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
           <span className="text-kpi font-semibold tabular-nums text-ink">{pct(data[shown]?.value ?? 0)}</span>
           <span className="mt-0.5 max-w-[60%] truncate text-[12px] text-ink-3">{data[shown]?.key ?? centerLabel}</span>
+          {active !== null && <span className="mt-0.5 text-[11px] tabular-nums text-ink-4">{format(data[active].value)}</span>}
         </div>
       </div>
-      <ul className="mt-4 grid w-full grid-cols-2 gap-x-3 gap-y-0.5">
+      <ul className="mt-4 grid w-full grid-cols-1 gap-x-3 gap-y-0.5 pb-1 min-[480px]:grid-cols-2">
         {data.map((d, i) => (
           <li key={d.key}>
             <button

@@ -20,7 +20,8 @@ type Size = "xs" | "sm" | "md" | "lg";
 const VARIANT: Record<Variant, string> = {
   primary:
     "border border-white/20 bg-accent-fill text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.35)] hover:bg-accent-hover active:translate-y-px disabled:bg-accent-fill/50 disabled:shadow-none",
-  secondary: "border border-line bg-surface text-ink hover:bg-hover active:translate-y-px disabled:text-ink-4",
+  /* V2 PQ-003: white outlined — #cbd5e1 border, hover #f8fafc fill with #94a3b8 border. */
+  secondary: "border border-line-strong bg-surface text-ink hover:border-[#94a3b8] hover:bg-[#f8fafc] active:translate-y-px disabled:text-ink-4",
   ghost: "text-ink-2 hover:bg-hover hover:text-ink disabled:text-ink-4",
   danger: "border border-danger/30 bg-surface text-danger hover:bg-danger/8 disabled:opacity-50",
   link: "h-auto px-0 text-accent underline-offset-2 hover:underline disabled:text-ink-4",

@@ -4,23 +4,20 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 export type Density = "comfortable" | "compact";
 export type Locale = "en" | "id";
-export type Period = "QTD" | "YTD" | "LTM" | "ITD";
 
 type Prefs = {
   density: Density;
   sidebarCollapsed: boolean;
-  period: Period;
   locale: Locale;
 };
 
 type PrefsContext = Prefs & {
   setDensity: (d: Density) => void;
   setSidebarCollapsed: (c: boolean) => void;
-  setPeriod: (p: Period) => void;
   setLocale: (l: Locale) => void;
 };
 
-const DEFAULTS: Prefs = { density: "compact", sidebarCollapsed: false, period: "QTD", locale: "en" };
+const DEFAULTS: Prefs = { density: "compact", sidebarCollapsed: false, locale: "en" };
 const KEY = "octo.app.prefs";
 
 /** Row heights per density (parity backlog TABLE-002): compact 56px, comfortable 64px. */
@@ -35,7 +32,7 @@ function read(): Prefs {
     const stored = { ...DEFAULTS, ...(raw ? (JSON.parse(raw) as Partial<Prefs>) : {}) };
     if (!(stored.density in ROW_HEIGHT)) stored.density = "compact";
     // Keys from earlier versions (e.g. theme) are ignored: the dashboard is light-only (DS-002).
-    return { density: stored.density, sidebarCollapsed: !!stored.sidebarCollapsed, period: stored.period, locale: stored.locale };
+    return { density: stored.density, sidebarCollapsed: !!stored.sidebarCollapsed, locale: stored.locale };
   } catch {
     return DEFAULTS;
   }
@@ -67,7 +64,6 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       ...prefs,
       setDensity: (density) => update({ density }),
       setSidebarCollapsed: (sidebarCollapsed) => update({ sidebarCollapsed }),
-      setPeriod: (period) => update({ period }),
       setLocale: (locale) => update({ locale }),
     }),
     [prefs, update],

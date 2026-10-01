@@ -6,9 +6,8 @@ import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 import type { Metric } from "@/lib/demo";
 import { ring } from "@/components/ui/button";
-import { Sparkline } from "@/components/chart/sparkline";
 import { MetricSkeleton } from "@/components/feedback";
-import { Delta } from "./delta";
+import { TrendBadge } from "./delta";
 
 export type MetricState = "ready" | "loading" | "stale" | "error" | "no-data";
 
@@ -19,8 +18,8 @@ export function useMetricValue() {
 }
 
 /**
- * KPI card (KPI-001, Vestra anatomy): small icon + label, sparkline top right,
- * large tabular value, delta pill + comparison. With `onOpen` the whole card is
+ * KPI card (V2 CC-001): icon + label + arrow, large tabular value, trend
+ * badge + comparison. No mini charts — the trend lives in the KPI drawer. With `onOpen` the whole card is
  * one button (hover tint, stronger border, arrow) that opens the KPI drawer —
  * there is no separate Lineage link in the footer any more.
  */
@@ -45,7 +44,6 @@ export function MetricCard({
   if (state === "loading") return <MetricSkeleton />;
 
   const value = state === "no-data" || state === "error" ? "—" : fmt(metric);
-  const good = metric.delta === undefined || metric.upIsGood === undefined ? undefined : (metric.delta > 0) === metric.upIsGood;
   const valueCls = cn(
     "font-semibold tabular-nums text-ink",
     variant === "emphasized" ? "text-kpi-xl" : variant === "compact" ? "text-metric" : "text-kpi",
@@ -68,13 +66,9 @@ export function MetricCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {icon && <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-line bg-subtle text-ink-2 [&_svg]:size-3.5">{icon}</span>}
-          <span className="block truncate text-[13px] font-medium tracking-[-0.01em] text-ink">{metric.label}</span>
+          <span className="line-clamp-2 text-[13px] font-medium leading-snug tracking-[-0.01em] text-ink">{metric.label}</span>
         </div>
-        {clickable ? (
-          <ArrowUpRight aria-hidden className="size-4 shrink-0 text-ink-4 transition-colors group-hover:text-accent-ink" />
-        ) : (
-          metric.spark && state === "ready" && variant !== "compact" && <Sparkline values={metric.spark} tone={good === undefined ? "muted" : good ? "gain" : "loss"} className="-mt-0.5 h-7 w-20" />
-        )}
+        {clickable && <ArrowUpRight aria-hidden className="size-4 shrink-0 text-ink-4 transition-colors group-hover:text-accent-ink" />}
       </div>
 
       <div className="min-w-0">
@@ -93,7 +87,7 @@ export function MetricCard({
             <span className="text-[12px] text-ink-3">No data for this period</span>
           ) : (
             <>
-              {metric.delta !== undefined && <Delta value={metric.delta} unit={metric.deltaUnit} upIsGood={metric.upIsGood} pill />}
+              {metric.delta !== undefined && <TrendBadge value={metric.delta} unit={metric.deltaUnit} upIsGood={metric.upIsGood} trend={metric.trend} />}
               <span className="text-[12px] font-medium text-ink-3">{metric.comparison}</span>
               {state === "stale" && (
                 <span className="inline-flex items-center gap-1 text-[12px] text-warn">
@@ -102,9 +96,6 @@ export function MetricCard({
                 </span>
               )}
             </>
-          )}
-          {clickable && metric.spark && state === "ready" && variant !== "compact" && (
-            <Sparkline values={metric.spark} tone={good === undefined ? "muted" : good ? "gain" : "loss"} className="ml-auto h-6 w-16" />
           )}
         </div>
         {asOf && <span className="sr-only">As of {asOf}</span>}
@@ -129,3 +120,6 @@ export function MetricGrid({ children, cols = 4, className }: { children: React.
     </div>
   );
 }
+
+/** V2 shared-primitive name for the KPI card. */
+export { MetricCard as KpiCard };

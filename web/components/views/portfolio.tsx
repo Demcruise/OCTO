@@ -138,7 +138,7 @@ export function PortfolioView() {
       { id: "irr", header: "IRR", value: (i) => i.irr, align: "right", cell: (i) => <NumericCell value={i.irr} kind="pct" /> },
       { id: "weight", header: "Weight", value: (i) => (i.fairValue / totalFv) * 100, align: "right", cell: (i) => <NumericCell value={(i.fairValue / totalFv) * 100} kind="pct" muted />, aggregate: (rs) => f.pct((rs.reduce((n, r) => n + r.fairValue, 0) / totalFv) * 100) },
       { id: "qtd", header: "QTD", value: (i) => i.qtdChange, align: "right", cell: (i) => <DeltaCell value={i.qtdChange} /> },
-      { id: "trend", header: "Trend", value: (i) => i.trend[i.trend.length - 1], sortable: false, cell: (i) => <SparklineCell values={i.trend} /> },
+      { id: "trend", kind: "trend", header: "Trend", value: (i) => i.trend[i.trend.length - 1], sortable: false, cell: (i) => <SparklineCell values={i.trend} /> },
       { id: "risk", header: "Risk", value: (i) => i.riskStatus, facet: true, cell: (i) => <StatusCell tone={RISK_TONE[i.riskStatus]}>{i.riskStatus}</StatusCell> },
     ],
     [f, totalFv],

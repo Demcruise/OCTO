@@ -25,6 +25,12 @@ const ROUTES = [
   "/app/workflows?tab=ai",
   "/app/workflows?tab=exceptions",
   "/app/data?tab=lineage",
+  "/app/deals?view=calendar",
+  "/app/deals?view=timeline",
+  "/app/funds/fnd-002?tab=activity",
+  "/app/reports/rpt-0212",
+  "/app/reports/rpt-0188",
+  "/app/portfolio?state=error",
   "/app/data",
   "/app/settings",
 ];

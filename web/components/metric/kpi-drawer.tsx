@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { ArrowRight, GitBranch } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
-import { usePreferences } from "@/lib/preferences";
-import { AS_OF, QUARTERS, type Metric } from "@/lib/demo";
+import { AS_OF, FUNDS, NAV_SERIES, PORTFOLIO, QUARTERS, fundDpi, fundTvpi, type Metric } from "@/lib/demo";
 import { Sheet } from "@/components/ui/overlay";
 import { Button, LinkButton } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
 import { TrendChart } from "@/components/chart/line-chart";
 import { useMetricValue } from "./metric-card";
-import { Delta } from "./delta";
+import { TrendBadge } from "./delta";
 
 /** Plain-language definitions; the formula itself comes from the metric's provenance. */
 const DEFINITION: Record<string, string> = {
@@ -37,6 +36,87 @@ const RELATED: Record<string, { label: string; href: string }[]> = {
   dry: [{ label: "Review pipeline", href: "/app/deals" }],
 };
 
+type Row = { label: string; value: string; sub?: string };
+
+/**
+ * Metric-specific breakdown (V2 KPI-003…008): what a reader needs beyond the
+ * headline — quarter change and history for NAV, benchmark for IRR, fund
+ * contribution for TVPI, distributions for DPI, deployment for invested
+ * capital and capacity for dry powder. Every figure derives from demo data.
+ */
+function useBreakdown(m: Metric): { title: string; rows: Row[]; bars?: { label: string; value: number; display: string }[] } | null {
+  const f = useFormat();
+  const P = PORTFOLIO;
+  const last = NAV_SERIES[NAV_SERIES.length - 1];
+  const prev = NAV_SERIES[NAV_SERIES.length - 2];
+  switch (m.id) {
+    case "nav":
+      return {
+        title: "Quarter change",
+        rows: [
+          { label: "Current NAV", value: f.money(P.nav) },
+          { label: "Change vs Q2 2026", value: `${f.delta(((last.nav - prev.nav) / prev.nav) * 100)} · ${f.delta((last.nav - prev.nav) * 1e6, "$")}` },
+          { label: "Three-year change", value: f.delta(((last.nav - NAV_SERIES[0].nav) / NAV_SERIES[0].nav) * 100), sub: `since ${NAV_SERIES[0].q}` },
+          { label: "Freshness", value: "Q3 marks · struck 13:24 UTC" },
+        ],
+      };
+    case "irr":
+      return {
+        title: "Return context",
+        rows: [
+          { label: "Net IRR, since inception", value: f.pct(P.netIrr) },
+          { label: "Gross IRR", value: f.pct(P.grossIrr), sub: "before fees and carry" },
+          { label: "Hurdle", value: f.pct(8), sub: "preferred return per LPA" },
+          { label: "Public benchmark (PME)", value: f.pct(11.4), sub: "MSCI AC Asia, KS-PME, demo" },
+          { label: "Largest driver", value: "Flagship II marks", sub: "+0.6 pts this quarter" },
+        ],
+      };
+    case "tvpi":
+      return {
+        title: "Fund contribution",
+        rows: [
+          { label: "Portfolio TVPI", value: f.multiple(P.tvpi) },
+          { label: "Total value", value: f.money(P.distributions + P.nav), sub: "distributions + NAV" },
+          { label: "Paid-in", value: f.money(P.called) },
+        ],
+        bars: FUNDS.map((x) => ({ label: x.short, value: ((x.distributions + x.nav) / (P.distributions + P.nav)) * 100, display: `${f.multiple(fundTvpi(x))} · ${f.pct(((x.distributions + x.nav) / (P.distributions + P.nav)) * 100, 0)} of value` })),
+      };
+    case "dpi":
+      return {
+        title: "Distributions",
+        rows: [
+          { label: "Portfolio DPI", value: f.multiple(P.dpi) },
+          { label: "Distributed to LPs", value: f.money(P.distributions) },
+          { label: "Paid-in", value: f.money(P.called) },
+          { label: "Distributed this quarter", value: f.money(31.8e6), sub: "Q3 2026" },
+        ],
+        bars: FUNDS.filter((x) => x.distributions > 0).map((x) => ({ label: x.short, value: (x.distributions / P.distributions) * 100, display: `${f.money(x.distributions)} · DPI ${f.multiple(fundDpi(x))}` })),
+      };
+    case "invested":
+      return {
+        title: "Deployment",
+        rows: [
+          { label: "Invested (cost)", value: f.money(P.invested) },
+          { label: "Called from LPs", value: f.money(P.called) },
+          { label: "Remaining commitments", value: f.money(P.committed - P.called) },
+          { label: "Deployment", value: f.pct((P.called / P.committed) * 100, 0), sub: "called ÷ committed" },
+        ],
+      };
+    case "dry":
+      return {
+        title: "Capacity",
+        rows: [
+          { label: "Available", value: f.money(P.dryPowder) },
+          { label: "Committed", value: f.money(P.committed) },
+          { label: "Deployed (called)", value: f.money(P.called) },
+          { label: "Capacity left", value: f.pct((P.dryPowder / P.committed) * 100, 0), sub: "of commitments" },
+        ],
+      };
+    default:
+      return null;
+  }
+}
+
 /**
  * KPI metric drawer (KPI-002). Opened by clicking a whole KPI card: value and
  * change, plain-language definition, period, trend, drivers, source/lineage
@@ -44,10 +124,14 @@ const RELATED: Record<string, { label: string; href: string }[]> = {
  * drawer; the card itself no longer carries a Lineage link.
  */
 export function KpiMetricDrawer({ metric, onClose, onLineage, primary = { label: "View portfolio", href: "/app/portfolio" } }: { metric: Metric | null; onClose: () => void; onLineage?: (m: Metric) => void; primary?: { label: string; href: string } }) {
+  if (!metric) return null;
+  return <DrawerBody metric={metric} onClose={onClose} onLineage={onLineage} primary={primary} />;
+}
+
+function DrawerBody({ metric, onClose, onLineage, primary }: { metric: Metric; onClose: () => void; onLineage?: (m: Metric) => void; primary: { label: string; href: string } }) {
   const f = useFormat();
   const fmt = useMetricValue();
-  const { period } = usePreferences();
-  if (!metric) return null;
+  const breakdown = useBreakdown(metric);
   const m = metric;
   const p = m.provenance;
   const x = m.spark ? QUARTERS.slice(-m.spark.length) : [];
@@ -76,16 +160,47 @@ export function KpiMetricDrawer({ metric, onClose, onLineage, primary = { label:
         <section aria-label="Current value">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <p className="text-kpi-xl font-semibold tabular-nums text-ink">{fmt(m)}</p>
-            {m.delta !== undefined && <Delta value={m.delta} unit={m.deltaUnit} upIsGood={m.upIsGood} pill />}
+            {m.delta !== undefined && <TrendBadge value={m.delta} unit={m.deltaUnit} upIsGood={m.upIsGood} trend={m.trend} />}
             <span className="text-[12px] text-ink-3">{m.comparison}</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <StatusBadge tone="info">Demo data</StatusBadge>
             <StatusBadge tone="neutral" dot={false}>
-              {period} · as of {f.date(AS_OF)}
+              Q3 2026 · as of {f.date(AS_OF)}
             </StatusBadge>
           </div>
         </section>
+
+        {breakdown && (
+          <Section title={breakdown.title}>
+            <dl className="divide-y divide-line-subtle rounded-md border border-line">
+              {breakdown.rows.map((r) => (
+                <div key={r.label} className="flex min-h-10 items-center justify-between gap-3 px-3 py-2 text-[13px]">
+                  <dt className="min-w-0">
+                    <span className="block text-ink-2">{r.label}</span>
+                    {r.sub && <span className="block text-[11px] text-ink-4">{r.sub}</span>}
+                  </dt>
+                  <dd className="shrink-0 text-right font-medium tabular-nums text-ink">{r.value}</dd>
+                </div>
+              ))}
+            </dl>
+            {breakdown.bars && (
+              <ul className="mt-3 space-y-2" aria-label={`${breakdown.title} by fund`}>
+                {breakdown.bars.map((b) => (
+                  <li key={b.label}>
+                    <div className="flex items-baseline justify-between gap-3 text-[12px]">
+                      <span className="font-medium text-ink-2">{b.label}</span>
+                      <span className="tabular-nums text-ink-3">{b.display}</span>
+                    </div>
+                    <div aria-hidden className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunken">
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(2, b.value)}%` }} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        )}
 
         <Section title="Definition">
           <p className="text-[13px] text-ink-2">{DEFINITION[m.id] ?? p.transformation}</p>
@@ -93,7 +208,7 @@ export function KpiMetricDrawer({ metric, onClose, onLineage, primary = { label:
         </Section>
 
         {m.spark && (
-          <Section title="Trend" hint={`Last ${m.spark.length} quarters`}>
+          <Section title="Supporting trend" hint={`Last ${m.spark.length} quarters`}>
             <div className="h-40">
               <TrendChart x={x} series={[{ id: m.id, label: m.label, values: m.spark }]} format={valueOf} label={`${m.label}, last ${m.spark.length} quarters`} />
             </div>
@@ -117,7 +232,7 @@ export function KpiMetricDrawer({ metric, onClose, onLineage, primary = { label:
           </ul>
         </Section>
 
-        <Section title="Source and lineage">
+        <Section title="Source and freshness">
           <dl className="grid grid-cols-2 gap-3 text-[13px]">
             {[
               ["System", p.sourceSystem],
@@ -162,3 +277,6 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
     </section>
   );
 }
+
+/** V2 shared-primitive name for the KPI drawer. */
+export { KpiMetricDrawer as MetricDrawer };

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
-import { Download, GitBranch } from "lucide-react";
+import { Download, GitBranch, History } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
 import { useFund, useInvestments } from "@/lib/data/queries";
-import { ACTIVITY, AS_OF, DEMO_NOW, companyById, fundCashFlows, fundMetrics, fundNavSeries, fundTvpi, investmentMoic, type Investment, type Metric } from "@/lib/demo";
+import { AS_OF, DEMO_NOW, companyById, fundBridge, fundCashFlows, fundMetrics, fundNavSeries, fundTvpi, investmentMoic, type Investment, type Metric } from "@/lib/demo";
 import { PageBody } from "@/components/page/page-header";
 import { Panel, PanelBody, PanelHead } from "@/components/page/panel";
 import { ObjectHeader, ObjectLinks, ObjectMetadata } from "@/components/object/object";
@@ -13,12 +13,12 @@ import { MetricCard, MetricGrid, useMetricValue } from "@/components/metric/metr
 import { LineageDrawer } from "@/components/metric/metric-lineage";
 import { KpiMetricDrawer } from "@/components/metric/kpi-drawer";
 import { ChartShell } from "@/components/chart/chart-shell";
-import { TrendChart } from "@/components/chart/line-chart";
 import { BarChart, RankingBars } from "@/components/chart/bar-chart";
 import { WaterfallChart } from "@/components/chart/waterfall-chart";
 import { DonutChart } from "@/components/chart/donut-chart";
 import { Legend } from "@/components/chart/core";
-import { Timeline } from "@/components/chart/timeline";
+import { ActivityTimeline, type ActivityItem } from "@/components/chart/timeline";
+import { NavChart } from "@/components/chart/nav-chart";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { DeltaCell, EntityCell, NumericCell, SparklineCell, StatusCell } from "@/components/data/cells";
 import { Button } from "@/components/ui/button";
@@ -68,19 +68,25 @@ export function FundDetail({ id }: { id: string }) {
   const metrics = fundMetrics(x);
   const nav = fundNavSeries(x);
   const flows = fundCashFlows(x);
-  const opening = nav[nav.length - 2].nav;
-  const closing = x.nav / 1e6;
+  const bridge = fundBridge(x);
+  const opening = bridge[0].value;
+  const closing = bridge[bridge.length - 1].value;
   const q3calls = flows[flows.length - 1].calls;
   const q3dists = flows[flows.length - 1].dists;
-  const fx = -Math.round(closing * 0.003 * 10) / 10;
-  const valuation = Math.round((closing - opening - q3calls + q3dists - fx) * 10) / 10;
-  const bridge = [
-    { label: "Opening", value: opening, kind: "total" as const },
-    { label: "Calls", value: q3calls, kind: "step" as const },
-    { label: "Distributions", value: -q3dists, kind: "step" as const },
-    { label: "Valuation", value: valuation, kind: "step" as const },
-    { label: "FX", value: fx, kind: "step" as const },
-    { label: "Closing", value: closing, kind: "total" as const },
+
+  const fmtM = (v: number) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(1)}M`;
+  // Quarter-end NAV path with a rebased public benchmark, for the shared NavChart.
+  const navPoints = nav.map((p, i) => ({ q: p.q, nav: p.nav, benchmark: Math.round(nav[0].nav * Math.pow(1.021, i) * 10) / 10 }));
+  const at = (h: number) => new Date(now.getTime() - h * 3_600_000).toISOString();
+  const activity: ActivityItem[] = [
+    { id: "f1", at: at(0.4), label: f.ago(at(0.4), now), title: "Q3 NAV struck", detail: `${f.money(x.nav)} closing NAV under definition v2.1`, actor: "Q3 NAV model", source: "IBOR valuations", state: "complete" },
+    { id: "f2", at: at(3), label: f.ago(at(3), now), title: "Administrator file awaiting tie-out", detail: "Cash statement for 30 Sep not yet matched to the ledger", actor: "Fund accounting", source: "Apex Fund Services", state: "pending" },
+    { id: "f3", at: at(30), label: f.ago(at(30), now), title: `Capital call #14 settled`, detail: `${fmtM(q3calls)} received from LPs`, actor: "Fund accounting", source: "Bank statement", state: "complete" },
+    { id: "f4", at: at(52), label: f.ago(at(52), now), title: "Stale mark flagged", detail: "One position has no approved valuation in 45 days", actor: "OCTO", source: "Valuation log", state: "attention" },
+    { id: "f5", at: at(76), label: f.ago(at(76), now), title: "IC memo approved", detail: "Follow-on approved by the investment committee", actor: "M. Sari", source: "Workflows", state: "complete" },
+    { id: "f6", at: at(120), label: f.ago(at(120), now), title: "Cash break resolved", detail: "FX settlement timing difference, accepted IBOR", actor: "Fund accounting", source: "Reconciliation", state: "complete" },
+    { id: "f7", at: at(400), label: f.date(at(400)), title: "Q2 NAV struck", detail: `${fmtM(opening)} closing NAV`, actor: "Q2 NAV model", source: "IBOR valuations", state: "historical" },
+    { id: "f8", at: at(1500), label: f.date(at(1500)), title: `${x.short} distribution paid`, detail: `${fmtM(q3dists)} to LPs`, actor: "Fund accounting", source: "Bank statement", state: "historical" },
   ];
 
   const bySector = new Map<string, number>();
@@ -104,7 +110,7 @@ export function FundDetail({ id }: { id: string }) {
     { id: "irr", header: "IRR", value: (i) => i.irr, align: "right", cell: (i) => <NumericCell value={i.irr} kind="pct" /> },
     { id: "weight", header: "Weight", value: (i) => (i.fairValue / sum) * 100, align: "right", cell: (i) => <NumericCell value={(i.fairValue / sum) * 100} kind="pct" muted /> },
     { id: "qtd", header: "QTD", value: (i) => i.qtdChange, align: "right", cell: (i) => <DeltaCell value={i.qtdChange} /> },
-    { id: "trend", header: "Trend", value: (i) => i.trend[7], sortable: false, cell: (i) => <SparklineCell values={i.trend} /> },
+    { id: "trend", kind: "trend", header: "Trend", value: (i) => i.trend[7], sortable: false, cell: (i) => <SparklineCell values={i.trend} /> },
     { id: "risk", header: "Risk", value: (i) => i.riskStatus, facet: true, cell: (i) => <StatusCell tone={i.riskStatus === "On track" ? "ok" : i.riskStatus === "Watch" ? "warn" : "danger"}>{i.riskStatus}</StatusCell> },
   ];
 
@@ -160,13 +166,25 @@ export function FundDetail({ id }: { id: string }) {
                 <MetricCard key={m.id} metric={m} variant="compact" onOpen={setKpi} />
               ))}
             </MetricGrid>
+            <NavChart title="NAV trajectory" points={navPoints} benchmark={false} onLineage={() => setLineage(metrics[2])} />
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-              <ChartShell className="xl:col-span-7" title="NAV trajectory" subtitle="Quarter-end, $M" source="IBOR valuations" freshness={<FreshnessBadge state="demo" />} exportData={{ filename: `${x.slug}-nav`, head: ["Quarter", "NAV ($M)"], rows: nav.map((p) => [p.q, p.nav]) }} height={240}>
-                <TrendChart x={nav.map((p) => p.q)} series={[{ id: "nav", label: "NAV", values: nav.map((p) => p.nav) }]} format={(v) => `$${Math.round(v)}M`} label={`${x.name} NAV`} />
+              <ChartShell
+                className="xl:col-span-7"
+                title="Q3 value bridge"
+                subtitle={`Opening ${fmtM(opening)} + calls − distributions ± valuation ± FX = closing ${fmtM(closing)}`}
+                legend={<Legend items={[{ label: "Opening / closing", color: "var(--color-mark-neutral)" }, { label: "Increase", color: "var(--color-gain)" }, { label: "Decrease", color: "var(--color-loss)" }]} />}
+                height={280}
+                expandable={false}
+                exportData={{ filename: `${x.slug}-bridge`, head: ["Step", "$M"], rows: bridge.map((b) => [b.label, b.value]) }}
+              >
+                <WaterfallChart data={bridge} label={`${x.name} Q3 value bridge`} format={fmtM} axisFormat={(v) => `$${Math.round(v)}M`} />
               </ChartShell>
-              <ChartShell className="xl:col-span-5" title="Q3 value bridge" subtitle="Opening to closing NAV, $M · axis starts above zero" height={240} exportData={{ filename: `${x.slug}-bridge`, head: ["Step", "$M"], rows: bridge.map((b) => [b.label, b.value]) }}>
-                <WaterfallChart data={bridge} label={`${x.name} Q3 value bridge`} format={(v) => `${v < 0 ? "−" : ""}$${Math.abs(v).toFixed(1)}M`} />
-              </ChartShell>
+              <Panel className="xl:col-span-5">
+                <PanelHead title="Recent activity" icon={<History />} toolbar={<Button size="sm" variant="ghost" onClick={() => setTab("activity")}>All activity</Button>} />
+                <PanelBody>
+                  <ActivityTimeline items={activity.slice(0, 4)} now={now} />
+                </PanelBody>
+              </Panel>
             </div>
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
               <ChartShell
@@ -244,15 +262,9 @@ export function FundDetail({ id }: { id: string }) {
 
         {tab === "activity" && (
           <Panel>
-            <PanelHead title="Activity" />
+            <PanelHead title="Activity" description="Fund events in order, newest first. Each entry shows its state, owner and source." icon={<History />} />
             <PanelBody>
-              <Timeline
-                events={[
-                  { id: "f1", at: AS_OF, label: "30 Sep", title: "Q3 NAV struck", detail: `${f.money(x.nav)} · NAV definition v2.1`, tone: "accent" },
-                  { id: "f2", at: AS_OF, label: "12 Aug", title: "Capital call #14 settled", detail: `${f.money(q3calls * 1e6)} from LPs`, tone: "neutral" },
-                  ...ACTIVITY.slice(0, 3).map((a) => ({ id: a.id, at: a.at, label: f.ago(a.at, now), title: `${a.actor} ${a.verb} ${a.object}`, tone: "neutral" as const })),
-                ]}
-              />
+              <ActivityTimeline items={activity} now={now} />
             </PanelBody>
           </Panel>
         )}

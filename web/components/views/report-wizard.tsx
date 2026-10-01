@@ -131,7 +131,7 @@ export function ReportWizard({ templates, onCancel, onDone }: { templates: Repor
               <legend className="mb-2 text-[13px] text-ink-2">Reporting period. Data is taken as of each period end.</legend>
               <div className="flex flex-wrap gap-2">
                 {PERIODS.map((p) => (
-                  <label key={p} className={cn("flex h-9 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[13px]", period === p ? "border-accent-line bg-accent-soft font-semibold text-accent-ink" : "border-line text-ink-2 hover:bg-hover")}>
+                  <label key={p} className={cn("flex h-8 cursor-pointer items-center gap-2 rounded-sm border px-3 text-[13px]", period === p ? "border-accent/60 bg-accent-soft font-semibold text-accent-ink" : "border-line text-ink-2 hover:bg-hover")}>
                     <input type="radio" name="period" className="sr-only" checked={period === p} onChange={() => setPeriod(p)} />
                     {period === p && <Check aria-hidden className="size-3.5" />}
                     {p}

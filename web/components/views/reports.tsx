@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useFormat } from "@/lib/use-format";
-import { useReports } from "@/lib/data/queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { keys, useReports } from "@/lib/data/queries";
 import { DEMO_NOW, fundById, type Report, type ReportStatus } from "@/lib/demo";
 import { PageBody, PageHeader } from "@/components/page/page-header";
 import { DataTable, type Column } from "@/components/data/data-table";
@@ -28,8 +28,8 @@ export function ReportsView() {
   const toast = useToast();
   useBreadcrumb(null);
   const q = useReports();
-  const [reports, setReports] = useState<Report[]>([]);
-  useEffect(() => void (q.data && setReports(q.data)), [q.data]);
+  const qc = useQueryClient();
+  const reports = q.data ?? [];
   const status = (STATUSES.find((s) => s.toLowerCase().replace(" ", "-") === params.get("status")) ?? "Draft") as ReportStatus;
   const creating = params.get("new") === "1";
 
@@ -69,7 +69,8 @@ export function ReportsView() {
             onCancel={() => router.replace("/app/reports", { scroll: false })}
             onDone={({ name, template }) => {
               const r: Report = { ...template, id: `RPT-${240 + reports.length}`, name, status: "Published", version: "v1", owner: "You", updatedAt: DEMO_NOW, history: [{ version: "v1", by: "You", at: DEMO_NOW, note: `Published from ${template.name}` }] };
-              setReports((xs) => [r, ...xs]);
+              // Write through the query cache so the new report's detail route resolves too (V2 REPORT-002).
+              qc.setQueryData<Report[]>(keys.reports(), (xs) => [r, ...(xs ?? [])]);
               toast({ tone: "ok", title: "Report published", body: `${r.name} (demo — lives in this session).` });
             }}
           />

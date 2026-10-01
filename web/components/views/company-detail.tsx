@@ -18,7 +18,7 @@ import { BarChart } from "@/components/chart/bar-chart";
 import { TrendChart } from "@/components/chart/line-chart";
 import { DonutChart } from "@/components/chart/donut-chart";
 import { Legend } from "@/components/chart/core";
-import { Timeline } from "@/components/chart/timeline";
+import { ActivityTimeline, type ActivityItem } from "@/components/chart/timeline";
 import { DataTable, type Column } from "@/components/data/data-table";
 import { NumericCell } from "@/components/data/cells";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -202,7 +202,13 @@ export function CompanyDetail({ id }: { id: string }) {
                 <Panel>
                   <PanelHead title="Key events" />
                   <PanelBody>
-                    <Timeline events={[{ id: "e0", at: c.latestEvent.at, label: f.ago(c.latestEvent.at, now), title: c.latestEvent.title, tone: c.status === "Covenant breach" ? "danger" : "accent" }, ...news.map((n) => ({ id: n.id, at: n.at, label: f.ago(n.at, now), title: n.title, tone: "neutral" as const })), { id: "e9", at: daysAgo(20), label: f.date(daysAgo(20)), title: "September board meeting", tone: "neutral" as const }]} />
+                    <ActivityTimeline
+                      items={[
+                        { id: "e0", at: c.latestEvent.at, label: f.ago(c.latestEvent.at, now), title: c.latestEvent.title, state: c.status === "Covenant breach" ? "critical" : "complete" },
+                        ...news.map((n) => ({ id: n.id, at: n.at, label: f.ago(n.at, now), title: n.title, source: n.source, state: "historical" as const })),
+                        { id: "e9", at: daysAgo(20), label: f.date(daysAgo(20)), title: "September board meeting", source: "Board portal", state: "historical" },
+                      ]}
+                    />
                   </PanelBody>
                 </Panel>
                 <Panel>
@@ -401,13 +407,14 @@ export function CompanyDetail({ id }: { id: string }) {
           <Panel>
             <PanelHead title="Activity" />
             <PanelBody>
-              <Timeline
-                events={[
-                  { id: "a1", at: c.latestEvent.at, label: f.ago(c.latestEvent.at, now), title: c.latestEvent.title, tone: "accent" },
-                  ...alerts.map((a) => ({ id: a.id, at: a.triggeredAt, label: f.ago(a.triggeredAt, now), title: `Alert raised: ${a.title}`, detail: `Rule ${a.ruleId} · owner ${a.owner}`, tone: "danger" as const })),
-                  { id: "a3", at: daysAgo(20), label: f.date(daysAgo(20)), title: "Board pack uploaded", detail: "Document vault", tone: "neutral" },
-                  ...(positions[0] ? [{ id: "a4", at: positions[0].valuationDate, label: f.date(positions[0].valuationDate), title: "Valuation approved", detail: `${f.money(positions[0].fairValue)} · valuation committee`, tone: "ok" as const }] : []),
-                ]}
+              <ActivityTimeline
+                now={now}
+                items={([
+                  { id: "a1", at: c.latestEvent.at, label: f.ago(c.latestEvent.at, now), title: c.latestEvent.title, state: "complete" },
+                  ...alerts.map((a) => ({ id: a.id, at: a.triggeredAt, label: f.ago(a.triggeredAt, now), title: `Alert raised: ${a.title}`, detail: `Rule ${a.ruleId}`, actor: a.owner, source: "Alert rules", state: (a.severity === "critical" ? "critical" : "attention") as "critical" | "attention" })),
+                  { id: "a3", at: daysAgo(20), label: f.date(daysAgo(20)), title: "Board pack uploaded", source: "Document vault", state: "historical" },
+                  ...(positions[0] ? [{ id: "a4", at: positions[0].valuationDate, label: f.date(positions[0].valuationDate), title: "Valuation approved", detail: f.money(positions[0].fairValue), actor: "Valuation committee", source: "IBOR valuation log", state: "complete" as const }] : []),
+                ] as ActivityItem[]).sort((a, b) => b.at.localeCompare(a.at))}
               />
             </PanelBody>
           </Panel>

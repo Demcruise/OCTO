@@ -50,6 +50,8 @@ export function NavChart({
   onLineage,
   toolbar,
   height = 260,
+  expandable = true,
+  downloadable = true,
   className,
 }: {
   title?: string;
@@ -60,15 +62,20 @@ export function NavChart({
   onLineage?: () => void;
   toolbar?: React.ReactNode;
   height?: number;
+  expandable?: boolean;
+  downloadable?: boolean;
   className?: string;
 }) {
   const f = useFormat();
   const [range, setRange] = useState<NavRange>(defaultRange);
   const [hover, setHover] = useState<number | null>(null);
   const data = useMemo(() => navSeries(range, points), [range, points]);
+  const full = useMemo(() => navSeries(range, points, true), [range, points]);
   const i = hover ?? data.length - 1;
   const cur = data[i];
   const change = (k: number) => (k === 0 ? null : ((data[k].nav - data[k - 1].nav) / data[k - 1].nav) * 100);
+  // Range changes reset the cursor so the headline never points past the new series.
+  const pick = (r: NavRange) => (setHover(null), setRange(r));
   const money = (v: number) => `$${v.toFixed(1)}M`;
   const axis = (v: number) => `$${Math.round(v)}M`;
   const delta = change(i);
@@ -95,30 +102,41 @@ export function NavChart({
       toolbar={
         <>
           {toolbar}
-          <RangeMenu value={range} onChange={setRange} />
+          <RangeMenu value={range} onChange={pick} />
         </>
       }
       legend={benchmark ? <Legend items={[{ label: "NAV", color: "var(--color-chart-1)" }, { label: "Public benchmark (rebased)", color: "var(--color-ink-4)", dashed: true }]} /> : undefined}
       freshness={<FreshnessBadge state="demo" asOf={f.date(AS_OF)} />}
       source="IBOR valuations"
       onLineage={onLineage}
-      exportData={{ filename: `nav-${range}`, head: ["Date", "NAV ($M)", ...(benchmark ? ["Benchmark ($M)"] : [])], rows: data.map((p) => [p.date, p.nav, ...(benchmark ? [p.benchmark] : [])]) }}
+      exportData={downloadable ? { filename: `nav-${range}`, head: ["Date", "NAV ($M)", ...(benchmark ? ["Benchmark ($M)"] : [])], rows: full.map((p) => [p.date, p.nav, ...(benchmark ? [p.benchmark] : [])]) } : undefined}
       state={state}
       height={height}
+      expandable={expandable}
     >
-      <TrendChart
-        x={data.map((p) => p.label)}
-        titles={data.map((p) => p.title)}
-        series={[{ id: "nav", label: "NAV", values: data.map((p) => p.nav) }, ...(benchmark ? [{ id: "bm", label: "Benchmark", values: data.map((p) => p.benchmark), color: "var(--color-ink-4)", dashed: true, area: false }] : [])]}
-        format={money}
-        axisFormat={axis}
-        note={(k) => {
-          const c = change(k);
-          return c === null ? `${money(data[k].nav)} · start of range` : `${money(data[k].nav)} · ${f.delta(c)} ${RANGE_DELTA[range]}`;
-        }}
-        label={`${title}, ${range}`}
-        onHover={setHover}
-      />
+      {({ expanded }) => {
+        const d = expanded ? full : data;
+        const delta = (k: number) => (k === 0 ? null : ((d[k].nav - d[k - 1].nav) / d[k - 1].nav) * 100);
+        return (
+          <TrendChart
+            key={`${range}-${expanded}`}
+            x={d.map((p) => p.label)}
+            titles={d.map((p) => p.title)}
+            series={[{ id: "nav", label: "NAV", values: d.map((p) => p.nav) }, ...(benchmark ? [{ id: "bm", label: "Benchmark", values: d.map((p) => p.benchmark), color: "var(--color-ink-4)", dashed: true, area: false }] : [])]}
+            format={money}
+            axisFormat={axis}
+            note={(k) => {
+              const c = delta(k);
+              return c === null ? `${money(d[k].nav)} · start of range` : `${money(d[k].nav)} · ${f.delta(c)} ${RANGE_DELTA[range]}`;
+            }}
+            label={`${title}, ${range}${expanded ? ", full history" : ""}`}
+            onHover={expanded ? undefined : setHover}
+          />
+        );
+      }}
     </ChartShell>
   );
 }
+
+/** V2 shared-primitive name for the range control. */
+export { RangeMenu as RangeSelect };

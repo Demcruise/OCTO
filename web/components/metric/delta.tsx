@@ -4,15 +4,18 @@ import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormat } from "@/lib/use-format";
 
+export type TrendSemantic = "positive" | "negative" | "neutral";
+
 /**
- * Signed change. Colour follows whether the move is *good*, not its sign
- * (a falling cost is green). The arrow shows direction; text says good/bad for
- * screen readers so colour is never the only signal (plan §29).
+ * Signed change. Colour follows whether the move is *good*, not its sign (a
+ * falling cost is green). An explicit `trend` semantic wins over inference
+ * (V2 CC-003); otherwise `upIsGood` decides. The arrow shows direction; text
+ * says favourable/unfavourable for screen readers so colour is never alone.
  */
-export function Delta({ value, unit = "%", upIsGood, pill, className, digits }: { value: number; unit?: "%" | "pts" | "×" | "$" | ""; upIsGood?: boolean; pill?: boolean; className?: string; digits?: number }) {
+export function Delta({ value, unit = "%", upIsGood, trend, pill, className, digits }: { value: number; unit?: "%" | "pts" | "×" | "$" | ""; upIsGood?: boolean; trend?: TrendSemantic; pill?: boolean; className?: string; digits?: number }) {
   const f = useFormat();
   const dir = value > 0 ? "up" : value < 0 ? "down" : "flat";
-  const good = upIsGood === undefined || dir === "flat" ? undefined : (dir === "up") === upIsGood;
+  const good = trend ? (trend === "neutral" ? undefined : trend === "positive") : upIsGood === undefined || dir === "flat" ? undefined : (dir === "up") === upIsGood;
   const Arrow = dir === "up" ? ArrowUpRight : dir === "down" ? ArrowDownRight : Minus;
   return (
     <span
@@ -21,10 +24,10 @@ export function Delta({ value, unit = "%", upIsGood, pill, className, digits }: 
         good === true && "text-ok",
         good === false && "text-danger",
         good === undefined && "text-ink-3",
-        pill && "h-5 rounded-xs px-1.5",
-        pill && good === true && "bg-ok/10",
-        pill && good === false && "bg-danger/10",
-        pill && good === undefined && "bg-muted",
+        pill && "h-[22px] rounded-full px-2 leading-none",
+        pill && good === true && "bg-mark-ok/10",
+        pill && good === false && "bg-mark-danger/10",
+        pill && good === undefined && "bg-sunken",
         className,
       )}
     >
@@ -33,4 +36,9 @@ export function Delta({ value, unit = "%", upIsGood, pill, className, digits }: 
       {good !== undefined && <span className="sr-only">{good ? " (favourable)" : " (unfavourable)"}</span>}
     </span>
   );
+}
+
+/** TrendBadge (V2 shared primitive): the pill form of Delta used on KPI cards and drawers. */
+export function TrendBadge(props: Omit<React.ComponentProps<typeof Delta>, "pill">) {
+  return <Delta {...props} pill />;
 }

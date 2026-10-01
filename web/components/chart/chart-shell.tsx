@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Download, GitBranch, Maximize2, Minimize2 } from "lucide-react";
+import { forwardRef, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Download, GitBranch, Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/button";
-import { EmptyState, ErrorState, PermissionState, Skeleton } from "@/components/feedback";
+import { useFocusTrap } from "@/components/ui/overlay";
+import { EmptyState, ErrorState, PermissionState } from "@/components/feedback";
 
 export type ChartState = "ready" | "loading" | "empty" | "error" | "stale" | "permission";
 
 export type ChartExport = { filename: string; head: string[]; rows: (string | number)[][] };
 
-function downloadCsv({ filename, head, rows }: ChartExport) {
+export function downloadCsv({ filename, head, rows }: ChartExport) {
   const esc = (v: string | number) => {
     const s = String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -21,10 +23,28 @@ function downloadCsv({ filename, head, rows }: ChartExport) {
   URL.revokeObjectURL(url);
 }
 
+/* ---------- ChartToolbar primitives (V2 §26: range/filter → Download → Expand) ---------- */
+
+export function DownloadButton({ title, data }: { title: string; data: ChartExport }) {
+  return <IconButton size="sm" variant="secondary" label={`Download ${title} as CSV`} icon={<Download />} onClick={() => downloadCsv(data)} />;
+}
+
+export const ExpandButton = forwardRef<HTMLButtonElement, { title: string; onClick: () => void }>(function ExpandButton({ title, onClick }, ref) {
+  return <IconButton ref={ref} size="sm" variant="secondary" label={`Expand ${title}`} aria-haspopup="dialog" icon={<Maximize2 />} onClick={onClick} />;
+});
+
+export function ChartToolbar({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap items-center gap-1.5">{children}</div>;
+}
+
+type Render = React.ReactNode | ((ctx: { expanded: boolean }) => React.ReactNode);
+
 /**
- * Analytical chart contract (plan §19): title, context, headline, controls,
- * legend, freshness, source/lineage footer, export, fullscreen, and designed
- * loading / empty / error / stale / permission states.
+ * ChartCard (V2 §26 / §28). Title, subtitle, toolbar, plot, legend, footer;
+ * designed loading / empty / error / stale / permission states. Expand opens a
+ * separate overlay (max 90vw × 85vh) so the page never shifts; children given
+ * as a function receive `expanded` and can show deeper history there. Escape
+ * closes and focus returns to the Expand button.
  */
 export function ChartShell({
   title,
@@ -37,10 +57,12 @@ export function ChartShell({
   source,
   onLineage,
   state = "ready",
+  staleSince,
   emptyText = "No data for the selected period.",
   onRetry,
   exportData,
   height = 260,
+  expandable = true,
   className,
   children,
 }: {
@@ -54,25 +76,24 @@ export function ChartShell({
   source?: string;
   onLineage?: () => void;
   state?: ChartState;
+  /** Shown as "Last updated …" when the chart is stale. */
+  staleSince?: string;
   emptyText?: string;
   onRetry?: () => void;
   exportData?: ChartExport;
   /** Plot height in px, or "auto" when the body sizes itself (donut + legend). */
   height?: number | "auto";
+  expandable?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children: Render;
 }) {
   const [full, setFull] = useState(false);
-  useEffect(() => {
-    if (!full) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [full]);
+  const expandRef = useRef<HTMLButtonElement>(null);
+  const render = (expanded: boolean) => (typeof children === "function" ? children({ expanded }) : children);
 
   const body =
     state === "loading" ? (
-      <div role="status" aria-busy="true" className="flex h-full flex-col justify-end gap-2" style={{ height: height === "auto" ? 220 : height }}>
+      <div role="status" aria-busy="true" className="flex flex-col justify-end gap-2" style={{ height: height === "auto" ? 220 : height }}>
         <span className="sr-only">Loading {title}…</span>
         <div className="flex h-full items-end gap-2">
           {[0.45, 0.6, 0.5, 0.75, 0.65, 0.85, 0.7, 0.9].map((h, i) => (
@@ -87,55 +108,99 @@ export function ChartShell({
     ) : state === "permission" ? (
       <PermissionState scope="this chart" className="py-6" />
     ) : (
-      <div style={{ height: full ? "calc(100% - 8px)" : height === "auto" ? undefined : height }} className={cn(state === "stale" && "opacity-80")}>
-        {children}
+      <div style={{ height: height === "auto" ? undefined : height }} className={cn(state === "stale" && "opacity-80")}>
+        {render(false)}
       </div>
     );
 
+  const ready = state === "ready" || state === "stale";
+
   return (
-    <>
-      {full && <div aria-hidden className="fixed inset-0 z-[74] bg-black/40" onClick={() => setFull(false)} />}
-      <section
-        aria-label={title}
-        role={full ? "dialog" : undefined}
-        aria-modal={full || undefined}
-        className={cn(
-          "flex min-w-0 flex-col rounded-lg border border-line bg-surface",
-          full && "fixed inset-3 z-[75] shadow-dialog sm:inset-8",
-          className,
-        )}
+    <section aria-label={title} className={cn("flex min-w-0 flex-col rounded-lg border border-line bg-surface", className)}>
+      <header className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-card font-semibold text-ink [&>svg]:size-4 [&>svg]:text-ink-3">
+            {icon}
+            {title}
+          </h2>
+          {subtitle && <p className="mt-0.5 text-[12px] text-ink-3">{subtitle}</p>}
+          {headline && <div className="mt-2">{headline}</div>}
+        </div>
+        <ChartToolbar>
+          {toolbar}
+          {exportData && ready && <DownloadButton title={title} data={exportData} />}
+          {expandable && ready && <ExpandButton ref={expandRef} title={title} onClick={() => setFull(true)} />}
+        </ChartToolbar>
+      </header>
+      {legend && <div className="px-5 pt-2">{legend}</div>}
+      <div className="min-h-0 px-5 pb-4 pt-3">{body}</div>
+      {(freshness || source || onLineage || state === "stale") && (
+        <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-subtle px-5 py-2.5 text-[11px] text-ink-3">
+          {freshness}
+          {source && <span>Source: {source}</span>}
+          {state === "stale" && <span className="font-medium text-warn">Stale — last updated {staleSince ?? "before the refresh target"}</span>}
+          {onLineage && (
+            <button type="button" onClick={onLineage} className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded-sm font-medium hover:text-accent focus-visible:outline-2 focus-visible:outline-focus">
+              <GitBranch aria-hidden className="size-3" /> Lineage
+            </button>
+          )}
+        </footer>
+      )}
+      {full && (
+        <ExpandedChart title={title} subtitle={subtitle} headline={headline} toolbar={toolbar} legend={legend} exportData={exportData} onClose={() => setFull(false)}>
+          {render(true)}
+        </ExpandedChart>
+      )}
+    </section>
+  );
+}
+
+function ExpandedChart({ title, subtitle, headline, toolbar, legend, exportData, onClose, children }: { title: string; subtitle?: string; headline?: React.ReactNode; toolbar?: React.ReactNode; legend?: React.ReactNode; exportData?: ChartExport; onClose: () => void; children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return createPortal(
+    <ExpandedBody title={title} subtitle={subtitle} headline={headline} toolbar={toolbar} legend={legend} exportData={exportData} onClose={onClose}>
+      {children}
+    </ExpandedBody>,
+    document.querySelector(".octo-app") ?? document.body,
+  );
+}
+
+function ExpandedBody({ title, subtitle, headline, toolbar, legend, exportData, onClose, children }: { title: string; subtitle?: string; headline?: React.ReactNode; toolbar?: React.ReactNode; legend?: React.ReactNode; exportData?: ChartExport; onClose: () => void; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useFocusTrap(ref, onClose);
+  return (
+    <div className="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-6">
+      <div aria-hidden className="absolute inset-0 bg-black/40 motion-safe:animate-[fade-in_160ms_ease-out]" onClick={onClose} />
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="relative flex h-[85vh] w-full max-w-[90vw] flex-col rounded-lg border border-line bg-surface shadow-dialog motion-safe:animate-[pop-in_160ms_var(--ease-out-soft)]"
       >
-        <header className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line-subtle px-6 py-4">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-card font-semibold text-ink [&>svg]:size-4 [&>svg]:text-ink-3">
-              {icon}
-              {title}
+            <h2 id={titleId} className="text-section font-semibold text-ink">
+              {title} <span className="text-[13px] font-normal text-ink-3">· full history</span>
             </h2>
             {subtitle && <p className="mt-0.5 text-[12px] text-ink-3">{subtitle}</p>}
             {headline && <div className="mt-2">{headline}</div>}
           </div>
-          {/* ChartControls (CHART-001): range/measure → Download → Expand, always in this order. */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <ChartToolbar>
             {toolbar}
-            {exportData && state === "ready" && <IconButton size="sm" variant="secondary" label={`Download ${title} as CSV`} icon={<Download />} onClick={() => downloadCsv(exportData)} />}
-            <IconButton size="sm" variant="secondary" label={full ? "Exit full screen" : `Expand ${title}`} icon={full ? <Minimize2 /> : <Maximize2 />} onClick={() => setFull(!full)} />
-          </div>
+            {exportData && <DownloadButton title={title} data={exportData} />}
+            <IconButton size="sm" variant="secondary" label="Close expanded chart" icon={<X />} onClick={onClose} data-autofocus />
+          </ChartToolbar>
         </header>
-        {legend && <div className="px-5 pt-2">{legend}</div>}
-        <div className={cn("min-h-0 px-5 pb-4 pt-3", full && "flex-1")}>{body}</div>
-        {(freshness || source || onLineage) && (
-          <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line-subtle px-5 py-2.5 text-[11px] text-ink-3">
-            {freshness}
-            {source && <span>Source: {source}</span>}
-            {state === "stale" && <span className="font-medium text-warn">Stale — past refresh target</span>}
-            {onLineage && (
-              <button type="button" onClick={onLineage} className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded-sm font-medium hover:text-accent focus-visible:outline-2 focus-visible:outline-focus">
-                <GitBranch aria-hidden className="size-3" /> Lineage
-              </button>
-            )}
-          </footer>
-        )}
-      </section>
-    </>
+        {legend && <div className="px-6 pt-3">{legend}</div>}
+        <div className="min-h-0 flex-1 px-6 pb-6 pt-3">{children}</div>
+      </div>
+    </div>
   );
 }
+
+/** V2 shared-primitive name for the chart container. */
+export { ChartShell as ChartCard };
